@@ -1,0 +1,67 @@
+{
+  "name": "dev-core",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "electron-dev": "electron .",
+    "dist": "next build && node scripts/prepare-standalone.js && electron-builder"
+  },
+  "dependencies": {
+    "googleapis": "^171.4.0",
+    "next": "16.1.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "electron": "^40.2.1",
+    "electron-builder": "^26.7.0",
+    "electron-is-dev": "^3.0.1",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "build": {
+    "appId": "com.nattsu.devcore",
+    "productName": "dev-core",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": ".next/standalone",
+        "to": "standalone"
+      },
+      {
+        "from": ".next/static",
+        "to": "standalone/.next/static"
+      },
+      {
+        "from": "public",
+        "to": "standalone/public"
+      },
+      {
+        "from": "credentials.json",
+        "to": "standalone/credentials.json"
+      }
+    ],
+    "win": {
+      "target": "portable",
+      "forceCodeSigning": false
+    }
+  }
+}
