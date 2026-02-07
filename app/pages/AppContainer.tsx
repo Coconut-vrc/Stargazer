@@ -51,10 +51,11 @@ export const AppContainer: React.FC = () => {
         raw_extra: []
       }));
 
-      const castValues = await sheetService.fetchSheetData(castUrl, 'A2:B50');
+      const castValues = await sheetService.fetchSheetData(castUrl, 'A2:C50');
       const importedCasts = castValues.map(row => ({
         name: row[0] || '',
-        is_present: row[1] !== '1'
+        is_present: row[1] === '1', // 修正: 1の場合を出席とする
+        ng_users: row[2] ? row[2].split(',').map((s: string) => s.trim()) : [] // 修正: ng_usersの初期化
       }));
 
       repository.saveApplyUsers(importedUsers);
@@ -87,7 +88,6 @@ export const AppContainer: React.FC = () => {
           </button>
         ))}
       </div>
-
       <div className="main-content">
         {renderPage()}
       </div>

@@ -1,3 +1,6 @@
+// F:\DEVELOPFOLDER\dev-core\app\stores\AppContext.tsx
+'use client';
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface UserBean {
@@ -14,6 +17,7 @@ export interface UserBean {
 export interface CastBean {
   name: string;
   is_present: boolean;
+  ng_users: string[]; 
 }
 
 export type PageType = 'import' | 'db' | 'cast' | 'lottery' | 'matching';
@@ -59,6 +63,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
 export const useAppContext = () => {
   const context = useContext(AppContext);
-  if (!context) throw new Error('useAppContext must be used within an AppProvider');
+  if (!context) throw new Error('useAppContext must be used within AppProvider');
   return context;
 };

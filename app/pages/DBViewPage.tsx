@@ -2,6 +2,46 @@ import React from 'react';
 import { useAppContext } from '../stores/AppContext';
 import { DiscordColors } from '../common/types/discord-colors';
 
+/**
+ * X IDセル専用コンポーネント
+ * クリック時の遷移ロジックとホバーエフェクトをカプセル化
+ */
+const XLinkCell: React.FC<{ xId: string; baseStyle: React.CSSProperties }> = ({ xId, baseStyle }) => {
+  // IDから先頭の「@」を除去してサニタイズ [1, 2]
+  const handle = xId? xId.replace(/^@/, '') : '';
+  
+  // セルの基本スタイルにリンク用のスタイルを結合
+  const cellStyle: React.CSSProperties = {
+   ...baseStyle,
+    cursor: 'pointer',
+    color: DiscordColors.textLink,
+    transition: 'background-color 0.17s ease', // Discord風の遷移速度 
+  };
+
+  // クリックハンドラー
+  const handleClick = (e: React.MouseEvent) => {
+    // テーブル行(tr)などに設定された親のクリックイベントを阻止 
+    e.stopPropagation();
+    
+    if (!handle) return;
+    
+    // セキュリティ属性を付与して新しいタブで開く [6, 7, 8]
+    window.open(`https://x.com/${handle}`, '_blank', 'noopener,noreferrer');
+  };
+
+  return (
+    <td
+      style={cellStyle}
+      onClick={handleClick}
+      // Discord風のホバーフィードバックを適用 
+      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = DiscordColors.itemHover)}
+      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+    >
+      {handle? `@${handle}` : '—'}
+    </td>
+  );
+};
+
 export const DBViewPage: React.FC = () => {
   const { repository, setActivePage } = useAppContext();
   const userData = repository.getAllApplyUsers();
@@ -58,12 +98,15 @@ export const DBViewPage: React.FC = () => {
           </thead>
           <tbody>
             {userData.map((user, i) => (
-              <tr key={i} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : DiscordColors.bgAlt }}>
+              <tr key={i} style={{ backgroundColor: i % 2 === 0? 'transparent' : DiscordColors.bgAlt }}>
                 <td style={cellStyle}>{user.name}</td>
-                <td style={{ ...cellStyle, color: DiscordColors.textLink }}>@{user.x_id}</td>
-                <td style={cellStyle}>{user.casts[0] ?? '—'}</td>
-                <td style={cellStyle}>{user.casts[1] ?? '—'}</td>
-                <td style={{ ...cellStyle, color: DiscordColors.textMuted, fontSize: '12px' }}>{user.note}</td>
+                
+                {/* 共通コンポーネント化したX IDセル */}
+                <XLinkCell xId={user.x_id} baseStyle={cellStyle} />
+
+                <td style={cellStyle}>{user.casts?? '—'}</td>
+                <td style={cellStyle}>{user.casts?? '—'}</td>
+                <td style={{...cellStyle, color: DiscordColors.textMuted, fontSize: '12px' }}>{user.note}</td>
               </tr>
             ))}
           </tbody>
