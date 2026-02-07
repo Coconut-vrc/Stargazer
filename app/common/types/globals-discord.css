@@ -1,0 +1,357 @@
+/* ========================================
+   Discord風グローバルスタイル
+   ======================================== */
+
+:root {
+  /* app/mock/test.html から抽出したカラーリング */
+  --color-purple-deep: #1A0A1A;
+  --color-violet-mid: #0D0B1E;
+  --color-navy-dark: #05121B;
+  --text-main: #dbdee1;
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --line-color: rgba(255, 255, 255, 0.1);
+
+  /* 上記に合わせた Discord 系変数（全体で利用） */
+  --discord-bg-dark: rgba(0, 0, 0, 0.25);
+  --discord-bg-main: transparent;
+  --discord-bg-secondary: rgba(255, 255, 255, 0.05);
+  --discord-bg-hover: rgba(255, 255, 255, 0.08);
+  --discord-bg-selected: rgba(255, 255, 255, 0.08);
+  --discord-bg-alt: rgba(0, 0, 0, 0.15);
+
+  --discord-text-normal: #dbdee1;
+  --discord-text-muted: rgba(255, 255, 255, 0.4);
+  --discord-text-link: #00a8fc;
+  --discord-text-success: #23a559;
+  --discord-text-warning: #f0b232;
+  --discord-text-danger: #ed4245;
+
+  --discord-accent-blue: #5865f2;
+  --discord-accent-green: #23a559;
+  --discord-accent-yellow: #f0b232;
+  --discord-accent-red: #ed4245;
+
+  --discord-border: rgba(255, 255, 255, 0.1);
+  --discord-divider: rgba(255, 255, 255, 0.1);
+
+  --discord-button-primary: #5865f2;
+  --discord-button-primary-hover: #4752c4;
+  --discord-button-secondary: rgba(255, 255, 255, 0.1);
+  --discord-button-secondary-hover: rgba(255, 255, 255, 0.15);
+  --discord-button-success: #23a559;
+  --discord-button-success-hover: #2d7d46;
+  --discord-button-danger: #ed4245;
+}
+
+/* ========================================
+   基本リセット
+   ======================================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: "Whitney", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--discord-bg-main);
+  color: var(--discord-text-normal);
+}
+
+/* ========================================
+   リンク
+   ======================================== */
+
+a {
+  color: var(--discord-text-link);
+  text-decoration: none;
+  transition: color 0.17s ease;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ========================================
+   ボタン
+   ======================================== */
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: background-color 0.17s ease, transform 0.17s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* プライマリボタン */
+.btn-primary {
+  background-color: var(--discord-button-primary);
+  color: #fff;
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+.btn-primary:hover {
+  background-color: var(--discord-button-primary-hover);
+}
+
+/* 成功ボタン */
+.btn-success {
+  background-color: var(--discord-button-success);
+  color: #fff;
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+.btn-success:hover {
+  background-color: var(--discord-button-success-hover);
+}
+
+/* セカンダリボタン */
+.btn-secondary {
+  background-color: var(--discord-button-secondary);
+  color: var(--discord-text-normal);
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+.btn-secondary:hover {
+  background-color: var(--discord-button-secondary-hover);
+}
+
+/* 危険ボタン */
+.btn-danger {
+  background-color: var(--discord-button-danger);
+  color: #fff;
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+.btn-danger:hover {
+  background-color: #c23636;
+}
+
+/* ========================================
+   入力フィールド
+   ======================================== */
+
+input,
+textarea,
+select {
+  background-color: var(--discord-bg-secondary);
+  color: var(--discord-text-normal);
+  border: 1px solid var(--discord-border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.17s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--discord-accent-blue);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--discord-text-muted);
+}
+
+/* ========================================
+   テーブル
+   ======================================== */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--discord-bg-dark);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+thead th {
+  background-color: var(--discord-bg-secondary);
+  color: var(--discord-text-muted);
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--discord-border);
+}
+
+tbody td {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--discord-text-normal);
+  border-bottom: 1px solid var(--discord-border);
+}
+
+tbody tr:hover {
+  background-color: var(--discord-bg-hover);
+}
+
+tbody tr:nth-child(even) {
+  background-color: var(--discord-bg-alt);
+}
+
+/* ========================================
+   カード
+   ======================================== */
+
+.card {
+  background-color: var(--discord-bg-dark);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--discord-border);
+}
+
+.card-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--discord-text-normal);
+  margin: 0;
+}
+
+.card-subtitle {
+  font-size: 14px;
+  color: var(--discord-text-muted);
+  margin-top: 4px;
+}
+
+/* ========================================
+   スクロールバー（Webkit）
+   ======================================== */
+
+::-webkit-scrollbar {
+  width: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--discord-bg-main);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--discord-bg-secondary);
+  border-radius: 8px;
+  border: 4px solid var(--discord-bg-main);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--discord-bg-hover);
+}
+
+/* ========================================
+   ユーティリティクラス
+   ======================================== */
+
+.text-muted {
+  color: var(--discord-text-muted);
+}
+
+.text-success {
+  color: var(--discord-text-success);
+}
+
+.text-warning {
+  color: var(--discord-text-warning);
+}
+
+.text-danger {
+  color: var(--discord-text-danger);
+}
+
+.text-link {
+  color: var(--discord-text-link);
+}
+
+.bg-dark {
+  background-color: var(--discord-bg-dark);
+}
+
+.bg-main {
+  background-color: var(--discord-bg-main);
+}
+
+.bg-secondary {
+  background-color: var(--discord-bg-secondary);
+}
+
+.border-bottom {
+  border-bottom: 1px solid var(--discord-border);
+}
+
+.rounded {
+  border-radius: 8px;
+}
+
+.rounded-sm {
+  border-radius: 4px;
+}
+
+/* ========================================
+   アニメーション
+   ======================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+/* ========================================
+   レスポンシブ
+   ======================================== */
+
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  button {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
