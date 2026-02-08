@@ -19,6 +19,7 @@ export function middleware(request: NextRequest) {
 // 制限をかけたいページをここで指定
 export const config = {
     matcher: [
+        '/',
         '/((?!_next/static|_next/image|favicon.ico|api).*)',
       ],
 };
