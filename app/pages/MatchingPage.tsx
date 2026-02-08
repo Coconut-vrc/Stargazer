@@ -35,6 +35,7 @@ export const MatchingPage: React.FC<MatchingPageProps> = ({
     padding: '20px 12px',
     minHeight: '100%',
     color: DiscordColors.textNormal,
+    backgroundColor: DiscordColors.bgMain
   };
 
   const tableWrapperStyle: React.CSSProperties = {
