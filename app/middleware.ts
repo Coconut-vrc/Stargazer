@@ -18,9 +18,7 @@ export function middleware(request: NextRequest) {
 
 // 制限をかけたいページをここで指定
 export const config = {
-  matcher: [
-    '/matching/:path*', 
-    '/admin/:path*',
-    // 他に隠したいページがあれば足す
-  ],
+    matcher: [
+        '/((?!_next/static|_next/image|favicon.ico|api).*)',
+      ],
 };
