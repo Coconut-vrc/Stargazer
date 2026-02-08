@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { UserBean, useAppContext } from '../stores/AppContext';
 import { MatchingService } from '../features/matching/logics/matching_service';
@@ -15,12 +17,17 @@ interface MatchingResult {
   t3_info: string;
 }
 
-export const MatchingPage: React.FC<{
+interface MatchingPageProps {
   winners: UserBean[];
-  allUserData: UserBean;
+  allUserData: UserBean[];
   repository: ReturnType<typeof useAppContext>['repository'];
-}> = ({ winners: currentWinners, repository }) => {
-  // useState の変数名と setter を正しく定義（エラー修正）
+}
+
+export const MatchingPage: React.FC<MatchingPageProps> = ({ 
+  winners: currentWinners, 
+  allUserData, 
+  repository 
+}) => {
   const [results, setResults] = useState<MatchingResult[]>([]);
   const [showResults, setShowResults] = useState(false);
 
@@ -57,13 +64,13 @@ export const MatchingPage: React.FC<{
   };
 
   const startMatching = () => {
-    if (currentWinners.length === 0) {
+    if (!currentWinners || currentWinners.length === 0) {
       alert('当選者が選択されていません。');
       return;
     }
     const service = new MatchingService(currentWinners, repository);
     const matchingResults = service.runMatching();
-    setResults(matchingResults as MatchingResult[]);
+    setResults(matchingResults);
     setShowResults(true);
   };
 
@@ -87,8 +94,8 @@ export const MatchingPage: React.FC<{
             </thead>
             <tbody>
               {results.map((r, i) => (
-                <tr key={i} style={{ backgroundColor: i % 2 === 0? 'transparent' : DiscordColors.bgAlt }}>
-                  <td style={{...cellStyle, color: DiscordColors.accentBlue, fontWeight: 600 }}>{r.pair_no}</td>
+                <tr key={i} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : DiscordColors.bgAlt }}>
+                  <td style={{ ...cellStyle, color: DiscordColors.accentBlue, fontWeight: 600 }}>{r.pair_no}</td>
                   <td style={cellStyle}>{r.user_a.name}</td>
                   <td style={cellStyle}>{r.user_b.name}</td>
                   <td style={cellStyle}>
@@ -107,15 +114,14 @@ export const MatchingPage: React.FC<{
               ))}
             </tbody>
           </table>
-          <div style={{ padding: '16px' }}>
-            <button
-              type="button"
-              style={{ background: 'none', border: 'none', color: DiscordColors.textLink, cursor: 'pointer', fontSize: '14px' }}
-              onClick={() => setShowResults(false)}
-            >
-              ← 設定に戻る
-            </button>
-          </div>
+        </div>
+        <div style={{ padding: '16px' }}>
+          <button
+            onClick={() => setShowResults(false)}
+            style={{ background: 'none', border: 'none', color: DiscordColors.textLink, cursor: 'pointer', fontSize: '14px' }}
+          >
+            ← 設定に戻る
+          </button>
         </div>
       </div>
     );
@@ -136,11 +142,11 @@ export const MatchingPage: React.FC<{
           </thead>
           <tbody>
             {currentWinners.map((winner, i) => (
-              <tr key={i} style={{ backgroundColor: i % 2 === 0? 'transparent' : DiscordColors.bgAlt }}>
-                <td style={{...cellStyle, color: DiscordColors.accentBlue, fontWeight: 600 }}>卓 {i + 1}</td>
-                <td style={cellStyle}>{winner? winner.name : '—'}</td>
-                <td style={{...cellStyle, color: DiscordColors.textMuted }}>{winner? `@${winner.x_id}` : ''}</td>
-                <td style={cellStyle}>{winner? winner.casts.join(', ') : ''}</td>
+              <tr key={i} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : DiscordColors.bgAlt }}>
+                <td style={{ ...cellStyle, color: DiscordColors.accentBlue, fontWeight: 600 }}>卓 {i + 1}</td>
+                <td style={cellStyle}>{winner ? winner.name : '—'}</td>
+                <td style={{ ...cellStyle, color: DiscordColors.textMuted }}>{winner ? `@${winner.x_id}` : ''}</td>
+                <td style={cellStyle}>{winner && Array.isArray(winner.casts) ? winner.casts.join(', ') : ''}</td>
               </tr>
             ))}
           </tbody>
@@ -148,7 +154,6 @@ export const MatchingPage: React.FC<{
       </div>
       <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center' }}>
         <button
-          type="button"
           onClick={startMatching}
           style={{
             backgroundColor: DiscordColors.buttonSuccess,

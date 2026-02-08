@@ -86,7 +86,7 @@ export const AppContainer: React.FC = () => {
       {/* サイドバー（PCは常時表示、スマホは被さる） */}
       <aside className={`sidebar ${isMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-inner">
-          <div className="sidebar-title">MENU</div>
+          <div className="sidebar-title"></div>
           {sidebarButtons.map((button, index) => (
             <button
               key={index}
