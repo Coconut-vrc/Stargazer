@@ -4,28 +4,19 @@ import { DiscordColors } from '../common/types/discord-colors';
 
 /**
  * X IDセル専用コンポーネント
- * クリック時の遷移ロジックとホバーエフェクトをカプセル化
  */
 const XLinkCell: React.FC<{ xId: string; baseStyle: React.CSSProperties }> = ({ xId, baseStyle }) => {
-  // IDから先頭の「@」を除去してサニタイズ [1, 2]
   const handle = xId? xId.replace(/^@/, '') : '';
-  
-  // セルの基本スタイルにリンク用のスタイルを結合
   const cellStyle: React.CSSProperties = {
    ...baseStyle,
     cursor: 'pointer',
     color: DiscordColors.textLink,
-    transition: 'background-color 0.17s ease', // Discord風の遷移速度 
+    transition: 'background-color 0.17s ease',
   };
 
-  // クリックハンドラー
   const handleClick = (e: React.MouseEvent) => {
-    // テーブル行(tr)などに設定された親のクリックイベントを阻止 
     e.stopPropagation();
-    
     if (!handle) return;
-    
-    // セキュリティ属性を付与して新しいタブで開く [6, 7, 8]
     window.open(`https://x.com/${handle}`, '_blank', 'noopener,noreferrer');
   };
 
@@ -33,7 +24,6 @@ const XLinkCell: React.FC<{ xId: string; baseStyle: React.CSSProperties }> = ({ 
     <td
       style={cellStyle}
       onClick={handleClick}
-      // Discord風のホバーフィードバックを適用 
       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = DiscordColors.itemHover)}
       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
     >
@@ -48,8 +38,8 @@ export const DBViewPage: React.FC = () => {
 
   const tableHeaderStyle: React.CSSProperties = {
     textAlign: 'left',
-    padding: '12px 16px',
-    fontSize: '12px',
+    padding: '10px 12px',
+    fontSize: '11px', // Image 1対応：一回り小さく
     color: DiscordColors.textMuted,
     textTransform: 'uppercase',
     fontWeight: 600,
@@ -58,14 +48,14 @@ export const DBViewPage: React.FC = () => {
   };
 
   const cellStyle: React.CSSProperties = {
-    padding: '12px 16px',
-    fontSize: '14px',
+    padding: '10px 12px',
+    fontSize: '12px', // Image 1対応：一回り小さく
     color: DiscordColors.textNormal,
     borderBottom: `1px solid ${DiscordColors.border}`,
   };
 
   return (
-    <div style={{ padding: '24px 16px' }}>
+    <div style={{ padding: '20px 12px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h1 style={{ color: DiscordColors.textHeader, fontSize: '20px', margin: 0 }}>名簿データベース</h1>
         <button
@@ -78,15 +68,21 @@ export const DBViewPage: React.FC = () => {
             borderRadius: '4px',
             fontWeight: 600,
             cursor: 'pointer',
-            fontSize: '14px',
+            fontSize: '13px',
           }}
         >
-          抽選設定へ進む
+          抽選設定へ
         </button>
       </div>
 
-      <div style={{ backgroundColor: DiscordColors.bgDark, borderRadius: '8px', overflow: 'hidden', border: `1px solid ${DiscordColors.border}` }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <div style={{ 
+        backgroundColor: DiscordColors.bgDark, 
+        borderRadius: '8px', 
+        overflowX: 'auto', // 横スクロール追加
+        WebkitOverflowScrolling: 'touch',
+        border: `1px solid ${DiscordColors.border}` 
+      }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
           <thead>
             <tr>
               <th style={tableHeaderStyle}>名前</th>
@@ -100,13 +96,10 @@ export const DBViewPage: React.FC = () => {
             {userData.map((user, i) => (
               <tr key={i} style={{ backgroundColor: i % 2 === 0? 'transparent' : DiscordColors.bgAlt }}>
                 <td style={cellStyle}>{user.name}</td>
-                
-                {/* 共通コンポーネント化したX IDセル */}
                 <XLinkCell xId={user.x_id} baseStyle={cellStyle} />
-
-                <td style={cellStyle}>{user.casts?? '—'}</td>
-                <td style={cellStyle}>{user.casts?? '—'}</td>
-                <td style={{...cellStyle, color: DiscordColors.textMuted, fontSize: '12px' }}>{user.note}</td>
+                <td style={cellStyle}>{user.casts || '—'}</td>
+                <td style={cellStyle}>{user.casts[1] || '—'}</td>
+                <td style={{...cellStyle, color: DiscordColors.textMuted, fontSize: '11px' }}>{user.note}</td>
               </tr>
             ))}
           </tbody>

@@ -17,14 +17,15 @@ interface MatchingResult {
 
 export const MatchingPage: React.FC<{
   winners: UserBean[];
-  allUserData: UserBean[];
+  allUserData: UserBean;
   repository: ReturnType<typeof useAppContext>['repository'];
 }> = ({ winners: currentWinners, repository }) => {
+  // useState の変数名と setter を正しく定義（エラー修正）
   const [results, setResults] = useState<MatchingResult[]>([]);
   const [showResults, setShowResults] = useState(false);
 
   const containerStyle: React.CSSProperties = {
-    padding: '24px 16px',
+    padding: '20px 12px',
     minHeight: '100%',
     color: DiscordColors.textNormal,
   };
@@ -32,7 +33,8 @@ export const MatchingPage: React.FC<{
   const tableWrapperStyle: React.CSSProperties = {
     backgroundColor: DiscordColors.bgDark,
     borderRadius: '8px',
-    overflow: 'hidden',
+    overflowX: 'auto',
+    WebkitOverflowScrolling: 'touch',
     border: `1px solid ${DiscordColors.border}`,
     marginBottom: '24px',
   };
@@ -40,8 +42,8 @@ export const MatchingPage: React.FC<{
   const headerCellStyle: React.CSSProperties = {
     backgroundColor: DiscordColors.bgSidebar,
     color: DiscordColors.textMuted,
-    padding: '12px 16px',
-    fontSize: '12px',
+    padding: '10px 12px',
+    fontSize: '11px',
     fontWeight: 600,
     textTransform: 'uppercase',
     borderBottom: `1px solid ${DiscordColors.border}`,
@@ -49,9 +51,9 @@ export const MatchingPage: React.FC<{
   };
 
   const cellStyle: React.CSSProperties = {
-    padding: '12px 16px',
+    padding: '10px 12px',
     borderBottom: `1px solid ${DiscordColors.border}`,
-    fontSize: '14px',
+    fontSize: '12px',
   };
 
   const startMatching = () => {
@@ -70,10 +72,9 @@ export const MatchingPage: React.FC<{
       <div style={containerStyle}>
         <div style={{ marginBottom: '24px' }}>
           <h1 style={{ color: DiscordColors.textHeader, margin: 0, fontSize: '20px' }}>マッチング完了</h1>
-          <p style={{ color: DiscordColors.textMuted, margin: '4px 0', fontSize: '14px' }}>生成されたローテーション案です</p>
         </div>
         <div style={tableWrapperStyle}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
             <thead>
               <tr>
                 <th style={headerCellStyle}>ペア</th>
@@ -86,21 +87,21 @@ export const MatchingPage: React.FC<{
             </thead>
             <tbody>
               {results.map((r, i) => (
-                <tr key={i} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : DiscordColors.bgAlt }}>
-                  <td style={{ ...cellStyle, color: DiscordColors.accentBlue, fontWeight: 600 }}>{r.pair_no}</td>
+                <tr key={i} style={{ backgroundColor: i % 2 === 0? 'transparent' : DiscordColors.bgAlt }}>
+                  <td style={{...cellStyle, color: DiscordColors.accentBlue, fontWeight: 600 }}>{r.pair_no}</td>
                   <td style={cellStyle}>{r.user_a.name}</td>
                   <td style={cellStyle}>{r.user_b.name}</td>
                   <td style={cellStyle}>
                     <div style={{ color: DiscordColors.accentYellow, fontWeight: 600 }}>{r.t1}</div>
-                    <div style={{ color: DiscordColors.textMuted, fontSize: '12px' }}>{r.t1_info}</div>
+                    <div style={{ color: DiscordColors.textMuted, fontSize: '11px' }}>{r.t1_info}</div>
                   </td>
                   <td style={cellStyle}>
                     <div style={{ color: DiscordColors.accentYellow, fontWeight: 600 }}>{r.t2}</div>
-                    <div style={{ color: DiscordColors.textMuted, fontSize: '12px' }}>{r.t2_info}</div>
+                    <div style={{ color: DiscordColors.textMuted, fontSize: '11px' }}>{r.t2_info}</div>
                   </td>
                   <td style={cellStyle}>
                     <div style={{ color: DiscordColors.accentYellow, fontWeight: 600 }}>{r.t3}</div>
-                    <div style={{ color: DiscordColors.textMuted, fontSize: '12px' }}>{r.t3_info}</div>
+                    <div style={{ color: DiscordColors.textMuted, fontSize: '11px' }}>{r.t3_info}</div>
                   </td>
                 </tr>
               ))}
@@ -109,13 +110,7 @@ export const MatchingPage: React.FC<{
           <div style={{ padding: '16px' }}>
             <button
               type="button"
-              style={{
-                background: 'none',
-                border: 'none',
-                color: DiscordColors.textLink,
-                cursor: 'pointer',
-                fontSize: '14px',
-              }}
+              style={{ background: 'none', border: 'none', color: DiscordColors.textLink, cursor: 'pointer', fontSize: '14px' }}
               onClick={() => setShowResults(false)}
             >
               ← 設定に戻る
@@ -128,14 +123,9 @@ export const MatchingPage: React.FC<{
 
   return (
     <div style={containerStyle}>
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ color: DiscordColors.textHeader, margin: 0, fontSize: '20px' }}>マッチング構成確認</h1>
-        <p style={{ color: DiscordColors.textMuted, margin: '4px 0', fontSize: '14px' }}>
-          当選者リストに基づきペアを自動生成します
-        </p>
-      </div>
+      <h1 style={{ color: DiscordColors.textHeader, marginBottom: '24px', fontSize: '20px' }}>マッチング構成確認</h1>
       <div style={tableWrapperStyle}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '500px' }}>
           <thead>
             <tr>
               <th style={headerCellStyle}>卓</th>
@@ -145,29 +135,21 @@ export const MatchingPage: React.FC<{
             </tr>
           </thead>
           <tbody>
-            {Array.from({ length: 15 }, (_, i) => {
-              const winner = currentWinners[i];
-              return (
-                <tr key={i} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : DiscordColors.bgAlt }}>
-                  <td style={{ ...cellStyle, color: DiscordColors.accentBlue, fontWeight: 600 }}>卓 {i + 1}</td>
-                  <td style={cellStyle}>{winner ? winner.name : '—'}</td>
-                  <td style={{ ...cellStyle, color: DiscordColors.textMuted }}>{winner ? `@${winner.x_id}` : ''}</td>
-                  <td style={cellStyle}>{winner ? winner.casts.join(', ') : ''}</td>
-                </tr>
-              );
-            })}
+            {currentWinners.map((winner, i) => (
+              <tr key={i} style={{ backgroundColor: i % 2 === 0? 'transparent' : DiscordColors.bgAlt }}>
+                <td style={{...cellStyle, color: DiscordColors.accentBlue, fontWeight: 600 }}>卓 {i + 1}</td>
+                <td style={cellStyle}>{winner? winner.name : '—'}</td>
+                <td style={{...cellStyle, color: DiscordColors.textMuted }}>{winner? `@${winner.x_id}` : ''}</td>
+                <td style={cellStyle}>{winner? winner.casts.join(', ') : ''}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
-      <div
-        style={{
-          marginTop: '24px',
-          display: 'flex',
-          justifyContent: 'center',
-        }}
-      >
+      <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center' }}>
         <button
           type="button"
+          onClick={startMatching}
           style={{
             backgroundColor: DiscordColors.buttonSuccess,
             color: '#fff',
@@ -178,7 +160,6 @@ export const MatchingPage: React.FC<{
             fontWeight: 600,
             cursor: 'pointer',
           }}
-          onClick={startMatching}
         >
           マッチング開始
         </button>
