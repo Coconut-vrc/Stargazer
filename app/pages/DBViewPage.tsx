@@ -82,13 +82,14 @@ export const DBViewPage: React.FC = () => {
         WebkitOverflowScrolling: 'touch',
         border: `1px solid ${DiscordColors.border}` 
       }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
           <thead>
             <tr>
               <th style={tableHeaderStyle}>名前</th>
               <th style={tableHeaderStyle}>X ID</th>
               <th style={tableHeaderStyle}>希望1</th>
               <th style={tableHeaderStyle}>希望2</th>
+              <th style={tableHeaderStyle}>希望3</th>
               <th style={tableHeaderStyle}>備考</th>
             </tr>
           </thead>
@@ -97,8 +98,9 @@ export const DBViewPage: React.FC = () => {
               <tr key={i} style={{ backgroundColor: i % 2 === 0? 'transparent' : DiscordColors.bgAlt }}>
                 <td style={cellStyle}>{user.name}</td>
                 <XLinkCell xId={user.x_id} baseStyle={cellStyle} />
-                <td style={cellStyle}>{user.casts || '—'}</td>
+                <td style={cellStyle}>{user.casts[0] || '—'}</td>
                 <td style={cellStyle}>{user.casts[1] || '—'}</td>
+                <td style={cellStyle}>{user.casts[2] || '—'}</td>
                 <td style={{...cellStyle, color: DiscordColors.textMuted, fontSize: '11px' }}>{user.note}</td>
               </tr>
             ))}

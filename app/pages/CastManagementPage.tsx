@@ -1,4 +1,5 @@
-// F:\DEVELOPFOLDER\dev-core\app\pages\CastManagementPage.tsx
+// pages/CastManagementPage.tsx の全量
+
 import React, { useState, useEffect, useRef } from 'react';
 import { CastBean, Repository } from '../stores/AppContext';
 import { DiscordColors } from '../common/types/discord-colors';
@@ -8,7 +9,7 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
   const [casts, setCasts] = useState<CastBean[]>([]);
   const [selectedCastName, setSelectedCastName] = useState('');
   const [inputNgName, setInputNgName] = useState('');
-  
+  const [inputCastName, setInputCastName] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -35,17 +36,48 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
     const allCasts = repository.getAllCasts();
     const rowIndex = allCasts.findIndex(c => c.name === castName);
     if (rowIndex === -1) return;
-    const range = `${column}${rowIndex + 2}`; 
+
+    const range = `${column}${rowIndex + 2}`;
     try {
       await sheetService.updateSheetData(CAST_SHEET_URL, range, [[value]]);
     } catch (e) {
-      console.error(e);
+      console.error('更新失敗:', e);
+    }
+  };
+
+  const handleAddCast = async () => {
+    const newName = inputCastName.trim();
+    if (!newName) return;
+    if (casts.some(c => c.name === newName)) {
+      alert('そのキャストは既に登録されてるよ');
+      return;
+    }
+
+    const newCast: CastBean = {
+      name: newName,
+      is_present: false,
+      ng_users: []
+    };
+
+    const nextRowIndex = casts.length + 2;
+    const range = `A${nextRowIndex}:C${nextRowIndex}`;
+    
+    try {
+      await sheetService.updateSheetData(CAST_SHEET_URL, range, [[newName, '0', '']]);
+      const updatedList = [...casts, newCast];
+      repository.saveCasts(updatedList);
+      setCasts(updatedList);
+      setInputCastName('');
+      if (updatedList.length === 1) setSelectedCastName(newName);
+    } catch (e) {
+      console.error('キャスト追加失敗:', e);
     }
   };
 
   const handleAddNg = async () => {
     const nameToAdd = inputNgName.trim();
     if (!nameToAdd || !selectedCastName) return;
+
     const cast = casts.find(c => c.name === selectedCastName);
     if (cast) {
       if (cast.ng_users.includes(nameToAdd)) return;
@@ -71,96 +103,224 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
     const newStatus = !cast.is_present;
     repository.updateCastPresence(cast.name, newStatus);
     setCasts([...repository.getAllCasts()]);
-    const sheetValue = newStatus ? '0' : '1';
+    const sheetValue = newStatus ? '1' : '0';
     await syncToSheet(cast.name, 'B', sheetValue);
   };
 
-  const commonInputStyle: React.CSSProperties = { 
-    backgroundColor: DiscordColors.bgDark, border: `1px solid ${DiscordColors.border}`, 
-    color: DiscordColors.textNormal, padding: '10px 12px', borderRadius: '4px', fontSize: '14px', outline: 'none', width: '100%', boxSizing: 'border-box'
+  const commonInputStyle: React.CSSProperties = {
+    backgroundColor: DiscordColors.bgDark,
+    border: `1px solid ${DiscordColors.border}`,
+    color: DiscordColors.textNormal,
+    padding: '10px 12px',
+    borderRadius: '4px',
+    fontSize: '14px',
+    outline: 'none',
+    width: '100%',
+    boxSizing: 'border-box'
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: '12px',
+    color: DiscordColors.textMuted,
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    marginBottom: '8px'
   };
 
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
       <header style={{ marginBottom: '24px' }}>
-        <h1 style={{ color: DiscordColors.textHeader, fontSize: '24px', margin: 0, fontWeight: 700 }}>キャスト・NG管理</h1>
+        <h1 style={{ color: DiscordColors.textHeader, fontSize: '24px', margin: 0, fontWeight: 700 }}>
+          キャスト・NG管理
+        </h1>
       </header>
 
-      {/* 登録フォーム */}
-      <div style={{
-        backgroundColor: DiscordColors.bgSecondary, padding: '20px', borderRadius: '8px', marginBottom: '32px',
-        border: `1px solid ${DiscordColors.border}`, display: 'flex', gap: '16px', alignItems: 'flex-end', position: 'relative', zIndex: 100
-      }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, position: 'relative' }} ref={dropdownRef}>
-          <label style={{ fontSize: '12px', color: DiscordColors.textMuted, fontWeight: 700, textTransform: 'uppercase' }}>対象キャスト</label>
-          <div 
-            style={{ ...commonInputStyle, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          >
-            <span>{selectedCastName || '選択中...'}</span>
-            <span style={{ fontSize: '10px' }}>▼</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
+        {/* キャスト新規登録フォーム */}
+        <div style={{
+          backgroundColor: DiscordColors.bgSecondary,
+          padding: '20px',
+          borderRadius: '8px',
+          border: `1px solid ${DiscordColors.border}`,
+          display: 'flex',
+          gap: '16px',
+          alignItems: 'flex-end'
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+            <label style={labelStyle}>キャストを新規登録</label>
+            <input
+              placeholder="キャスト名を入力..."
+              style={commonInputStyle}
+              value={inputCastName}
+              onChange={(e) => setInputCastName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddCast()}
+            />
           </div>
-          {isDropdownOpen && (
-            <div style={{
-              position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px',
-              backgroundColor: '#18191c', border: `1px solid ${DiscordColors.border}`, borderRadius: '4px', zIndex: 9999,
-              maxHeight: '200px', overflowY: 'auto', boxShadow: '0 8px 16px rgba(0,0,0,0.6)'
-            }}>
-              {casts.map(c => (
-                <div 
-                  key={c.name}
-                  style={{ padding: '10px 12px', cursor: 'pointer', fontSize: '14px', color: DiscordColors.textNormal }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#35373c'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  onClick={() => { setSelectedCastName(c.name); setIsDropdownOpen(false); }}
-                >
-                  {c.name}
-                </div>
-              ))}
-            </div>
-          )}
+          <button
+            onClick={handleAddCast}
+            style={{
+              backgroundColor: DiscordColors.accentGreen,
+              color: '#fff',
+              border: 'none',
+              padding: '0 24px',
+              borderRadius: '4px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              height: '40px'
+            }}
+          >
+            登録
+          </button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 2 }}>
-          <label style={{ fontSize: '12px', color: DiscordColors.textMuted, fontWeight: 700, textTransform: 'uppercase' }}>NGユーザーを追加</label>
-          <input 
-            placeholder="ユーザー名を入力..." style={commonInputStyle} value={inputNgName}
-            onChange={(e) => setInputNgName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddNg()}
-          />
+        {/* NGユーザー登録フォーム */}
+        <div style={{
+          backgroundColor: DiscordColors.bgSecondary,
+          padding: '20px',
+          borderRadius: '8px',
+          border: `1px solid ${DiscordColors.border}`,
+          display: 'flex',
+          gap: '16px',
+          alignItems: 'flex-end',
+          position: 'relative',
+          zIndex: 100
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative' }} ref={dropdownRef}>
+            <label style={labelStyle}>対象キャスト</label>
+            <div
+              style={{ ...commonInputStyle, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            >
+              <span>{selectedCastName || '選択中...'}</span>
+              <span style={{ fontSize: '10px' }}>▼</span>
+            </div>
+            {isDropdownOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                marginTop: '4px',
+                backgroundColor: '#18191c',
+                border: `1px solid ${DiscordColors.border}`,
+                borderRadius: '4px',
+                zIndex: 9999,
+                maxHeight: '200px',
+                overflowY: 'auto',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.6)'
+              }}>
+                {casts.map(c => (
+                  <div
+                    key={c.name}
+                    style={{ padding: '10px 12px', cursor: 'pointer', fontSize: '14px', color: DiscordColors.textNormal }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#35373c'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    onClick={() => {
+                      setSelectedCastName(c.name);
+                      setIsDropdownOpen(false);
+                    }}
+                  >
+                    {c.name}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 2 }}>
+            <label style={labelStyle}>NGユーザーを追加</label>
+            <input
+              placeholder="ユーザー名を入力..."
+              style={commonInputStyle}
+              value={inputNgName}
+              onChange={(e) => setInputNgName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddNg()}
+            />
+          </div>
+
+          <button
+            onClick={handleAddNg}
+            style={{
+              backgroundColor: DiscordColors.accentBlue,
+              color: '#fff',
+              border: 'none',
+              padding: '0 24px',
+              borderRadius: '4px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              height: '40px'
+            }}
+          >
+            追加
+          </button>
         </div>
-        
-        <button onClick={handleAddNg} style={{ backgroundColor: DiscordColors.accentBlue, color: '#fff', border: 'none', padding: '0 24px', borderRadius: '4px', fontWeight: 600, cursor: 'pointer', height: '40px' }}>
-          追加
-        </button>
       </div>
 
+      {/* カード一覧表示 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
         {casts.map((cast) => (
-          <div key={cast.name} style={{ backgroundColor: DiscordColors.bgSecondary, border: `1px solid ${DiscordColors.border}`, borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div key={cast.name} style={{
+            backgroundColor: DiscordColors.bgSecondary,
+            border: `1px solid ${DiscordColors.border}`,
+            borderRadius: '8px',
+            padding: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <span style={{ fontWeight: 600, color: DiscordColors.textHeader, fontSize: '16px' }}>{cast.name}</span>
-              <button 
-                onClick={() => togglePresence(cast)} 
-                style={{ 
-                  padding: '10px 0', borderRadius: '4px', fontSize: '14px', cursor: 'pointer', border: 'none', 
-                  backgroundColor: cast.is_present ? DiscordColors.accentGreen : DiscordColors.accentRed, 
-                  color: '#fff', fontWeight: 700, width: '100%'
-                }}
-              >
-                {cast.is_present ? '出席中' : '欠席中'}
-              </button>
+              <div style={{
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                backgroundColor: cast.is_present ? DiscordColors.accentGreen : DiscordColors.accentRed
+              }} />
             </div>
-            <div style={{ borderTop: `1px solid ${DiscordColors.border}`, paddingTop: '10px' }}>
+
+            <button
+              onClick={() => togglePresence(cast)}
+              style={{
+                padding: '10px 0',
+                borderRadius: '4px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                border: 'none',
+                backgroundColor: cast.is_present ? DiscordColors.accentGreen : DiscordColors.accentRed,
+                color: '#fff',
+                fontWeight: 700
+              }}
+            >
+              {cast.is_present ? '出席中' : '欠席'}
+            </button>
+
+            <div style={{ marginTop: '4px' }}>
+              <div style={{ fontSize: '11px', color: DiscordColors.textMuted, fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase' }}>
+                NGユーザー ({cast.ng_users.length})
+              </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                {cast.ng_users.map(ng => (
-                  <span key={ng} style={{ 
-                    fontSize: '12px', backgroundColor: 'rgba(237,66,69,0.1)', color: DiscordColors.accentRed, padding: '4px 10px', 
-                    borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '8px', border: `1px solid ${DiscordColors.accentRed}44` 
-                  }}>
-                    {ng}
-                    <span onClick={() => handleRemoveNg(cast.name, ng)} style={{ cursor: 'pointer', fontWeight: 800 }}>×</span>
-                  </span>
-                ))}
+                {cast.ng_users.length > 0 ? (
+                  cast.ng_users.map(ng => (
+                    <div
+                      key={ng}
+                      style={{
+
+                        fontSize: '12px', backgroundColor: 'rgba(237,66,69,0.1)', color: DiscordColors.accentRed, padding: '4px 10px', 
+                        borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '8px', border: `1px solid ${DiscordColors.accentRed}44` 
+                         }}
+                    >
+                      <span>{ng}</span>
+                      <span
+                        style={{ cursor: 'pointer', color: DiscordColors.textMuted, fontSize: '14px', lineHeight: '1' }}
+                        onClick={() => handleRemoveNg(cast.name, ng)}
+                      >
+                        ×
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <span style={{ fontSize: '12px', color: DiscordColors.textMuted, fontStyle: 'italic' }}>なし</span>
+                )}
               </div>
             </div>
           </div>
