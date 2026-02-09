@@ -1,187 +1,132 @@
-'use client';
+// app/pages/MatchingPage.tsx
+"use client";
 
-import React, { useState } from 'react';
-import { UserBean, useAppContext, Repository } from '../stores/AppContext';
-import { MatchingService } from '../features/matching/logics/matching_service';
+import React, { useState, useEffect } from 'react';
+import { UserBean, Repository } from '../stores/AppContext';
+import { MatchingService, MatchedCast } from '../features/matching/logics/matching_service';
 import { DiscordColors } from '../common/types/discord-colors';
-
-// 2ラウンド制に合わせた表示用データ構造
-interface MatchingResult {
-  pair_no: string;
-  user_a: UserBean;
-  user_b: { name: string }; 
-  t1: string;
-  t1_info: string;
-  t2: string;
-  t2_info: string;
-  // t3 は削除
-}
 
 interface MatchingPageProps {
   winners: UserBean[];
-  allUserData: UserBean[];
+  allUserData: UserBean[]; // 互換性のために残しているが内部では repository を優先使用
   repository: Repository;
 }
 
-export const MatchingPage: React.FC<MatchingPageProps> = ({ 
-  winners: currentWinners, 
-  repository 
-}) => {
-  const [results, setResults] = useState<MatchingResult[]>([]);
-  const [showResults, setShowResults] = useState(false);
+export const MatchingPage: React.FC<MatchingPageProps> = ({ winners, repository }) => {
+  const [matchingResult, setMatchingResult] = useState<Map<string, MatchedCast[]>>(new Map());
 
-  const containerStyle: React.CSSProperties = {
-    padding: '20px 12px',
-    minHeight: '100%',
-    color: DiscordColors.textNormal,
-    backgroundColor: DiscordColors.bgMain
-  };
+  // ページ表示時、または当選者が変わった時にマッチングを再計算
+  useEffect(() => {
+    if (winners.length > 0) {
+      const result = MatchingService.runMatching(winners, repository.getAllCasts());
+      setMatchingResult(result);
+    }
+  }, [winners, repository]);
 
-  const tableWrapperStyle: React.CSSProperties = {
-    backgroundColor: DiscordColors.bgDark,
-    borderRadius: '8px',
-    overflowX: 'auto',
-    WebkitOverflowScrolling: 'touch',
-    border: `1px solid ${DiscordColors.border}`,
-    marginBottom: '24px',
-  };
-
-  const headerCellStyle: React.CSSProperties = {
-    backgroundColor: DiscordColors.bgSidebar,
-    color: DiscordColors.textMuted,
-    padding: '10px 12px',
-    fontSize: '11px',
-    fontWeight: 600,
-    textTransform: 'uppercase',
-    borderBottom: `1px solid ${DiscordColors.border}`,
-    textAlign: 'left',
-  };
-
-  const cellStyle: React.CSSProperties = {
-    padding: '10px 12px',
-    borderBottom: `1px solid ${DiscordColors.border}`,
-    fontSize: '12px',
-  };
-
-  const startMatching = () => {
-    if (!currentWinners || currentWinners.length === 0) {
-      alert('当選者が選択されていません。');
-      return;
+  /**
+   * 希望ランクに応じたラベルを表示
+   */
+  const renderRankBadge = (rank: number) => {
+    if (rank === 0) {
+      return (
+        <span style={{ 
+          fontSize: '10px', 
+          padding: '2px 6px', 
+          borderRadius: '4px', 
+          backgroundColor: DiscordColors.bgSecondary, 
+          color: DiscordColors.textMuted 
+        }}>
+          希望外
+        </span>
+      );
     }
 
-    const allCasts = repository.getAllCasts();
-    // 2ラウンド制のロジックを実行
-    const matchMap = MatchingService.runMatching(currentWinners, allCasts);
+    // 1:金、2:銀、3:銅っぽい配色
+    const rankConfigs: Record<number, { bg: string, text: string }> = {
+      1: { bg: '#F5C400', text: '#000' }, 
+      2: { bg: '#A8A8A8', text: '#000' },
+      3: { bg: '#AD6F2D', text: '#fff' },
+    };
 
-    const displayResults: MatchingResult[] = currentWinners.map((winner, index) => {
-      const assignedCasts = matchMap.get(winner.x_id) || [];
-      
-      return {
-        pair_no: `卓 ${index + 1}`,
-        user_a: winner,
-        user_b: { name: '—' }, 
-        t1: assignedCasts[0]?.name || 'なし',
-        t1_info: assignedCasts[0] ? 'マッチング済' : '-',
-        t2: assignedCasts[1]?.name || 'なし',
-        t2_info: assignedCasts[1] ? 'マッチング済' : '-',
-      };
-    });
+    const config = rankConfigs[rank] || { bg: DiscordColors.accentBlue, text: '#fff' };
 
-    setResults(displayResults);
-    setShowResults(true);
+    return (
+      <span style={{ 
+        fontSize: '10px', 
+        padding: '2px 6px', 
+        borderRadius: '4px', 
+        fontWeight: 'bold',
+        backgroundColor: config.bg, 
+        color: config.text 
+      }}>
+        第{rank}希望
+      </span>
+    );
   };
 
-  if (showResults) {
-    return (
-      <div style={containerStyle}>
-        <div style={{ marginBottom: '24px' }}>
-          <h1 style={{ color: DiscordColors.textHeader, margin: 0, fontSize: '20px' }}>マッチング完了</h1>
-        </div>
-        <div style={tableWrapperStyle}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
-            <thead>
-              <tr>
-                <th style={headerCellStyle}>卓</th>
-                <th style={headerCellStyle}>ユーザー</th>
-                <th style={headerCellStyle}>ID</th>
-                <th style={headerCellStyle}>ROUND 1</th>
-                <th style={headerCellStyle}>ROUND 2</th>
-                {/* ROUND 3 のヘッダーを削除 */}
-              </tr>
-            </thead>
-            <tbody>
-              {results.map((r, i) => (
-                <tr key={i} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : DiscordColors.bgAlt }}>
-                  <td style={{ ...cellStyle, color: DiscordColors.accentBlue, fontWeight: 600 }}>{r.pair_no}</td>
-                  <td style={cellStyle}>{r.user_a.name}</td>
-                  <td style={{ ...cellStyle, color: DiscordColors.textMuted }}>@{r.user_a.x_id}</td>
-                  <td style={cellStyle}>
-                    <div style={{ color: DiscordColors.accentYellow, fontWeight: 600 }}>{r.t1}</div>
-                    <div style={{ color: DiscordColors.textMuted, fontSize: '11px' }}>{r.t1_info}</div>
-                  </td>
-                  <td style={cellStyle}>
-                    <div style={{ color: DiscordColors.accentYellow, fontWeight: 600 }}>{r.t2}</div>
-                    <div style={{ color: DiscordColors.textMuted, fontSize: '11px' }}>{r.t2_info}</div>
-                  </td>
-                  {/* ROUND 3 のセルを削除 */}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div style={{ padding: '16px' }}>
-          <button
-            onClick={() => setShowResults(false)}
-            style={{ background: 'none', border: 'none', color: DiscordColors.textLink, cursor: 'pointer', fontSize: '14px' }}
-          >
-            ← 設定に戻る
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div style={containerStyle}>
-      <h1 style={{ color: DiscordColors.textHeader, marginBottom: '24px', fontSize: '20px' }}>マッチング構成確認</h1>
-      <div style={tableWrapperStyle}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '500px' }}>
+    <div className="fade-in" style={{ padding: '24px' }}>
+      <header style={{ marginBottom: '24px' }}>
+        <h1 style={{ color: DiscordColors.textHeader, fontSize: '24px', fontWeight: 700 }}>
+          マッチング結果
+        </h1>
+        <p style={{ color: DiscordColors.textMuted, fontSize: '14px' }}>
+          2ラウンド制（希望1〜3を優先して割り当て）
+        </p>
+      </header>
+
+      <div style={{ 
+        backgroundColor: DiscordColors.bgDark, 
+        borderRadius: '8px', 
+        border: `1px solid ${DiscordColors.border}`,
+        overflow: 'hidden'
+      }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr>
-              <th style={headerCellStyle}>卓</th>
-              <th style={headerCellStyle}>ユーザー名</th>
-              <th style={headerCellStyle}>ID</th>
-              <th style={headerCellStyle}>希望キャスト</th>
+            <tr style={{ backgroundColor: DiscordColors.bgSecondary }}>
+              <th style={{ padding: '12px', textAlign: 'left', color: DiscordColors.textMuted, fontSize: '12px', textTransform: 'uppercase' }}>当選ユーザー</th>
+              <th style={{ padding: '12px', textAlign: 'left', color: DiscordColors.textMuted, fontSize: '12px', textTransform: 'uppercase' }}>Round 1</th>
+              <th style={{ padding: '12px', textAlign: 'left', color: DiscordColors.textMuted, fontSize: '12px', textTransform: 'uppercase' }}>Round 2</th>
             </tr>
           </thead>
           <tbody>
-            {currentWinners.map((winner, i) => (
-              <tr key={i} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : DiscordColors.bgAlt }}>
-                <td style={{ ...cellStyle, color: DiscordColors.accentBlue, fontWeight: 600 }}>卓 {i + 1}</td>
-                <td style={cellStyle}>{winner ? winner.name : '—'}</td>
-                <td style={{ ...cellStyle, color: DiscordColors.textMuted }}>{winner ? `@${winner.x_id}` : ''}</td>
-                <td style={cellStyle}>{winner && Array.isArray(winner.casts) ? winner.casts.join(', ') : ''}</td>
+            {winners.length === 0 ? (
+              <tr>
+                <td colSpan={3} style={{ padding: '40px', textAlign: 'center', color: DiscordColors.textMuted }}>
+                  当選者がいません。抽選ページから抽選を行ってください。
+                </td>
               </tr>
-            ))}
+            ) : (
+              winners.map((user) => {
+                const matched = matchingResult.get(user.x_id) || [];
+                return (
+                  <tr key={user.x_id} style={{ borderTop: `1px solid ${DiscordColors.border}` }}>
+                    <td style={{ padding: '12px' }}>
+                      <div style={{ fontWeight: 600, color: DiscordColors.textNormal }}>{user.name}</div>
+                      <div style={{ fontSize: '12px', color: DiscordColors.textLink }}>@{user.x_id}</div>
+                    </td>
+                    {[0, 1].map((roundIdx) => (
+                      <td key={roundIdx} style={{ padding: '12px' }}>
+                        {matched[roundIdx] ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ fontSize: '14px', color: DiscordColors.textNormal }}>
+                              {matched[roundIdx].cast.name}
+                            </div>
+                            <div>
+                              {renderRankBadge(matched[roundIdx].rank)}
+                            </div>
+                          </div>
+                        ) : (
+                          <span style={{ color: DiscordColors.accentRed, fontSize: '14px' }}>未配置</span>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
-      </div>
-      <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center' }}>
-        <button
-          onClick={startMatching}
-          style={{
-            backgroundColor: DiscordColors.buttonSuccess,
-            color: '#fff',
-            border: 'none',
-            padding: '12px 32px',
-            borderRadius: '4px',
-            fontSize: '16px',
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          マッチング開始
-        </button>
       </div>
     </div>
   );

@@ -2,6 +2,14 @@
 
 import { UserBean, CastBean } from "../../../stores/AppContext";
 
+/**
+ * マッチング結果の1枠分を表すインターフェース
+ */
+export interface MatchedCast {
+  cast: CastBean;
+  rank: number; // 1:第1希望, 2:第2希望, 3:第3希望, 0:希望外
+}
+
 export class MatchingService {
   /**
    * マッチング実行 (2ラウンド制)
@@ -9,56 +17,63 @@ export class MatchingService {
    * @param winners 当選者リスト
    * @param allCasts 全キャストリスト
    */
-  static runMatching(winners: UserBean[], allCasts: CastBean[]): Map<string, CastBean[]> {
-    const result = new Map<string, CastBean[]>();
+  static runMatching(winners: UserBean[], allCasts: CastBean[]): Map<string, MatchedCast[]> {
+    const result = new Map<string, MatchedCast[]>();
 
-    // 出勤しているキャストのみ対象 [cite: 350]
+    // 出勤しているキャストのみ対象
     const activeCasts = allCasts.filter(c => c.is_present);
 
-    // 各ユーザーの履歴結果を初期化 [cite: 350]
+    // 各ユーザーの結果リストを初期化
     winners.forEach(w => result.set(w.x_id, []));
 
-    // ラウンド1〜2の2回実行 [cite: 351]
+    // ラウンド1〜2の2回実行
     for (let round = 0; round < 2; round++) {
-      // このラウンドでまだどこにも配置されていないキャストのプール [cite: 351]
+      // このラウンドでまだどこにも配置されていないキャストのプール
       let availableInThisRound = [...activeCasts];
 
-      // 特定のユーザーが常に優先されないよう、ラウンドごとにユーザーをシャッフル [cite: 352]
+      // 特定のユーザーが常に優先されないよう、ラウンドごとにユーザーをシャッフル
       const shuffledWinners = [...winners].sort(() => Math.random() - 0.5);
 
       for (const user of shuffledWinners) {
         const history = result.get(user.x_id) || [];
         let selectedCast: CastBean | undefined = undefined;
+        let matchedRank = 0; // デフォルトは希望外(0)
 
-        // --- 1. 第一〜第三優先：希望キャストの中から順に探す --- 
-        // user.casts は [希望1, 希望2, 希望3] の順で格納されている前提
+        // --- 1. 第一〜第三優先：希望キャストの中から順に探す ---
         if (user.casts && user.casts.length > 0) {
-          for (const wantedCastName of user.casts) {
-            selectedCast = availableInThisRound.find(cast => 
-              cast.name === wantedCastName && // 名前が一致
-              !history.some(prev => prev.name === cast.name) && // 過去ラウンドで会っていない
-              !cast.ng_users?.includes(user.x_id) && // NGチェック(ID)
-              !cast.ng_users?.includes(user.name)    // NGチェック(名前)
+          for (let i = 0; i < user.casts.length; i++) {
+            const wantedCastName = user.casts[i];
+            const found = availableInThisRound.find(cast => 
+              cast.name === wantedCastName && 
+              !history.some(prev => prev.cast.name === cast.name) && // 過去ラウンドと重複不可
+              !cast.ng_users?.includes(user.x_id) && 
+              !cast.ng_users?.includes(user.name)
             );
-            if (selectedCast) break; // 見つかったら次の希望は見ない
+            
+            if (found) {
+              selectedCast = found;
+              matchedRank = i + 1; // 配列の添字+1をランクとする
+              break; 
+            }
           }
         }
 
-        // --- 2. 第二優先：希望外だが手が空いているキャストから探す --- [cite: 355]
+        // --- 2. 希望外：手が空いているキャストから探す ---
         if (!selectedCast) {
           selectedCast = availableInThisRound.find(cast => 
-            !history.some(prev => prev.name === cast.name) && 
+            !history.some(prev => prev.cast.name === cast.name) && 
             !cast.ng_users?.includes(user.x_id) && 
             !cast.ng_users?.includes(user.name)
           );
+          matchedRank = 0; // 希望外
         }
 
         if (selectedCast) {
-          // 履歴に追加 [cite: 356]
-          history.push(selectedCast);
+          // 履歴にキャストとランクのペアを追加
+          history.push({ cast: selectedCast, rank: matchedRank });
           result.set(user.x_id, history);
           
-          // このラウンドのプールから除外（同じラウンド内の重複を防止） [cite: 356]
+          // このラウンドのプールから除外
           availableInThisRound = availableInThisRound.filter(c => c.name !== selectedCast!.name);
         }
       }
