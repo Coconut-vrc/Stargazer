@@ -6,7 +6,7 @@ import { Menu, X, LogOut } from 'lucide-react';
 import { ImportPage } from './ImportPage';
 import { DBViewPage } from './DBViewPage';
 import { CastManagementPage } from './CastManagementPage';
-import LotteryPage from './LotteryPage';
+import { LotteryPage } from './LotteryPage';
 import { MatchingPage } from './MatchingPage';
 import { LoginPage } from './LoginPage';
 import { useAppContext, type PageType } from '../stores/AppContext';
@@ -105,12 +105,8 @@ export const AppContainer: React.FC = () => {
       case 'db': return <DBViewPage />;
       case 'cast': return <CastManagementPage repository={repository} />;
       case 'lottery': 
-        // ここを修正！repositoryからユーザーデータを取得して渡す
-        return (
-          <LotteryPage 
-            allUserData={repository.getAllApplyUsers()} 
-          />
-        );
+        // 【修正】Propsを渡さず、コンポーネントを呼ぶだけにする
+        return <LotteryPage />;
       case 'matching':
         return (
           <MatchingPage
