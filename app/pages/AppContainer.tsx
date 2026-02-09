@@ -61,9 +61,9 @@ export const AppContainer: React.FC = () => {
         name: row[1] || '',
         x_id: row[2] || '',
         first_flag: row[3] || '',
-        casts: row[4] ? row[4].split(',').map((s: string) => s.trim()) : [],
-        note: row[5] || '',
-        is_pair_ticket: row[6] === '1',
+        casts: [row[4], row[5], row[6]].filter(Boolean),
+        note: row[7] || '',
+        is_pair_ticket: row[8] === '1',
         raw_extra: []
       }));
 

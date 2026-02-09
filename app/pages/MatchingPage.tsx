@@ -1,31 +1,30 @@
 'use client';
 
 import React, { useState } from 'react';
-import { UserBean, useAppContext } from '../stores/AppContext';
+import { UserBean, useAppContext, Repository } from '../stores/AppContext';
 import { MatchingService } from '../features/matching/logics/matching_service';
 import { DiscordColors } from '../common/types/discord-colors';
 
+// 2ラウンド制に合わせた表示用データ構造
 interface MatchingResult {
   pair_no: string;
   user_a: UserBean;
-  user_b: UserBean;
+  user_b: { name: string }; 
   t1: string;
   t1_info: string;
   t2: string;
   t2_info: string;
-  t3: string;
-  t3_info: string;
+  // t3 は削除
 }
 
 interface MatchingPageProps {
   winners: UserBean[];
   allUserData: UserBean[];
-  repository: ReturnType<typeof useAppContext>['repository'];
+  repository: Repository;
 }
 
 export const MatchingPage: React.FC<MatchingPageProps> = ({ 
   winners: currentWinners, 
-  allUserData, 
   repository 
 }) => {
   const [results, setResults] = useState<MatchingResult[]>([]);
@@ -69,9 +68,26 @@ export const MatchingPage: React.FC<MatchingPageProps> = ({
       alert('当選者が選択されていません。');
       return;
     }
-    const service = new MatchingService(currentWinners, repository);
-    const matchingResults = service.runMatching();
-    setResults(matchingResults);
+
+    const allCasts = repository.getAllCasts();
+    // 2ラウンド制のロジックを実行
+    const matchMap = MatchingService.runMatching(currentWinners, allCasts);
+
+    const displayResults: MatchingResult[] = currentWinners.map((winner, index) => {
+      const assignedCasts = matchMap.get(winner.x_id) || [];
+      
+      return {
+        pair_no: `卓 ${index + 1}`,
+        user_a: winner,
+        user_b: { name: '—' }, 
+        t1: assignedCasts[0]?.name || 'なし',
+        t1_info: assignedCasts[0] ? 'マッチング済' : '-',
+        t2: assignedCasts[1]?.name || 'なし',
+        t2_info: assignedCasts[1] ? 'マッチング済' : '-',
+      };
+    });
+
+    setResults(displayResults);
     setShowResults(true);
   };
 
@@ -85,12 +101,12 @@ export const MatchingPage: React.FC<MatchingPageProps> = ({
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
             <thead>
               <tr>
-                <th style={headerCellStyle}>ペア</th>
-                <th style={headerCellStyle}>ユーザーA</th>
-                <th style={headerCellStyle}>ユーザーB</th>
-                <th style={headerCellStyle}>T1</th>
-                <th style={headerCellStyle}>T2</th>
-                <th style={headerCellStyle}>T3</th>
+                <th style={headerCellStyle}>卓</th>
+                <th style={headerCellStyle}>ユーザー</th>
+                <th style={headerCellStyle}>ID</th>
+                <th style={headerCellStyle}>ROUND 1</th>
+                <th style={headerCellStyle}>ROUND 2</th>
+                {/* ROUND 3 のヘッダーを削除 */}
               </tr>
             </thead>
             <tbody>
@@ -98,7 +114,7 @@ export const MatchingPage: React.FC<MatchingPageProps> = ({
                 <tr key={i} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : DiscordColors.bgAlt }}>
                   <td style={{ ...cellStyle, color: DiscordColors.accentBlue, fontWeight: 600 }}>{r.pair_no}</td>
                   <td style={cellStyle}>{r.user_a.name}</td>
-                  <td style={cellStyle}>{r.user_b.name}</td>
+                  <td style={{ ...cellStyle, color: DiscordColors.textMuted }}>@{r.user_a.x_id}</td>
                   <td style={cellStyle}>
                     <div style={{ color: DiscordColors.accentYellow, fontWeight: 600 }}>{r.t1}</div>
                     <div style={{ color: DiscordColors.textMuted, fontSize: '11px' }}>{r.t1_info}</div>
@@ -107,10 +123,7 @@ export const MatchingPage: React.FC<MatchingPageProps> = ({
                     <div style={{ color: DiscordColors.accentYellow, fontWeight: 600 }}>{r.t2}</div>
                     <div style={{ color: DiscordColors.textMuted, fontSize: '11px' }}>{r.t2_info}</div>
                   </td>
-                  <td style={cellStyle}>
-                    <div style={{ color: DiscordColors.accentYellow, fontWeight: 600 }}>{r.t3}</div>
-                    <div style={{ color: DiscordColors.textMuted, fontSize: '11px' }}>{r.t3_info}</div>
-                  </td>
+                  {/* ROUND 3 のセルを削除 */}
                 </tr>
               ))}
             </tbody>
