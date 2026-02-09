@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const { password } = await request.json();
 
     // パスワードチェック
-    if (password === 'dev4') {
+    if (password === 'Valentine3745') {
       const response = NextResponse.json({ success: true });
 
       // Cookieの設定 (HttpOnlyでセキュリティ確保)
