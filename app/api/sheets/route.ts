@@ -6,7 +6,7 @@ import path from 'path';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { spreadsheetId, range, values, method } = body;
+    const { spreadsheetId, range, values, method, sheetName } = body;
 
     let auth;
     if (process.env.GOOGLE_CREDENTIALS) {
@@ -29,6 +29,27 @@ export async function POST(request: Request) {
     }
 
     const sheets = google.sheets({ version: 'v4', auth });
+
+    // 新しいシートを作成
+    if (method === 'CREATE_SHEET') {
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        requestBody: {
+          requests: [
+            {
+              addSheet: {
+                properties: {
+                  title: sheetName,
+                },
+              },
+            },
+          ],
+        },
+      });
+      return NextResponse.json({ success: true });
+    }
+
+    // データを更新
     if (method === 'UPDATE') {
       await sheets.spreadsheets.values.update({
         spreadsheetId,
@@ -39,6 +60,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
+    // データを取得
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range,

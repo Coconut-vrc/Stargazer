@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { UserBean, Repository } from '../stores/AppContext';
 import { MatchingService, MatchedCast } from '../features/matching/logics/matching_service';
 import { DiscordColors } from '../common/types/discord-colors';
+import { SheetService } from '../infrastructures/googleSheets/sheet_service';
 
 interface MatchingPageProps {
   winners: UserBean[];
@@ -15,6 +16,119 @@ interface MatchingPageProps {
 export const MatchingPage: React.FC<MatchingPageProps> = ({ winners, repository }) => {
   const [matchingResult, setMatchingResult] = useState<Map<string, MatchedCast[]>>(new Map());
   const [showResults, setShowResults] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const sheetService = new SheetService();
+  // 応募シートと同じブックに出力
+  const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1-1bz7LuxCPADoWCEj24TL6QmOMPzvhmUeUtCiZLp2jo/edit';
+
+  /**
+   * タイムスタンプを YYYYMMDD_HHMMSS 形式で取得
+   */
+  const getTimestamp = (): string => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    return `${year}${month}${day}_${hours}${minutes}${seconds}`;
+  };
+
+  /**
+   * 希望順位を文字列に変換
+   */
+  const rankToString = (rank: number): string => {
+    if (rank === 0) return '希望外';
+    return `第${rank}希望`;
+  };
+
+  /**
+   * 抽選結果をシートに出力
+   */
+  const exportLotteryResults = async () => {
+    if (winners.length === 0) {
+      alert('当選者がいません');
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      const timestamp = getTimestamp();
+      const sheetName = `抽選結果_${timestamp}`;
+
+      // ヘッダー行
+      const headers = ['応募日時', '名前', 'X ID', '初回フラグ', '希望キャスト', '備考', 'ペアチケット'];
+      
+      // データ行
+      const dataRows = winners.map(winner => [
+        winner.timestamp || '',
+        winner.name || '',
+        winner.x_id || '',
+        winner.first_flag || '',
+        Array.isArray(winner.casts) ? winner.casts.join(', ') : '',
+        winner.note || '',
+        winner.is_pair_ticket ? 'あり' : 'なし',
+      ]);
+
+      const values = [headers, ...dataRows];
+
+      await sheetService.createSheetAndWriteData(SHEET_URL, sheetName, values);
+      alert(`抽選結果を「${sheetName}」シートに出力しました！`);
+    } catch (error) {
+      console.error('抽選結果の出力エラー:', error);
+      alert('抽選結果の出力に失敗しました');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  /**
+   * マッチング結果をシートに出力
+   */
+  const exportMatchingResults = async () => {
+    if (winners.length === 0 || matchingResult.size === 0) {
+      alert('マッチング結果がありません');
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      const timestamp = getTimestamp();
+      const sheetName = `マッチング結果_${timestamp}`;
+
+      // ヘッダー行
+      const headers = ['卓', 'ユーザー名', 'X ID', 'Round 1 キャスト', 'Round 1 希望順位', 'Round 2 キャスト', 'Round 2 希望順位'];
+      
+      // データ行
+      const dataRows = winners.map((winner, index) => {
+        const matched = matchingResult.get(winner.x_id) || [];
+        const round1 = matched[0] || null;
+        const round2 = matched[1] || null;
+
+        return [
+          `卓 ${index + 1}`,
+          winner.name || '',
+          winner.x_id || '',
+          round1 ? round1.cast.name : '未配置',
+          round1 ? rankToString(round1.rank) : '-',
+          round2 ? round2.cast.name : '未配置',
+          round2 ? rankToString(round2.rank) : '-',
+        ];
+      });
+
+      const values = [headers, ...dataRows];
+
+      await sheetService.createSheetAndWriteData(SHEET_URL, sheetName, values);
+      alert(`マッチング結果を「${sheetName}」シートに出力しました！`);
+    } catch (error) {
+      console.error('マッチング結果の出力エラー:', error);
+      alert('マッチング結果の出力に失敗しました');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   /**
    * マッチング開始ボタンがクリックされた時の処理
@@ -140,6 +254,52 @@ export const MatchingPage: React.FC<MatchingPageProps> = ({ winners, repository 
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* 出力ボタン群 */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '12px', 
+          marginBottom: '24px',
+          flexWrap: 'wrap'
+        }}>
+          <button
+            onClick={exportLotteryResults}
+            disabled={isExporting}
+            style={{
+              backgroundColor: DiscordColors.accentGreen,
+              color: '#fff',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '4px',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: isExporting ? 'not-allowed' : 'pointer',
+              opacity: isExporting ? 0.6 : 1,
+              transition: 'all 0.2s',
+            }}
+          >
+            {isExporting ? '出力中...' : '抽選結果を出力'}
+          </button>
+
+          <button
+            onClick={exportMatchingResults}
+            disabled={isExporting}
+            style={{
+              backgroundColor: DiscordColors.accentBlue,
+              color: '#fff',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '4px',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: isExporting ? 'not-allowed' : 'pointer',
+              opacity: isExporting ? 0.6 : 1,
+              transition: 'all 0.2s',
+            }}
+          >
+            {isExporting ? '出力中...' : 'マッチング結果を出力'}
+          </button>
         </div>
 
         {/* 戻るボタン */}
