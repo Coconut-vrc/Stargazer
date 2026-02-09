@@ -104,7 +104,13 @@ export const AppContainer: React.FC = () => {
       case 'import': return <ImportPage onSuccess={loadData} />;
       case 'db': return <DBViewPage />;
       case 'cast': return <CastManagementPage repository={repository} />;
-      case 'lottery': return <LotteryPage />;
+      case 'lottery': 
+        // ここを修正！repositoryからユーザーデータを取得して渡す
+        return (
+          <LotteryPage 
+            allUserData={repository.getAllApplyUsers()} 
+          />
+        );
       case 'matching':
         return (
           <MatchingPage
