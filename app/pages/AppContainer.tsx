@@ -1,21 +1,57 @@
 // app/pages/AppContainer.tsx
 "use client";
 
-import React, { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Menu, X, LogOut } from 'lucide-react'; 
 import { ImportPage } from './ImportPage';
 import { DBViewPage } from './DBViewPage';
 import { CastManagementPage } from './CastManagementPage';
 import { LotteryPage } from './LotteryPage';
 import { MatchingPage } from './MatchingPage';
+import { LoginPage } from './LoginPage';
 import { useAppContext, type PageType } from '../stores/AppContext';
 import { SheetService } from '../infrastructures/googleSheets/sheet_service';
 import './AppContainer.css';
 
 export const AppContainer: React.FC = () => {
   const { activePage, setActivePage, repository, currentWinners } = useAppContext();
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // メニューの開閉状態
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  // --- 認証状態管理 ---
+  const [isLoggedIn, setIsLoggedIn] = useState(false); 
+  const [isChecking, setIsChecking] = useState(true); 
+  
   const sheetService = new SheetService();
+
+  // --- 【重要】起動時にCookieがあるか確認し、ログイン状態を復元する ---
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/auth/check');
+        if (res.ok) {
+          setIsLoggedIn(true);
+        }
+      } catch (err) {
+        console.error("Auth check failed:", err);
+      } finally {
+        setIsChecking(false);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  // --- ログアウト処理 ---
+  const handleLogout = async () => {
+    try {
+      const res = await fetch('/api/auth/logout', { method: 'POST' });
+      if (res.ok) {
+        setIsLoggedIn(false);
+        setActivePage('import'); // ログアウト後は初期ページへ
+      }
+    } catch (err) {
+      alert('ログアウトに失敗したよ');
+    }
+  };
 
   const loadData = async (userUrl: string, castUrl: string) => {
     try {
@@ -55,6 +91,14 @@ export const AppContainer: React.FC = () => {
     { text: 'マッチング', page: 'matching' },
   ];
 
+  // 認証チェック中は何も表示しない（ログイン画面が一瞬出るのを防ぐ）
+  if (isChecking) return null; 
+
+  // 未ログインなら、他の画面を一切見せずにログイン画面を出す
+  if (!isLoggedIn) {
+    return <LoginPage onLoginSuccess={() => setIsLoggedIn(true)} />;
+  }
+
   const renderPage = () => {
     switch (activePage) {
       case 'import': return <ImportPage onSuccess={loadData} />;
@@ -75,7 +119,7 @@ export const AppContainer: React.FC = () => {
 
   return (
     <div className="app-container">
-      {/* スマホ用ヘッダー */}
+      {/* スマホヘッダー */}
       <div className="mobile-header">
         <div className="logo">chocomelapp</div>
         <button className="menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -83,7 +127,7 @@ export const AppContainer: React.FC = () => {
         </button>
       </div>
 
-      {/* サイドバー（PCは常時表示、スマホは被さる） */}
+      {/* サイドバー */}
       <aside className={`sidebar ${isMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-inner">
           <div className="sidebar-title"></div>
@@ -93,16 +137,36 @@ export const AppContainer: React.FC = () => {
               className={`sidebar-button ${activePage === button.page ? 'active' : ''}`}
               onClick={() => {
                 setActivePage(button.page);
-                setIsMenuOpen(false); // ページを選んだら閉じる
+                setIsMenuOpen(false);
               }}
             >
               {button.text}
             </button>
           ))}
+          
+          {/* ログアウトボタンをサイドバー下部に追加 */}
+          <div style={{ marginTop: 'auto', padding: '10px' }}>
+            <button 
+              onClick={handleLogout}
+              className="sidebar-button logout"
+              style={{ 
+                color: '#ff4444', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                width: '100%', 
+                background: 'none', 
+                border: 'none', 
+                cursor: 'pointer' 
+              }}
+            >
+              <LogOut size={18} />
+              ログアウト
+            </button>
+          </div>
         </div>
       </aside>
 
-      {/* 背景オーバーレイ（メニューが開いている時だけメイン画面を暗くする） */}
       {isMenuOpen && <div className="overlay" onClick={() => setIsMenuOpen(false)} />}
 
       <main className="main-content">
