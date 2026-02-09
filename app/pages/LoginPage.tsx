@@ -16,7 +16,7 @@ export const LoginPage: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuc
     if (res.ok) {
       onLoginSuccess();
     } else {
-      setError('パスワードが間違ってるよ');
+      setError('パスワードが間違っています');
     }
   };
 
@@ -36,8 +36,7 @@ export const LoginPage: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuc
         textAlign: 'center',
         boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
       }}>
-        <h2 style={{ color: DiscordColors.textHeader, marginBottom: '8px' }}>おかえりなさい！</h2>
-        <p style={{ color: DiscordColors.textMuted, marginBottom: '20px' }}>管理用パスワードを入力してね</p>
+        <p style={{ color: DiscordColors.textMuted, marginBottom: '20px' }}>管理用パスワードを入力してください</p>
         
         <input
           type="password"
