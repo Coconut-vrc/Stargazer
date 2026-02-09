@@ -6,7 +6,7 @@ import { Menu, X, LogOut } from 'lucide-react';
 import { ImportPage } from './ImportPage';
 import { DBViewPage } from './DBViewPage';
 import { CastManagementPage } from './CastManagementPage';
-import { LotteryPage } from './LotteryPage';
+import LotteryPage from './LotteryPage';
 import { MatchingPage } from './MatchingPage';
 import { LoginPage } from './LoginPage';
 import { useAppContext, type PageType } from '../stores/AppContext';
