@@ -14,7 +14,8 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const sheetService = new SheetService();
-  const CAST_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1rc_QdWi805TaZ_2e8uV_odpc4DRQNVnC5ET6W63LzPw/edit';
+  const FALLBACK_CAST_SHEET_URL =
+    'https://docs.google.com/spreadsheets/d/1rc_QdWi805TaZ_2e8uV_odpc4DRQNVnC5ET6W63LzPw/edit';
 
   useEffect(() => {
     const allCasts = repository.getAllCasts();
@@ -33,13 +34,14 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
   }, [repository, selectedCastName]);
 
   const syncToSheet = async (castName: string, column: string, value: string) => {
+    const castSheetUrl = repository.getCastSheetUrl() || FALLBACK_CAST_SHEET_URL;
     const allCasts = repository.getAllCasts();
     const rowIndex = allCasts.findIndex(c => c.name === castName);
     if (rowIndex === -1) return;
 
     const range = `${column}${rowIndex + 2}`;
     try {
-      await sheetService.updateSheetData(CAST_SHEET_URL, range, [[value]]);
+      await sheetService.updateSheetData(castSheetUrl, range, [[value]]);
     } catch (e) {
       console.error('更新失敗:', e);
     }
@@ -59,11 +61,12 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
       ng_users: []
     };
 
+    const castSheetUrl = repository.getCastSheetUrl() || FALLBACK_CAST_SHEET_URL;
     const nextRowIndex = casts.length + 2;
     const range = `A${nextRowIndex}:C${nextRowIndex}`;
     
     try {
-      await sheetService.updateSheetData(CAST_SHEET_URL, range, [[newName, '0', '']]);
+      await sheetService.updateSheetData(castSheetUrl, range, [[newName, '0', '']]);
       const updatedList = [...casts, newCast];
       repository.saveCasts(updatedList);
       setCasts(updatedList);
@@ -71,6 +74,32 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
       if (updatedList.length === 1) setSelectedCastName(newName);
     } catch (e) {
       console.error('キャスト追加失敗:', e);
+    }
+  };
+  const handleDeleteCast = async (castName: string) => {
+    if (!window.confirm(`「${castName}」を削除しますか？`)) return;
+
+    const allCasts = repository.getAllCasts();
+    const rowIndex = allCasts.findIndex((c) => c.name === castName);
+    if (rowIndex === -1) return;
+
+    const castSheetUrl = repository.getCastSheetUrl() || FALLBACK_CAST_SHEET_URL;
+    const range = `A${rowIndex + 2}:C${rowIndex + 2}`;
+
+    try {
+      // シート上の該当行を空行にする
+      await sheetService.updateSheetData(castSheetUrl, range, [['', '', '']]);
+
+      const updated = allCasts.filter((c) => c.name !== castName);
+      repository.saveCasts(updated);
+      setCasts(updated);
+
+      if (selectedCastName === castName) {
+        setSelectedCastName(updated[0]?.name ?? '');
+      }
+    } catch (e) {
+      console.error('キャスト削除失敗:', e);
+      alert('キャストの削除に失敗しました');
     }
   };
 
@@ -260,71 +289,65 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
       </div>
 
       {/* カード一覧表示 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+      <div className="cast-grid">
         {casts.map((cast) => (
-          <div key={cast.name} style={{
-            backgroundColor: 'var(--discord-bg-secondary)',
-            border: '1px solid var(--discord-border)',
-            borderRadius: '8px',
-            padding: '16px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <span style={{ fontWeight: 600, color: 'var(--discord-text-header)', fontSize: '16px' }}>{cast.name}</span>
-              <div style={{
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                backgroundColor: cast.is_present ? 'var(--discord-accent-green)' : 'var(--discord-accent-red)'
-              }} />
+          <div key={cast.name} className="cast-card">
+            <div className="cast-card__header">
+              <span className="cast-card__name">{cast.name}</span>
+              <div
+                className={
+                  'cast-card__status-dot ' +
+                  (cast.is_present ? 'cast-card__status-dot--present' : 'cast-card__status-dot--absent')
+                }
+              />
             </div>
 
             <button
               onClick={() => togglePresence(cast)}
-              style={{
-                padding: '10px 0',
-                borderRadius: '4px',
-                fontSize: '14px',
-                cursor: 'pointer',
-                border: 'none',
-                backgroundColor: cast.is_present ? 'var(--discord-accent-green)' : 'var(--discord-accent-red)',
-                color: '#fff',
-                fontWeight: 700
-              }}
+              className={
+                'cast-card__presence-button ' +
+                (cast.is_present
+                  ? 'cast-card__presence-button--present'
+                  : 'cast-card__presence-button--absent')
+              }
             >
               {cast.is_present ? '出席中' : '欠席'}
             </button>
+            <div className="cast-card__ng-header">
+              <div className="cast-card__ng-label">NGユーザー ({cast.ng_users.length})</div>
+              <button
+                type="button"
+                onClick={() => handleDeleteCast(cast.name)}
+                className="cast-card__delete-button"
+              >
+                削除
+              </button>
+            </div>
 
-            <div style={{ marginTop: '4px' }}>
-              <div style={{ fontSize: '11px', color: 'var(--discord-text-muted)', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase' }}>
-                NGユーザー ({cast.ng_users.length})
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                {cast.ng_users.length > 0 ? (
-                  cast.ng_users.map((ng: string) => (
-                    <div
-                      key={ng}
-                      style={{
-
-                        fontSize: '12px', backgroundColor: 'rgba(237,66,69,0.1)', color: 'var(--discord-accent-red)', padding: '4px 10px', 
-                        borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid rgba(237,66,69,0.27)' 
-                         }}
+            <div className="cast-card__ng-list">
+              {cast.ng_users.length > 0 ? (
+                cast.ng_users.map((ng: string) => (
+                  <div key={ng} className="cast-card__ng-chip">
+                    <span>{ng}</span>
+                    <span
+                      className="cast-card__ng-chip-remove"
+                      onClick={() => handleRemoveNg(cast.name, ng)}
                     >
-                      <span>{ng}</span>
-                      <span
-                        style={{ cursor: 'pointer', color: 'var(--discord-text-muted)', fontSize: '14px', lineHeight: '1' }}
-                        onClick={() => handleRemoveNg(cast.name, ng)}
-                      >
-                        ×
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <span style={{ fontSize: '12px', color: 'var(--discord-text-muted)', fontStyle: 'italic' }}>なし</span>
-                )}
-              </div>
+                      ×
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <span
+                  style={{
+                    fontSize: '12px',
+                    color: 'var(--discord-text-muted)',
+                    fontStyle: 'italic',
+                  }}
+                >
+                  なし
+                </span>
+              )}
             </div>
           </div>
         ))}

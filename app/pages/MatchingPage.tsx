@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Repository, type UserBean, type MatchingMode } from '../stores/AppContext';
+import { Repository, type UserBean, type MatchingMode, type BusinessMode } from '../stores/AppContext';
 import { MatchingService, MatchedCast } from '../features/matching/logics/matching_service';
 import { DiscordTable, DiscordTableColumn } from '../components/DiscordTable';
 
@@ -11,19 +11,31 @@ interface MatchingPageProps {
   allUserData: UserBean[]; // 互換性のために残しているが内部では repository を優先使用
   repository: Repository;
   matchingMode: MatchingMode;
+  businessMode: BusinessMode;
 }
 
-const MatchingPageComponent: React.FC<MatchingPageProps> = ({ winners, repository, matchingMode }) => {
+const MatchingPageComponent: React.FC<MatchingPageProps> = ({
+  winners,
+  repository,
+  matchingMode,
+  businessMode,
+}) => {
   const [matchingResult, setMatchingResult] = useState<Map<string, MatchedCast[]>>(new Map());
 
 
   // ページ表示時、または当選者が変わった時にマッチングを再計算
   useEffect(() => {
     if (winners.length > 0) {
-      const result = MatchingService.runMatching(winners, repository.getAllCasts(), matchingMode);
+      const rotationCount = businessMode === 'normal' ? 3 : 2;
+      const result = MatchingService.runMatching(
+        winners,
+        repository.getAllCasts(),
+        matchingMode,
+        rotationCount,
+      );
       setMatchingResult(result);
     }
-  }, [winners, repository, matchingMode]);
+  }, [winners, repository, matchingMode, businessMode]);
 
   /**
    * 希望ランクに応じたラベルを表示
@@ -70,6 +82,8 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({ winners, repositor
     );
   }, []);
 
+  const rotationCount = businessMode === 'normal' ? 3 : 2;
+
   const columns: DiscordTableColumn<UserBean>[] = useMemo(
     () => [
       {
@@ -92,8 +106,8 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({ winners, repositor
           </td>
         ),
       },
-      ...[0, 1].map<DiscordTableColumn<UserBean>>((roundIdx) => ({
-        header: `Round ${roundIdx + 1}`,
+      ...Array.from({ length: rotationCount }, (_, roundIdx) => ({
+        header: `${roundIdx + 1}ローテ目`,
         headerStyle: {
           padding: '12px',
           textAlign: 'left',
@@ -111,7 +125,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({ winners, repositor
               }}
             >
               {slot ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div className="stack-vertical-4">
                   <div style={{ fontSize: '14px', color: 'var(--discord-text-normal)' }}>{slot.cast.name}</div>
                   <div>{renderRankBadge(slot.rank)}</div>
                 </div>
@@ -121,9 +135,9 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({ winners, repositor
             </td>
           );
         },
-      })),
+      })) as DiscordTableColumn<UserBean>[],
     ],
-    [matchingResult, renderRankBadge],
+    [matchingResult, renderRankBadge, rotationCount],
   );
 
   const emptyRow = useMemo(
@@ -145,26 +159,13 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({ winners, repositor
   );
 
   return (
-    <div className="fade-in" style={{ padding: '24px' }}>
-      <header style={{ marginBottom: '24px' }}>
-        <h1
-          style={{
-            color: 'var(--discord-text-header)',
-            fontSize: '24px',
-            fontWeight: 700,
-          }}
-        >
-          マッチング結果
-        </h1>
-        <p
-          style={{
-            color: 'var(--discord-text-muted)',
-            fontSize: '14px',
-          }}
-        >
-          {matchingMode === 'rotation'
-            ? '2ラウンド制（循環ローテーション＋重み付きランダム）'
-            : '2ラウンド制（希望優先ランダムマッチング）'}
+    <div className="fade-in page-wrapper">
+      <header className="page-header" style={{ marginBottom: '24px' }}>
+        <h1 className="page-header-title page-header-title--lg">マッチング結果</h1>
+        <p className="page-header-subtitle">
+          {rotationCount}ローテーション制（
+          {matchingMode === 'rotation' ? '循環ローテーション＋重み付きランダム' : '希望優先ランダムマッチング'}
+          ）
         </p>
       </header>
 

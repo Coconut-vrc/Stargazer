@@ -101,20 +101,26 @@ const DBViewPageComponent: React.FC = () => {
   );
 
   return (
-    <div style={{ padding: '20px 12px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1 style={{ color: 'var(--discord-text-header)', fontSize: '20px', margin: 0 }}>名簿データベース</h1>
+    <div className="page-wrapper">
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px',
+        }}
+      >
+        <h1 className="page-header-title page-header-title--md">名簿データベース</h1>
         <button
           onClick={() => setActivePage('lotteryCondition')}
+          className="btn-secondary"
           style={{
+            width: 'auto',
+            padding: '8px 16px',
+            fontSize: '13px',
             backgroundColor: 'var(--discord-accent-yellow)',
             color: '#000',
             border: 'none',
-            padding: '8px 16px',
-            borderRadius: '4px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            fontSize: '13px',
           }}
         >
           抽選条件へ

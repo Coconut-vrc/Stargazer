@@ -20,22 +20,30 @@ export const LoginPage: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuc
   };
 
   return (
-    <div style={{
-      backgroundColor: 'var(--discord-bg-dark)',
-      height: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }}>
-      <div style={{
-        backgroundColor: 'var(--discord-bg-secondary)',
-        padding: '32px',
-        borderRadius: '8px',
-        width: '400px',
-        textAlign: 'center',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
-      }}>
-        <p style={{ color: 'var(--discord-text-muted)', marginBottom: '20px' }}>管理用パスワードを入力してください</p>
+    <div
+      style={{
+        backgroundColor: 'var(--discord-bg-dark)',
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        className="card"
+        style={{
+          width: '400px',
+          textAlign: 'center',
+        }}
+      >
+        <p
+          style={{
+            color: 'var(--discord-text-muted)',
+            marginBottom: '20px',
+          }}
+        >
+          管理用パスワードを入力してください
+        </p>
         
         <input
           type="password"
@@ -58,16 +66,8 @@ export const LoginPage: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuc
         
         <button
           onClick={handleLogin}
-          style={{
-            width: '100%',
-            padding: '12px',
-            backgroundColor: 'var(--discord-accent-blue)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontWeight: 600,
-            cursor: 'pointer'
-          }}
+          className="btn-primary"
+          style={{ width: '100%' }}
         >
           ログイン
         </button>

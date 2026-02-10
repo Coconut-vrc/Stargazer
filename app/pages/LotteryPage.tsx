@@ -2,62 +2,145 @@ import React, { useCallback, useState } from 'react';
 import { useAppContext } from '../stores/AppContext';
 
 export const LotteryPage: React.FC = () => {
-  const { setActivePage, repository, setCurrentWinners, matchingMode, setMatchingMode } = useAppContext();
+  const {
+    setActivePage,
+    repository,
+    setCurrentWinners,
+    matchingMode,
+    setMatchingMode,
+    businessMode,
+    setBusinessMode,
+  } = useAppContext();
   const [count, setCount] = useState(15);
+  const [totalTables, setTotalTables] = useState(15);
 
   const run = useCallback(() => {
+    // 出席キャスト数を確認し、当選人数がそれを超えていれば抽選を止める
+    const allCasts = repository.getAllCasts();
+    const activeCastCount = allCasts.filter((c) => c.is_present).length;
+    if (count > activeCastCount) {
+      alert('出席キャスト数を超えているため、抽選人数を調整してください。');
+      return;
+    }
+
+    if (businessMode === 'normal' && totalTables < count) {
+      alert('総テーブル数は当選者数以上にしてください。');
+      return;
+    }
+
     const all = repository.getAllApplyUsers();
     const shuffled = [...all].sort(() => 0.5 - Math.random());
     setCurrentWinners(shuffled.slice(0, count));
     setActivePage('lottery');
-  }, [count, repository, setActivePage, setCurrentWinners]);
+  }, [businessMode, count, totalTables, repository, setActivePage, setCurrentWinners]);
 
   return (
-    <div style={{ padding: '24px 16px' }}>
-      <div
-        style={{
-          backgroundColor: 'var(--discord-bg-dark)',
-          borderRadius: '8px',
-          padding: '24px 32px',
-          maxWidth: '600px',
-          margin: '24px auto',
-          border: '1px solid var(--discord-border)',
-          textAlign: 'left',
-        }}
-      >
-          <h1
-            style={{
-              color: 'var(--discord-text-header)',
-              fontSize: '18px',
-              marginBottom: '4px',
-              fontWeight: 700,
-            }}
-          >
-            抽選条件
-          </h1>
-          <p
-            style={{
-              color: 'var(--discord-text-muted)',
-              fontSize: '12px',
-              marginBottom: '20px',
-            }}
-          >
-            当選人数とマッチング方式を選択してください
-          </p>
+    <div className="page-wrapper">
+      <div className="page-card-narrow">
+        <h1 className="page-header-title page-header-title--sm">抽選条件</h1>
+        <p
+          className="page-header-subtitle"
+          style={{
+            fontSize: '12px',
+            marginBottom: '20px',
+          }}
+        >
+          営業モードと抽選条件を選択してください
+        </p>
 
-          <div style={{ marginBottom: '22px' }}>
-            <label
+        <div
+          style={{
+            marginBottom: '18px',
+            display: 'flex',
+            gap: '8px',
+          }}
+        >
+            <button
+              type="button"
+              onClick={() => setBusinessMode('special')}
               style={{
-                color: 'var(--discord-text-muted)',
-                display: 'block',
-                marginBottom: '6px',
+                flex: 1,
+                padding: '8px 10px',
+                borderRadius: '6px',
+                border:
+                  businessMode === 'special'
+                    ? '1px solid var(--discord-accent-blue)'
+                    : '1px solid var(--discord-border)',
+                backgroundColor:
+                  businessMode === 'special'
+                    ? 'var(--discord-accent-blue)'
+                    : 'var(--discord-bg-secondary)',
+                color: businessMode === 'special' ? '#fff' : 'var(--discord-text-normal)',
                 fontSize: '12px',
                 fontWeight: 600,
-                textTransform: 'uppercase',
+                cursor: 'pointer',
               }}
             >
-              当選人数
-            </label>
+              特殊営業（完全リクイン制）
+            </button>
+            <button
+              type="button"
+              onClick={() => setBusinessMode('normal')}
+              style={{
+                flex: 1,
+                padding: '8px 10px',
+                borderRadius: '6px',
+                border:
+                  businessMode === 'normal'
+                    ? '1px solid var(--discord-accent-blue)'
+                    : '1px solid var(--discord-border)',
+                backgroundColor:
+                  businessMode === 'normal'
+                    ? 'var(--discord-accent-blue)'
+                    : 'var(--discord-bg-secondary)',
+                color: businessMode === 'normal' ? '#fff' : 'var(--discord-text-normal)',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              通常営業
+            </button>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">
+            {businessMode === 'special' ? '当選人数' : '当選者数'}
+          </label>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+            }}
+          >
+            <input
+              type="number"
+              value={count}
+              min={1}
+              onChange={(e) => setCount(Number(e.target.value))}
+              style={{
+                width: '90px',
+                backgroundColor: 'var(--discord-bg-sidebar)',
+                border: '1px solid var(--discord-border)',
+                padding: '10px 12px',
+                borderRadius: '6px',
+                color: 'var(--discord-text-normal)',
+                fontSize: '18px',
+                textAlign: 'center',
+                outline: 'none',
+                boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.4)',
+              }}
+            />
+            {businessMode === 'special' && (
+              <span className="form-inline-note">※ 抽選で選ぶ最大人数</span>
+            )}
+          </div>
+        </div>
+
+        {businessMode === 'normal' && (
+          <div className="form-group">
+            <label className="form-label">総テーブル数</label>
             <div
               style={{
                 display: 'flex',
@@ -67,9 +150,9 @@ export const LotteryPage: React.FC = () => {
             >
               <input
                 type="number"
-                value={count}
-                min={1}
-                onChange={(e) => setCount(Number(e.target.value))}
+                value={totalTables}
+                min={count}
+                onChange={(e) => setTotalTables(Number(e.target.value))}
                 style={{
                   width: '90px',
                   backgroundColor: 'var(--discord-bg-sidebar)',
@@ -80,40 +163,23 @@ export const LotteryPage: React.FC = () => {
                   fontSize: '18px',
                   textAlign: 'center',
                   outline: 'none',
-                  boxShadow: '0 0 0 1px rgba(0,0,0,0.4)',
+                  boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.4)',
                 }}
               />
-              <span
-                style={{
-                  fontSize: '12px',
-                  color: 'var(--discord-text-muted)',
-                }}
-              >
-                ※ 抽選で選ぶ最大人数
-              </span>
+              <span className="form-inline-note">※ 当選者を含む、用意済みテーブルの総数</span>
             </div>
           </div>
+        )}
 
-          <div style={{ marginBottom: '26px' }}>
-            <label
-              style={{
-                color: 'var(--discord-text-muted)',
-                display: 'block',
-                marginBottom: '8px',
-                fontSize: '12px',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-              }}
-            >
-              マッチング方式
-            </label>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-              }}
-            >
+        <div style={{ marginBottom: '26px' }}>
+          <label className="form-label">マッチング方式</label>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
               <button
                 type="button"
                 onClick={() => setMatchingMode('random')}
@@ -188,22 +254,13 @@ export const LotteryPage: React.FC = () => {
             </div>
           </div>
 
-          <button
-            onClick={run}
-            style={{
-              width: '100%',
-              backgroundColor: 'var(--discord-accent-blue)',
-              color: '#fff',
-              border: 'none',
-              padding: '12px 24px',
-              borderRadius: '4px',
-              fontWeight: 600,
-              fontSize: '14px',
-              cursor: 'pointer',
-            }}
-          >
-            抽選を開始する
-          </button>
+        <button
+          onClick={run}
+          className="btn-primary"
+          style={{ width: '100%', marginTop: '4px' }}
+        >
+          抽選を開始する
+        </button>
       </div>
     </div>
   );

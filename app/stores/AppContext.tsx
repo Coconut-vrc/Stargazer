@@ -10,9 +10,17 @@ export type PageType = 'import' | 'db' | 'cast' | 'lotteryCondition' | 'lottery'
 // マッチング方式
 export type MatchingMode = 'rotation' | 'random';
 
+// テーマ（ダーク / しょこめる）
+export type ThemeMode = 'dark' | 'shokomel';
+
+// 営業モード
+export type BusinessMode = 'special' | 'normal';
+
 export class Repository {
   private users: UserBean[] = [];
   private casts: CastBean[] = [];
+  private userSheetUrl: string | null = null;
+  private castSheetUrl: string | null = null;
 
   saveApplyUsers(users: UserBean[]) { this.users = users; }
   getAllApplyUsers(): UserBean[] { return this.users; }
@@ -21,6 +29,20 @@ export class Repository {
   updateCastPresence(name: string, isPresent: boolean) {
     const cast = this.casts.find((c) => c.name === name);
     if (cast) cast.is_present = isPresent;
+  }
+
+  setUserSheetUrl(url: string) {
+    this.userSheetUrl = url;
+  }
+  getUserSheetUrl(): string | null {
+    return this.userSheetUrl;
+  }
+
+  setCastSheetUrl(url: string) {
+    this.castSheetUrl = url;
+  }
+  getCastSheetUrl(): string | null {
+    return this.castSheetUrl;
   }
 }
 
@@ -32,6 +54,10 @@ interface AppContextType {
   setCurrentWinners: (winners: UserBean[]) => void;
   matchingMode: MatchingMode;
   setMatchingMode: (mode: MatchingMode) => void;
+  themeMode: ThemeMode;
+  setThemeMode: (mode: ThemeMode) => void;
+  businessMode: BusinessMode;
+  setBusinessMode: (mode: BusinessMode) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -40,8 +66,12 @@ const repositoryInstance = new Repository();
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [activePage, setActivePage] = useState<PageType>('import');
   const [currentWinners, setCurrentWinners] = useState<UserBean[]>([]);
-   // デフォルトは「ランダムマッチング」（希望重視モード）
+  // デフォルトは「ランダムマッチング」（希望重視モード）
   const [matchingMode, setMatchingMode] = useState<MatchingMode>('random');
+  // デフォルトはしょこめるテーマ
+  const [themeMode, setThemeMode] = useState<ThemeMode>('shokomel');
+  // デフォルトは特殊営業
+  const [businessMode, setBusinessMode] = useState<BusinessMode>('special');
 
   return (
     <AppContext.Provider value={{
@@ -52,6 +82,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setCurrentWinners,
       matchingMode,
       setMatchingMode,
+      themeMode,
+      setThemeMode,
+      businessMode,
+      setBusinessMode,
     }}>
       {children}
     </AppContext.Provider>

@@ -58,4 +58,19 @@ export class SheetService {
       throw new Error('データ書き込みに失敗したよ');
     }
   }
+
+  /**
+   * 指定スプレッドシート内のシート名一覧を取得
+   */
+  async listSheets(url: string): Promise<string[]> {
+    const spreadsheetId = this.extractId(url);
+    const response = await fetch('/api/sheets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ spreadsheetId, method: 'LIST_SHEETS' }),
+    });
+    if (!response.ok) throw new Error('シート一覧の取得に失敗したよ');
+    const data = await response.json();
+    return (data.sheets as string[]) || [];
+  }
 }

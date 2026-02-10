@@ -5,8 +5,12 @@ interface ImportPageProps {
 }
 
 export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
-  const [userUrl, setUserUrl] = useState('https://docs.google.com/spreadsheets/d/1-1bz7LuxCPADoWCEj24TL6QmOMPzvhmUeUtCiZLp2jo/edit');
-  const [castUrl, setCastUrl] = useState('https://docs.google.com/spreadsheets/d/1rc_QdWi805TaZ_2e8uV_odpc4DRQNVnC5ET6W63LzPw/edit');
+  const [userUrl, setUserUrl] = useState(
+    'https://docs.google.com/spreadsheets/d/1-1bz7LuxCPADoWCEj24TL6QmOMPzvhmUeUtCiZLp2jo/edit',
+  );
+  const [castUrl, setCastUrl] = useState(
+    'https://docs.google.com/spreadsheets/d/1rc_QdWi805TaZ_2e8uV_odpc4DRQNVnC5ET6W63LzPw/edit',
+  );
 
   const cardStyle: React.CSSProperties = {
     backgroundColor: 'var(--discord-bg-dark)',
@@ -38,26 +42,14 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
     outline: 'none',
   };
 
-  const buttonStyle: React.CSSProperties = {
-    backgroundColor: 'var(--discord-accent-blue)',
-    color: '#fff',
-    border: 'none',
-    padding: '12px 24px',
-    borderRadius: '4px',
-    fontSize: '14px',
-    fontWeight: 600,
-    cursor: 'pointer',
-    width: '100%',
-    transition: 'background-color 0.2s',
-  };
-
   return (
-    <div style={{ padding: '24px 16px' }}>
+    <div className="page-wrapper">
       <div style={cardStyle}>
-        <h2 style={{ color: 'var(--discord-text-header)', fontSize: '20px', marginBottom: '4px' }}>
-          外部連携設定
-        </h2>
-        <p style={{ color: 'var(--discord-text-muted)', fontSize: '14px', marginBottom: '24px' }}>
+        <h2 className="page-header-title page-header-title--md">外部連携設定</h2>
+        <p
+          className="page-header-subtitle"
+          style={{ fontSize: '14px', marginBottom: '24px' }}
+        >
           スプレッドシートのURLを同期します。
         </p>
 
@@ -68,10 +60,9 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
         <input style={inputStyle} value={castUrl} onChange={(e) => setCastUrl(e.target.value)} />
 
         <button
-          style={buttonStyle}
+          className="btn-primary"
+          style={{ width: '100%' }}
           onClick={() => onSuccess(userUrl, castUrl)}
-          onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#4752c4'; }}
-          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'var(--discord-accent-blue)'; }}
         >
           保存して同期を開始
         </button>
@@ -79,3 +70,4 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
     </div>
   );
 };
+

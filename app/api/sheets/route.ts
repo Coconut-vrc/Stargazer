@@ -49,6 +49,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
+    // シート一覧を取得
+    if (method === 'LIST_SHEETS') {
+      const res = await sheets.spreadsheets.get({
+        spreadsheetId,
+      });
+      const titles =
+        res.data.sheets
+          ?.map((s) => s.properties?.title)
+          .filter((t): t is string => !!t) ?? [];
+      return NextResponse.json({ sheets: titles });
+    }
+
     // データを更新
     if (method === 'UPDATE') {
       await sheets.spreadsheets.values.update({

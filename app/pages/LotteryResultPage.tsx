@@ -1,30 +1,75 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from '../stores/AppContext';
+import { SheetService } from '../infrastructures/googleSheets/sheet_service';
 
 export const LotteryResultPage: React.FC = () => {
-  const { currentWinners, setActivePage } = useAppContext();
+  const { currentWinners, setActivePage, repository } = useAppContext();
+  const [isExporting, setIsExporting] = useState(false);
+  const sheetService = new SheetService();
+
+  const handleExport = async () => {
+    if (currentWinners.length === 0) {
+      alert('当選者がいないため、エクスポートできません。');
+      return;
+    }
+
+    const userSheetUrl = repository.getUserSheetUrl();
+    if (!userSheetUrl) {
+      alert('応募者名簿のURLが設定されていません。先に「外部連携設定」で同期してください。');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mi = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+
+      const sheetName = `抽選結果_${yyyy}${mm}${dd}_${hh}${mi}${ss}`;
+
+      const header = [
+        'timestamp',
+        'name',
+        'x_id',
+        'first_flag',
+        '希望1',
+        '希望2',
+        '希望3',
+        'note',
+        'is_pair_ticket',
+      ];
+
+      const rows = currentWinners.map((user) => [
+        user.timestamp || '',
+        user.name || '',
+        user.x_id || '',
+        user.first_flag || '',
+        user.casts[0] || '',
+        user.casts[1] || '',
+        user.casts[2] || '',
+        user.note || '',
+        user.is_pair_ticket ? '1' : '0',
+      ]);
+
+      await sheetService.createSheetAndWriteData(userSheetUrl, sheetName, [header, ...rows]);
+      alert(`スプレッドシートに「${sheetName}」として保存しました。`);
+    } catch (e) {
+      console.error('抽選結果エクスポート失敗:', e);
+      alert('抽選結果のエクスポートに失敗しました。');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
-    <div className="fade-in" style={{ padding: '24px' }}>
-      <header style={{ marginBottom: '16px' }}>
-        <h1
-          style={{
-            color: 'var(--discord-text-header)',
-            fontSize: '24px',
-            fontWeight: 700,
-            marginBottom: '4px',
-          }}
-        >
-          マッチング構成確認
-        </h1>
-        <p
-          style={{
-            color: 'var(--discord-text-muted)',
-            fontSize: '14px',
-          }}
-        >
-          当選者と希望キャストを再度確認してください
-        </p>
+    <div className="fade-in page-wrapper">
+      <header className="page-header" style={{ marginBottom: '16px' }}>
+        <h1 className="page-header-title page-header-title--lg">マッチング構成確認</h1>
+        <p className="page-header-subtitle">当選者と希望キャストを再度確認してください</p>
       </header>
 
       <div
@@ -218,19 +263,47 @@ export const LotteryResultPage: React.FC = () => {
         </table>
       </div>
 
-      <div style={{ marginTop: '24px', textAlign: 'center' }}>
+      <div
+        style={{
+          marginTop: '24px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'stretch',
+          gap: '8px',
+          maxWidth: '480px',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+        }}
+      >
+        <button
+          onClick={handleExport}
+          style={{
+            padding: '10px 24px',
+            borderRadius: '4px',
+            backgroundColor: 'var(--discord-bg-secondary)',
+            color: 'var(--discord-text-normal)',
+            border: '1px solid var(--discord-border)',
+            fontWeight: 600,
+            fontSize: '14px',
+            cursor: isExporting || currentWinners.length === 0 ? 'not-allowed' : 'pointer',
+            opacity: isExporting || currentWinners.length === 0 ? 0.6 : 1,
+          }}
+          disabled={isExporting || currentWinners.length === 0}
+        >
+          {isExporting ? 'エクスポート中...' : '抽選結果をシートに保存'}
+        </button>
         <button
           onClick={() => setActivePage('matching')}
           style={{
-            minWidth: '220px',
-            padding: '12px 28px',
+            padding: '10px 24px',
             borderRadius: '4px',
             backgroundColor: 'var(--discord-accent-green)',
             color: '#fff',
             border: 'none',
             fontWeight: 600,
             fontSize: '15px',
-            cursor: 'pointer',
+            cursor: currentWinners.length === 0 ? 'not-allowed' : 'pointer',
+            opacity: currentWinners.length === 0 ? 0.6 : 1,
           }}
           disabled={currentWinners.length === 0}
         >

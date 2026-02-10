@@ -13,7 +13,7 @@ export interface MatchedCast {
 
 export class MatchingService {
   /**
-   * マッチング実行 (2ラウンド制)
+   * マッチング実行（ローテーション数可変）
    *
    * - ローテーションは「循環方式」：各ユーザーは基準となるテーブルから
    *   ラウンドごとに 1 テーブルずつずれていく
@@ -24,11 +24,13 @@ export class MatchingService {
    * @param winners 当選者リスト
    * @param allCasts 全キャストリスト
    * @param mode マッチング方式（循環 or ランダム）
+   * @param rotationCount ローテーション数（例: 2 or 3）
    */
   static runMatching(
     winners: UserBean[],
     allCasts: CastBean[],
     mode: MatchingMode,
+    rotationCount: number = 2,
   ): Map<string, MatchedCast[]> {
     const result = new Map<string, MatchedCast[]>();
 
@@ -40,8 +42,8 @@ export class MatchingService {
       return result;
     }
 
-    // ラウンド数（現状 2 固定）
-    const ROUNDS = 2;
+    // ローテーション数（最低1）
+    const ROUNDS = Math.max(1, rotationCount || 1);
 
     // ローテーションの起点を少しでもランダムにするため、キャスト配列自体をシャッフル
     const shuffledCasts = [...activeCasts].sort(() => Math.random() - 0.5);
@@ -84,23 +86,17 @@ export class MatchingService {
 
     if (mode === 'rotation') {
       // --- 「行全体が1つずつずれていく」循環ローテーション ---
-    //
-    // 前提:
-    // - winners の行順を「テーブル順」とみなし、Round2 以降は
-    //   Round1 のキャスト一覧が 1 行ずつ下にシフトしていく。
-    // - 1ラウンドあたり同一キャストは1人まで（＝Round1 の時点でキャストは重複しない）。
-    //
-    // 実装イメージ:
-    // - baseCasts: ローテーションの「第一ローテーション」の並び（シャッフルしてランダム性を付与）
-    // - offset: baseCasts をどこから開始するか（0〜baseCasts.length-1）を総当たりし、
-    //           「2ラウンド分の満足度合計」が高い offset ほど選ばれやすくする。
-    // - Round1: 行 i に baseCasts[(offset + i) % baseCasts.length]
-    // - Round2: 行 i に baseCasts[(offset + i - 1 + baseCasts.length) % baseCasts.length]
-    //
-    // これにより、行全体で見ると
-    //   第一ローテーション: A, B, C, ..., Z
-    //   第二ローテーション: Z, A, B, ..., Y
-    // のような「循環ローテーション」が保証される。
+      //
+      // 前提:
+      // - winners の行順を「テーブル順」とみなし、ローテーションごとに
+      //   キャストの並び全体が1つずつずれていく。
+      // - 1ローテーションあたり同一キャストは1人まで（＝最初のローテーション時点で重複しない）。
+      //
+      // 実装イメージ:
+      // - baseCasts: 「第1ローテーション」のキャスト並び（シャッフルしてランダム性を付与）
+      // - offset: baseCasts をどこから開始するか（0〜baseCasts.length-1）を総当たりし、
+      //           「全ローテーション分の満足度合計」が高い offset ほど選ばれやすくする。
+      // - rotation r（0 始まり）のとき 行 i には baseCasts[(offset + i - r + baseCasts.length) % baseCasts.length]
 
       const userCount = winners.length;
       const castCount = shuffledCasts.length;
@@ -119,25 +115,23 @@ export class MatchingService {
 
         for (let row = 0; row < usableCount; row++) {
           const user = winners[row];
-          const idxRound1 = (offset + row) % baseCasts.length;
-          const idxRound2 = (offset + row - 1 + baseCasts.length) % baseCasts.length;
 
-          const cast1 = baseCasts[idxRound1];
-          const cast2 = baseCasts[idxRound2];
+          for (let r = 0; r < ROUNDS; r++) {
+            const idx = (offset + row - r + baseCasts.length) % baseCasts.length;
+            const cast = baseCasts[idx];
 
-          // どちらかのラウンドでも NG ならこの offset は不適
-          if (isNg(user, cast1) || isNg(user, cast2)) {
-            valid = false;
-            break;
+            // いずれかのローテーションで NG があればこの offset は不適
+            if (isNg(user, cast)) {
+              valid = false;
+              break;
+            }
+
+            const prefRank = getPreferenceRank(user, cast.name);
+            const weight = rankWeights[prefRank] ?? defaultWeight;
+            totalScore += weight;
           }
 
-          const rank1 = getPreferenceRank(user, cast1.name);
-          const rank2 = getPreferenceRank(user, cast2.name);
-
-          const w1 = rankWeights[rank1] ?? defaultWeight;
-          const w2 = rankWeights[rank2] ?? defaultWeight;
-
-          totalScore += w1 + w2;
+          if (!valid) break;
         }
 
         if (valid) {
@@ -152,23 +146,13 @@ export class MatchingService {
           const user = winners[row];
           const history: MatchedCast[] = [];
 
-          const idxRound1 = row % baseCasts.length;
-          const idxRound2 = (row - 1 + baseCasts.length) % baseCasts.length;
-
-          const cast1 = baseCasts[idxRound1];
-          const cast2 = baseCasts[idxRound2];
-
-          const rank1 = isNg(user, cast1) ? 0 : getPreferenceRank(user, cast1.name);
-          const rank2 = isNg(user, cast2) ? 0 : getPreferenceRank(user, cast2.name);
-
-          history.push({
-            cast: cast1,
-            rank: rank1 >= 1 && rank1 <= 3 ? rank1 : 0,
-          });
-          history.push({
-            cast: cast2,
-            rank: rank2 >= 1 && rank2 <= 3 ? rank2 : 0,
-          });
+          for (let r = 0; r < ROUNDS; r++) {
+            const idx = (row - r + baseCasts.length) % baseCasts.length;
+            const cast = baseCasts[idx];
+            const prefRank = isNg(user, cast) ? 0 : getPreferenceRank(user, cast.name);
+            const rank = prefRank >= 1 && prefRank <= 3 ? prefRank : 0;
+            history.push({ cast, rank });
+          }
 
           result.set(user.x_id, history);
         }
@@ -183,23 +167,13 @@ export class MatchingService {
         const user = winners[row];
         const history: MatchedCast[] = [];
 
-        const idxRound1 = (chosenOffset + row) % baseCasts.length;
-        const idxRound2 = (chosenOffset + row - 1 + baseCasts.length) % baseCasts.length;
-
-        const cast1 = baseCasts[idxRound1];
-        const cast2 = baseCasts[idxRound2];
-
-        const rank1 = getPreferenceRank(user, cast1.name);
-        const rank2 = getPreferenceRank(user, cast2.name);
-
-        history.push({
-          cast: cast1,
-          rank: rank1 >= 1 && rank1 <= 3 ? rank1 : 0,
-        });
-        history.push({
-          cast: cast2,
-          rank: rank2 >= 1 && rank2 <= 3 ? rank2 : 0,
-        });
+        for (let r = 0; r < ROUNDS; r++) {
+          const idx = (chosenOffset + row - r + baseCasts.length) % baseCasts.length;
+          const cast = baseCasts[idx];
+          const prefRank = getPreferenceRank(user, cast.name);
+          const rank = prefRank >= 1 && prefRank <= 3 ? prefRank : 0;
+          history.push({ cast, rank });
+        }
 
         result.set(user.x_id, history);
       }

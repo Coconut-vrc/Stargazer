@@ -1,4 +1,4 @@
-/* app/pages/AppContainer.css */
+/* レイアウト系の共通スタイル（サイドバー・背景など） */
 
 .app-container {
   display: flex;
@@ -7,11 +7,61 @@
   position: relative;
   font-family: "gg sans", "Whitney", "Helvetica Neue", Helvetica, Arial, sans-serif;
   color: #dbdee1;
+  background: #0d0b1e;
+  overflow: hidden;
+  position: relative;
+}
+
+.app-container.theme-dark {
   background:
     radial-gradient(circle at 0% 0%, rgba(26, 10, 26, 1) 0%, transparent 50%),
     radial-gradient(circle at 100% 100%, rgba(5, 18, 27, 1) 0%, transparent 50%),
     #0d0b1e;
-  overflow: hidden;
+}
+
+.app-container.theme-shokomel {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #ffd7ec 0,
+      #ffd7ec 14px,
+      #ffe6f3 14px,
+      #ffe6f3 28px
+    );
+
+  /* override dark-theme tokens for Shokomel pastel theme */
+  --discord-bg-dark: rgba(255, 248, 252, 0.96);
+  --discord-bg-secondary: rgba(255, 255, 255, 0.94);
+  --discord-bg-sidebar: rgba(255, 255, 255, 0.9);
+  --discord-bg-hover: rgba(255, 255, 255, 0.85);
+  --discord-bg-alt: rgba(255, 230, 243, 0.6);
+
+  --discord-text-header: #5a2f73;
+  --discord-text-normal: #4a284f;
+  --discord-text-muted: rgba(74, 40, 79, 0.6);
+  --discord-text-link: #b25dd7;
+
+  --discord-accent-blue: #ff8fb8;
+  --discord-accent-green: #ffb4d1;
+  --discord-accent-yellow: #ffd38a;
+  --discord-accent-red: #ff6f91;
+
+  --discord-border: rgba(145, 86, 163, 0.28);
+  --discord-divider: rgba(145, 86, 163, 0.25);
+
+  --discord-button-primary: #ff8fb8;
+  --discord-button-primary-hover: #ff6f9f;
+  --discord-button-secondary: rgba(255, 255, 255, 0.85);
+  --discord-button-secondary-hover: rgba(255, 255, 255, 0.95);
+}
+
+.app-container.theme-shokomel .main-content {
+  background-color: rgba(255, 255, 255, 0.88);
+}
+
+.app-container.theme-shokomel .page-card-narrow {
+  background-color: rgba(255, 255, 255, 0.96);
+  border-color: rgba(145, 86, 163, 0.28);
 }
 
 .mobile-header {
@@ -21,7 +71,7 @@
   left: 0;
   right: 0;
   height: 60px;
-  background: rgba(17, 18, 20, 0.7);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(10px);
   z-index: 1000;
   padding: 0 20px;
@@ -84,6 +134,31 @@
   box-shadow: inset 4px 0 0 #5865f2;
 }
 
+.app-container.theme-shokomel .sidebar {
+  background: rgba(255, 255, 255, 0.9)!important;
+  border-right: 1px solid rgba(145, 86, 163, 0.25);
+}
+
+.app-container.theme-shokomel .sidebar-button {
+  color: #7a4b8a;
+}
+
+.app-container.theme-shokomel .sidebar-button.active {
+  background: rgba(255, 255, 255, 0.95);
+  color: #4a284f;
+  box-shadow: inset 4px 0 0 #ff8fb8;
+}
+
+.app-container.theme-shokomel .mobile-header {
+  background: rgba(255, 241, 247, 0.98);
+  border-bottom: 1px solid rgba(145, 86, 163, 0.25);
+}
+
+.app-container.theme-shokomel .menu-toggle {
+  background: #ff8fb8;
+  color: #ffffff;
+}
+
 .main-content {
   flex: 1;
   overflow-y: auto;
@@ -91,11 +166,11 @@
 }
 
 @media (max-width: 768px) {
- .mobile-header {
+  .mobile-header {
     display: flex;
   }
 
- .sidebar {
+  .sidebar {
     position: fixed;
     top: 60px;
     left: 0;
@@ -106,22 +181,23 @@
     border-right: 1px solid rgba(255, 255, 255, 0.1);
   }
 
- .sidebar.open {
+  .sidebar.open {
     transform: translateX(0);
   }
 
- .main-content {
+  .main-content {
     margin-top: 60px;
     height: calc(100vh - 60px);
     padding: 12px;
   }
 
   /* テーブルの改行を禁止して横スクロールを強制 */
-  table th, table td {
+  table th,
+  table td {
     white-space: nowrap;
   }
 
- .overlay {
+  .overlay {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
@@ -129,3 +205,5 @@
     z-index: 1500;
   }
 }
+
+
