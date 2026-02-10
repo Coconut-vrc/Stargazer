@@ -5,7 +5,8 @@ export async function POST(request: Request) {
   try {
     const { password } = await request.json();
 
-    const expectedPassword = process.env.CHOCOMELAPP_ADMIN_PASSWORD;
+    const rawExpected = process.env.CHOCOMELAPP_ADMIN_PASSWORD;
+    const expectedPassword = typeof rawExpected === 'string' ? rawExpected.trim() : '';
 
     // 環境変数が未設定の場合は常に失敗させる（安全側に倒す）
     if (!expectedPassword) {
@@ -16,8 +17,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // パスワードチェック
-    if (password === expectedPassword) {
+    // パスワードチェック（前後の空白は無視）
+    const inputPassword = typeof password === 'string' ? password.trim() : '';
+    if (inputPassword && inputPassword === expectedPassword) {
       const response = NextResponse.json({ success: true });
 
       // Cookieの設定 (HttpOnlyでセキュリティ確保)

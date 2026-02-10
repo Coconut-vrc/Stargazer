@@ -75,8 +75,12 @@ export const AppContainer: React.FC = () => {
     try {
       const res = await fetch('/api/auth/logout', { method: 'POST' });
       if (res.ok) {
+        // ログアウト直後にメモリ上のシートURL・名簿・キャストを必ずクリアする
+        repository.resetAll();
+        setCurrentWinners([]);
+        setMatchingMode('random');
+        setActivePage('import');
         setIsLoggedIn(false);
-        setActivePage('import'); // ログアウト後は初期ページへ
       }
     } catch (err) {
       alert('ログアウトに失敗したよ');
