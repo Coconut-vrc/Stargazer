@@ -1,7 +1,8 @@
 // app/pages/MatchingPage.tsx
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { toPng } from 'html-to-image';
 import { Repository, type UserBean, type MatchingMode, type BusinessMode } from '../stores/AppContext';
 import { MatchingService, MatchedCast } from '../features/matching/logics/matching_service';
 import { DiscordTable, DiscordTableColumn } from '../components/DiscordTable';
@@ -35,8 +36,12 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
 }) => {
   const [matchingResult, setMatchingResult] = useState<Map<string, MatchedCast[]>>(new Map());
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingPngUser, setIsExportingPngUser] = useState(false);
+  const [isExportingPngCast, setIsExportingPngCast] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const sheetService = useMemo(() => new SheetService(), []);
+  const userTableRef = useRef<HTMLDivElement>(null);
+  const castTableRef = useRef<HTMLDivElement>(null);
 
   // ページ表示時、または当選者が変わった時にマッチングを再計算
   useEffect(() => {
@@ -393,6 +398,60 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
     }
   }, [winners, matchingResult, repository, rotationCount, castViewRows, sheetService]);
 
+  const downloadPng = useCallback(
+    (node: HTMLElement, filename: string) => {
+      return toPng(node, {
+        backgroundColor: '#313338',
+        pixelRatio: 2,
+        cacheBust: true,
+      }).then((dataUrl) => {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = dataUrl;
+        link.click();
+      });
+    },
+    [],
+  );
+
+  const handleExportPngUser = useCallback(async () => {
+    if (!userTableRef.current || winners.length === 0 || matchingResult.size === 0) {
+      if (winners.length === 0 || matchingResult.size === 0) setAlertMessage('当選者またはマッチング結果がありません。');
+      return;
+    }
+    setIsExportingPngUser(true);
+    try {
+      const now = new Date();
+      const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+      await downloadPng(userTableRef.current, `マッチング結果_当選者別_${ts}.png`);
+      setAlertMessage('当選者別のPNGをダウンロードしました。');
+    } catch (e) {
+      console.error('PNG出力失敗:', e);
+      setAlertMessage('PNGの出力に失敗しました。');
+    } finally {
+      setIsExportingPngUser(false);
+    }
+  }, [winners.length, matchingResult.size, downloadPng]);
+
+  const handleExportPngCast = useCallback(async () => {
+    if (!castTableRef.current || winners.length === 0 || matchingResult.size === 0) {
+      if (winners.length === 0 || matchingResult.size === 0) setAlertMessage('当選者またはマッチング結果がありません。');
+      return;
+    }
+    setIsExportingPngCast(true);
+    try {
+      const now = new Date();
+      const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+      await downloadPng(castTableRef.current, `マッチング結果_キャスト別_${ts}.png`);
+      setAlertMessage('キャスト別のPNGをダウンロードしました。');
+    } catch (e) {
+      console.error('PNG出力失敗:', e);
+      setAlertMessage('PNGの出力に失敗しました。');
+    } finally {
+      setIsExportingPngCast(false);
+    }
+  }, [winners.length, matchingResult.size, downloadPng]);
+
   return (
     <div className="fade-in page-wrapper">
       <header className="page-header" style={{ marginBottom: '16px' }}>
@@ -408,9 +467,46 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
         style={{
           display: 'flex',
           justifyContent: 'flex-end',
+          gap: '10px',
           marginBottom: '12px',
         }}
       >
+        <button
+          type="button"
+          onClick={handleExportPngUser}
+          disabled={isExportingPngUser || winners.length === 0}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '4px',
+            border: '1px solid var(--discord-border)',
+            backgroundColor: 'var(--discord-bg-secondary)',
+            color: 'var(--discord-text-normal)',
+            fontSize: '13px',
+            fontWeight: 600,
+            cursor: isExportingPngUser || winners.length === 0 ? 'not-allowed' : 'pointer',
+            opacity: isExportingPngUser || winners.length === 0 ? 0.7 : 1,
+          }}
+        >
+          {isExportingPngUser ? '出力中...' : 'PNGで保存（当選者別）'}
+        </button>
+        <button
+          type="button"
+          onClick={handleExportPngCast}
+          disabled={isExportingPngCast || winners.length === 0}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '4px',
+            border: '1px solid var(--discord-border)',
+            backgroundColor: 'var(--discord-bg-secondary)',
+            color: 'var(--discord-text-normal)',
+            fontSize: '13px',
+            fontWeight: 600,
+            cursor: isExportingPngCast || winners.length === 0 ? 'not-allowed' : 'pointer',
+            opacity: isExportingPngCast || winners.length === 0 ? 0.7 : 1,
+          }}
+        >
+          {isExportingPngCast ? '出力中...' : 'PNGで保存（キャスト別）'}
+        </button>
         <button
           type="button"
           onClick={handleExport}
@@ -431,24 +527,29 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
         </button>
       </div>
 
-      <div className="table-container" style={{ marginBottom: '32px' }}>
-        <DiscordTable<UserBean>
-          columns={columns}
-          rows={winners}
-          containerStyle={undefined}
-          tableStyle={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            minWidth: '700px',
-          }}
-          headerRowStyle={{
-            backgroundColor: 'var(--discord-bg-secondary)',
-          }}
-          emptyRow={emptyRow}
-        />
+      <div
+        ref={userTableRef}
+        style={{ backgroundColor: 'var(--discord-bg-primary)', padding: '16px', borderRadius: '8px', marginBottom: '32px' }}
+      >
+        <div className="table-container">
+          <DiscordTable<UserBean>
+            columns={columns}
+            rows={winners}
+            containerStyle={undefined}
+            tableStyle={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              minWidth: '700px',
+            }}
+            headerRowStyle={{
+              backgroundColor: 'var(--discord-bg-secondary)',
+            }}
+            emptyRow={emptyRow}
+          />
+        </div>
       </div>
 
-      <section>
+      <section ref={castTableRef} style={{ backgroundColor: 'var(--discord-bg-primary)', padding: '16px', borderRadius: '8px' }}>
         <h2
           className="page-header-title page-header-title--md"
           style={{ marginBottom: '4px', fontSize: '18px' }}
