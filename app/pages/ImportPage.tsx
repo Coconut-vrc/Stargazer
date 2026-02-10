@@ -10,6 +10,30 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
   // RepositoryからURLを読み込んで初期値として設定
   const [userUrl, setUserUrl] = useState('');
   const [castUrl, setCastUrl] = useState('');
+  const [userUrlHistory, setUserUrlHistory] = useState<string[]>([]);
+  const [castUrlHistory, setCastUrlHistory] = useState<string[]>([]);
+
+  // localStorageからURL履歴を読み込む
+  useEffect(() => {
+    try {
+      const savedUserHistory = localStorage.getItem('chocomelapp_user_url_history');
+      const savedCastHistory = localStorage.getItem('chocomelapp_cast_url_history');
+      if (savedUserHistory) {
+        const parsed = JSON.parse(savedUserHistory);
+        if (Array.isArray(parsed)) {
+          setUserUrlHistory(parsed.slice(0, 3)); // 最大3件まで
+        }
+      }
+      if (savedCastHistory) {
+        const parsed = JSON.parse(savedCastHistory);
+        if (Array.isArray(parsed)) {
+          setCastUrlHistory(parsed.slice(0, 3)); // 最大3件まで
+        }
+      }
+    } catch (e) {
+      console.error('URL履歴の読み込みに失敗:', e);
+    }
+  }, []);
 
   // ページ表示時にRepositoryからURLを読み込む
   useEffect(() => {
@@ -18,6 +42,49 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
     if (savedUserUrl) setUserUrl(savedUserUrl);
     if (savedCastUrl) setCastUrl(savedCastUrl);
   }, [repository]);
+
+  // URL履歴をlocalStorageに保存する関数
+  const saveUrlToHistory = (url: string, type: 'user' | 'cast') => {
+    if (!url || !url.trim()) return;
+    
+    try {
+      const key = type === 'user' ? 'chocomelapp_user_url_history' : 'chocomelapp_cast_url_history';
+      
+      // localStorageから最新の履歴を取得（状態が古い可能性があるため）
+      const savedHistory = localStorage.getItem(key);
+      const currentHistory = savedHistory ? JSON.parse(savedHistory) : [];
+      if (!Array.isArray(currentHistory)) {
+        throw new Error('Invalid history format');
+      }
+      
+      // 既存の履歴から重複を除去し、新しいURLを先頭に追加
+      const updatedHistory = [
+        url.trim(),
+        ...currentHistory.filter((u: string) => u && u.trim() !== url.trim())
+      ].slice(0, 10); // 最大10件まで
+
+      localStorage.setItem(key, JSON.stringify(updatedHistory));
+      
+      if (type === 'user') {
+        setUserUrlHistory(updatedHistory);
+      } else {
+        setCastUrlHistory(updatedHistory);
+      }
+    } catch (e) {
+      console.error('URL履歴の保存に失敗:', e);
+    }
+  };
+
+  // 保存ボタンクリック時に履歴に追加
+  const handleSave = () => {
+    if (userUrl.trim()) {
+      saveUrlToHistory(userUrl, 'user');
+    }
+    if (castUrl.trim()) {
+      saveUrlToHistory(castUrl, 'cast');
+    }
+    onSuccess(userUrl, castUrl);
+  };
 
   const cardStyle: React.CSSProperties = {
     backgroundColor: 'var(--discord-bg-dark)',
@@ -86,15 +153,41 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
         </div>
 
         <label style={labelStyle}>応募者名簿 URL</label>
-        <input style={inputStyle} value={userUrl} onChange={(e) => setUserUrl(e.target.value)} />
+        <input
+          type="url"
+          list="user-url-list"
+          autoComplete="url"
+          style={inputStyle}
+          value={userUrl}
+          onChange={(e) => setUserUrl(e.target.value)}
+          placeholder="https://docs.google.com/spreadsheets/d/..."
+        />
+        <datalist id="user-url-list">
+          {userUrlHistory.map((url, idx) => (
+            <option key={idx} value={url} />
+          ))}
+        </datalist>
 
         <label style={labelStyle}>キャストリスト URL</label>
-        <input style={inputStyle} value={castUrl} onChange={(e) => setCastUrl(e.target.value)} />
+        <input
+          type="url"
+          list="cast-url-list"
+          autoComplete="url"
+          style={inputStyle}
+          value={castUrl}
+          onChange={(e) => setCastUrl(e.target.value)}
+          placeholder="https://docs.google.com/spreadsheets/d/..."
+        />
+        <datalist id="cast-url-list">
+          {castUrlHistory.map((url, idx) => (
+            <option key={idx} value={url} />
+          ))}
+        </datalist>
 
         <button
           className="btn-primary"
           style={{ width: '100%' }}
-          onClick={() => onSuccess(userUrl, castUrl)}
+          onClick={handleSave}
         >
           保存して同期を開始
         </button>

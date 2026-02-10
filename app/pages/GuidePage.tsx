@@ -58,9 +58,31 @@ export const GuidePage: React.FC = () => {
 
   return (
     <div className="page-wrapper" style={{ maxWidth: '1000px' }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .guide-section-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .guide-sample-preview {
+            transform: scale(1) !important;
+            transform-origin: top center !important;
+            margin-top: 20px;
+          }
+          .guide-flow-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+          .guide-mode-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .guide-header-flex {
+            flex-direction: column !important;
+            gap: 8px !important;
+          }
+        }
+      `}</style>
       {/* ヘッダー */}
       <header className="page-header" style={{ marginBottom: '32px', textAlign: 'center' }}>
-        <div style={{ 
+        <div className="guide-header-flex" style={{ 
           display: 'inline-flex', 
           alignItems: 'center', 
           gap: '12px',
@@ -106,7 +128,7 @@ export const GuidePage: React.FC = () => {
           border: '1px solid var(--discord-border)',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
-          <div style={{ 
+          <div className="guide-flow-grid" style={{ 
             display: 'grid', 
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '16px'
@@ -169,7 +191,7 @@ export const GuidePage: React.FC = () => {
             border: '1px solid var(--discord-border)',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+            <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
                 <h3 style={{ 
                   color: 'var(--discord-text-header)', 
@@ -204,7 +226,7 @@ export const GuidePage: React.FC = () => {
                   </ul>
                 </div>
               </div>
-              <div style={{ 
+              <div className="guide-sample-preview" style={{ 
                 backgroundColor: 'var(--discord-bg-dark)',
                 padding: '20px',
                 borderRadius: '8px',
@@ -327,7 +349,7 @@ export const GuidePage: React.FC = () => {
             border: '1px solid var(--discord-border)',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+            <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
                 <h3 style={{ 
                   color: 'var(--discord-text-header)', 
@@ -361,7 +383,7 @@ export const GuidePage: React.FC = () => {
                   </ul>
                 </div>
               </div>
-              <div style={{ 
+              <div className="guide-sample-preview" style={{ 
                 backgroundColor: 'var(--discord-bg-dark)',
                 padding: '16px',
                 borderRadius: '8px',
@@ -411,7 +433,7 @@ export const GuidePage: React.FC = () => {
             border: '1px solid var(--discord-border)',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+            <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
                 <h3 style={{ 
                   color: 'var(--discord-text-header)', 
@@ -446,7 +468,7 @@ export const GuidePage: React.FC = () => {
                   </ul>
                 </div>
               </div>
-              <div style={{ 
+              <div className="guide-sample-preview" style={{ 
                 backgroundColor: 'var(--discord-bg-dark)',
                 padding: '16px',
                 borderRadius: '8px',
@@ -524,7 +546,7 @@ export const GuidePage: React.FC = () => {
             border: '1px solid var(--discord-border)',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+            <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
                 <h3 style={{ 
                   color: 'var(--discord-text-header)', 
@@ -560,7 +582,7 @@ export const GuidePage: React.FC = () => {
                   </ul>
                 </div>
               </div>
-              <div style={{ 
+              <div className="guide-sample-preview" style={{ 
                 backgroundColor: 'var(--discord-bg-dark)',
                 padding: '20px',
                 borderRadius: '8px',
@@ -690,7 +712,7 @@ export const GuidePage: React.FC = () => {
             border: '1px solid var(--discord-border)',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+            <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
                 <h3 style={{ 
                   color: 'var(--discord-text-header)', 
@@ -724,7 +746,7 @@ export const GuidePage: React.FC = () => {
                   </ul>
                 </div>
               </div>
-              <div style={{ 
+              <div className="guide-sample-preview" style={{ 
                 backgroundColor: 'var(--discord-bg-dark)',
                 padding: '16px',
                 borderRadius: '8px',
@@ -803,7 +825,7 @@ export const GuidePage: React.FC = () => {
             border: '1px solid var(--discord-border)',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+            <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
                 <h3 style={{ 
                   color: 'var(--discord-text-header)', 
@@ -837,7 +859,7 @@ export const GuidePage: React.FC = () => {
                   </ul>
                 </div>
               </div>
-              <div style={{ 
+              <div className="guide-sample-preview" style={{ 
                 backgroundColor: 'var(--discord-bg-dark)',
                 padding: '16px',
                 borderRadius: '8px',
@@ -920,7 +942,7 @@ export const GuidePage: React.FC = () => {
           border: '1px solid var(--discord-border)',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div className="guide-mode-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             <div style={{
               backgroundColor: 'var(--discord-bg-dark)',
               padding: '20px',
@@ -1016,7 +1038,7 @@ export const GuidePage: React.FC = () => {
           border: '1px solid var(--discord-border)',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div className="guide-mode-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             <div style={{
               backgroundColor: 'var(--discord-bg-dark)',
               padding: '20px',
