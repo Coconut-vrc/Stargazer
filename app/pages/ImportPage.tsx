@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../stores/AppContext';
 
 interface ImportPageProps {
@@ -6,10 +6,18 @@ interface ImportPageProps {
 }
 
 export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
-  const { businessMode, setBusinessMode } = useAppContext();
-  // ログアウト時にクリアされるよう、初期値は空。URLは毎回入力または同期後にRepositoryに保持される
+  const { businessMode, setBusinessMode, repository } = useAppContext();
+  // RepositoryからURLを読み込んで初期値として設定
   const [userUrl, setUserUrl] = useState('');
   const [castUrl, setCastUrl] = useState('');
+
+  // ページ表示時にRepositoryからURLを読み込む
+  useEffect(() => {
+    const savedUserUrl = repository.getUserSheetUrl();
+    const savedCastUrl = repository.getCastSheetUrl();
+    if (savedUserUrl) setUserUrl(savedUserUrl);
+    if (savedCastUrl) setCastUrl(savedCastUrl);
+  }, [repository]);
 
   const cardStyle: React.CSSProperties = {
     backgroundColor: 'var(--discord-bg-dark)',
