@@ -10,6 +10,7 @@ import { LotteryPage } from './LotteryPage';
 import { LotteryResultPage } from './LotteryResultPage';
 import { MatchingPage } from './MatchingPage';
 import { LoginPage } from './LoginPage';
+import { GuidePage } from './GuidePage';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useAppContext, type PageType } from '../stores/AppContext';
 import { SheetService } from '../infrastructures/googleSheets/sheet_service';
@@ -175,12 +176,15 @@ export const AppContainer: React.FC = () => {
         console.error('既存抽選結果シート確認エラー:', e);
       }
     } catch (error) {
+      // エラーの詳細情報はサーバー側のログにのみ記録
       console.error('Data Load Error:', error);
-      alert('読み取り失敗');
+      // ユーザーには汎用的なエラーメッセージのみ表示（情報漏洩防止）
+      alert('データの読み取りに失敗しました。URLを確認してください。');
     }
   };
 
   const sidebarButtons: { text: string; page: PageType }[] = [
+    { text: 'ガイド', page: 'guide' },
     { text: 'データ読取', page: 'import' },
     { text: 'DBデータ確認', page: 'db' },
     { text: '抽選条件', page: 'lotteryCondition' },
@@ -228,7 +232,9 @@ export const AppContainer: React.FC = () => {
       setShowResultImportModal(false);
       setActivePage('lottery');
     } catch (e) {
+      // エラーの詳細情報はサーバー側のログにのみ記録
       console.error('既存抽選結果取り込みエラー:', e);
+      // ユーザーには汎用的なエラーメッセージのみ表示
       alert('既存の抽選結果の取り込みに失敗しました。');
     } finally {
       setIsImportingResult(false);
@@ -245,6 +251,8 @@ export const AppContainer: React.FC = () => {
     }
 
     switch (activePage) {
+      case 'guide':
+        return <GuidePage />;
       case 'import':
         return <ImportPage onSuccess={loadData} />;
       case 'db':

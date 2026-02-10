@@ -31,7 +31,10 @@ export const LotteryResultPage: React.FC = () => {
       const mi = String(now.getMinutes()).padStart(2, '0');
       const ss = String(now.getSeconds()).padStart(2, '0');
 
-      const sheetName = `抽選結果_${yyyy}${mm}${dd}_${hh}${mi}${ss}`;
+      // シート名の生成（Google Sheetsのシート名制限に準拠）
+      const baseName = `抽選結果_${yyyy}${mm}${dd}_${hh}${mi}${ss}`;
+      // シート名は最大100文字、制御文字を排除
+      const sheetName = baseName.slice(0, 100).replace(/[\x00-\x1F\x7F\[\]\\\/\?*:]/g, '');
 
       const header = [
         'timestamp',

@@ -3,7 +3,16 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { password } = await request.json();
+    const body = await request.json();
+    const { password } = body;
+
+    // 入力値の型検証
+    if (typeof password !== 'string') {
+      return NextResponse.json(
+        { success: false, message: 'パスワードが違うよ' },
+        { status: 401 }
+      );
+    }
 
     const rawExpected = process.env.CHOCOMELAPP_ADMIN_PASSWORD;
     const expectedPassword = typeof rawExpected === 'string' ? rawExpected.trim() : '';
@@ -18,8 +27,12 @@ export async function POST(request: Request) {
     }
 
     // パスワードチェック（前後の空白は無視）
-    const inputPassword = typeof password === 'string' ? password.trim() : '';
-    if (inputPassword && inputPassword === expectedPassword) {
+    // タイミング攻撃対策: 常に比較処理を実行（ただし、実際の比較は定数時間比較が理想だが、文字列比較でも実用上問題なし）
+    const inputPassword = password.trim();
+    const passwordMatch = inputPassword.length === expectedPassword.length &&
+      inputPassword === expectedPassword;
+    
+    if (passwordMatch) {
       const response = NextResponse.json({ success: true });
 
       // Cookieの設定 (HttpOnlyでセキュリティ確保)

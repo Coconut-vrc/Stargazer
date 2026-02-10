@@ -1,8 +1,30 @@
 // F:\DEVELOPFOLDER\dev-core\app\infrastructures\googleSheets\sheet_service.ts
 export class SheetService {
+  /**
+   * Google SheetsのURLからspreadsheetIdを抽出
+   * セキュリティ: URLの形式を検証してからIDを抽出
+   */
   private extractId(url: string): string {
-    const match = url.match(/\/d\/([^/]+)/);
-    return match ? match[1] : url;
+    if (!url || typeof url !== 'string') {
+      throw new Error('Invalid URL format');
+    }
+
+    // Google Sheets URLの形式を検証
+    // https://docs.google.com/spreadsheets/d/{ID}/edit または {ID}のみ
+    const urlPattern = /\/d\/([a-zA-Z0-9_-]{20,60})/;
+    const match = url.match(urlPattern);
+    
+    if (match && match[1]) {
+      return match[1];
+    }
+
+    // URL形式でない場合は、直接IDとして扱う（ただし形式検証）
+    const idPattern = /^[a-zA-Z0-9_-]{20,60}$/;
+    if (idPattern.test(url.trim())) {
+      return url.trim();
+    }
+
+    throw new Error('Invalid spreadsheet URL or ID format');
   }
 
   async fetchSheetData(url: string, range: string): Promise<any[]> {
