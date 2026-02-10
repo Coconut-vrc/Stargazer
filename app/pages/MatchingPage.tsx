@@ -390,7 +390,6 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
             cacheBust: true,
             width: scrollWidth,
             height: scrollHeight,
-            useCORS: true,
           })
             .then((dataUrl) => {
               // スタイルを元に戻す
