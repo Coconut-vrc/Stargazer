@@ -5,12 +5,9 @@ interface ImportPageProps {
 }
 
 export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
-  const [userUrl, setUserUrl] = useState(
-    'https://docs.google.com/spreadsheets/d/1-1bz7LuxCPADoWCEj24TL6QmOMPzvhmUeUtCiZLp2jo/edit',
-  );
-  const [castUrl, setCastUrl] = useState(
-    'https://docs.google.com/spreadsheets/d/1rc_QdWi805TaZ_2e8uV_odpc4DRQNVnC5ET6W63LzPw/edit',
-  );
+  // ログアウト時にクリアされるよう、初期値は空。URLは毎回入力または同期後にRepositoryに保持される
+  const [userUrl, setUserUrl] = useState('');
+  const [castUrl, setCastUrl] = useState('');
 
   const cardStyle: React.CSSProperties = {
     backgroundColor: 'var(--discord-bg-dark)',

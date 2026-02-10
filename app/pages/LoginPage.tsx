@@ -6,6 +6,7 @@ export const LoginPage: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuc
   const [error, setError] = useState('');
 
   const handleLogin = async () => {
+    setError('');
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -15,7 +16,9 @@ export const LoginPage: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuc
     if (res.ok) {
       onLoginSuccess();
     } else {
-      setError('パスワードが間違っています');
+      const data = await res.json().catch(() => ({}));
+      const message = typeof data?.message === 'string' ? data.message : 'パスワードが間違っています';
+      setError(message);
     }
   };
 
