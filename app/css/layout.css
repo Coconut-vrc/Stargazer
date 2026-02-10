@@ -192,7 +192,7 @@
   .main-content {
     margin-top: 60px;
     height: calc(100vh - 60px);
-    padding: 12px;
+    padding: 16px;
   }
 
   /* テーブルの改行を禁止して横スクロールを強制 */

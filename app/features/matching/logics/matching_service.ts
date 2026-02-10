@@ -223,6 +223,9 @@ export class MatchingService {
         if (user.casts && user.casts.length > 0) {
           for (let i = 0; i < Math.min(3, user.casts.length); i++) {
             const wantedName = user.casts[i];
+            // 空文字列はスキップ
+            if (!wantedName || wantedName.trim() === '') continue;
+            
             const cast = availableThisRound.find(
               (c) =>
                 c.name === wantedName &&

@@ -74,188 +74,40 @@ export const LotteryResultPage: React.FC = () => {
         <p className="page-header-subtitle">当選者と希望キャストを再度確認してください</p>
       </header>
 
-      <div
-        style={{
-          backgroundColor: 'var(--discord-bg-dark)',
-          borderRadius: '8px',
-          border: '1px solid var(--discord-border)',
-          overflowX: 'auto',
-        }}
-      >
-        <table
-          style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            minWidth: '800px',
-          }}
-        >
+      <div className="table-container">
+        <table style={{ minWidth: '800px' }}>
           <thead>
             <tr style={{ backgroundColor: 'var(--discord-bg-secondary)' }}>
-              <th
-                style={{
-                  padding: '12px 16px',
-                  textAlign: 'left',
-                  color: 'var(--discord-text-muted)',
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                  width: '60px',
-                }}
-              >
-                #
-              </th>
-              <th
-                style={{
-                  padding: '12px 16px',
-                  textAlign: 'left',
-                  color: 'var(--discord-text-muted)',
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                }}
-              >
-                ユーザー
-              </th>
-              <th
-                style={{
-                  padding: '12px 16px',
-                  textAlign: 'left',
-                  color: 'var(--discord-text-muted)',
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                }}
-              >
-                X ID
-              </th>
-              <th
-                style={{
-                  padding: '12px 16px',
-                  textAlign: 'left',
-                  color: 'var(--discord-text-muted)',
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                }}
-              >
-                希望1
-              </th>
-              <th
-                style={{
-                  padding: '12px 16px',
-                  textAlign: 'left',
-                  color: 'var(--discord-text-muted)',
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                }}
-              >
-                希望2
-              </th>
-              <th
-                style={{
-                  padding: '12px 16px',
-                  textAlign: 'left',
-                  color: 'var(--discord-text-muted)',
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                }}
-              >
-                希望3
-              </th>
-              <th
-                style={{
-                  padding: '12px 16px',
-                  textAlign: 'left',
-                  color: 'var(--discord-text-muted)',
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                }}
-              >
-                備考
-              </th>
+              <th className="table-header-cell" style={{ width: '60px' }}>#</th>
+              <th className="table-header-cell">ユーザー</th>
+              <th className="table-header-cell">X ID</th>
+              <th className="table-header-cell">希望1</th>
+              <th className="table-header-cell">希望2</th>
+              <th className="table-header-cell">希望3</th>
+              <th className="table-header-cell">備考</th>
             </tr>
           </thead>
           <tbody>
             {currentWinners.length === 0 ? (
               <tr>
-                <td
-                  colSpan={7}
-                  style={{
-                    padding: '32px',
-                    textAlign: 'center',
-                    color: 'var(--discord-text-muted)',
-                  }}
-                >
+                <td colSpan={7} className="table-cell" style={{ padding: '32px', textAlign: 'center', color: 'var(--discord-text-muted)' }}>
                   まだ抽選が行われていません。左メニューの「抽選条件」から抽選を実行してください。
                 </td>
               </tr>
             ) : (
               currentWinners.map((user, index) => (
                 <tr key={user.x_id || index}>
-                  <td
-                    style={{
-                      padding: '10px 16px',
-                      fontSize: '12px',
-                      color: 'var(--discord-text-muted)',
-                      borderBottom: '1px solid var(--discord-border)',
-                    }}
-                  >
+                  <td className="table-cell" style={{ fontSize: '12px', color: 'var(--discord-text-muted)' }}>
                     #{index + 1}
                   </td>
-                  <td
-                    style={{
-                      padding: '10px 16px',
-                      fontSize: '14px',
-                      color: 'var(--discord-text-normal)',
-                      borderBottom: '1px solid var(--discord-border)',
-                    }}
-                  >
-                    {user.name}
-                  </td>
-                  <td
-                    style={{
-                      padding: '10px 16px',
-                      fontSize: '13px',
-                      color: 'var(--discord-text-link)',
-                      borderBottom: '1px solid var(--discord-border)',
-                    }}
-                  >
+                  <td className="table-cell" style={{ fontSize: '14px' }}>{user.name}</td>
+                  <td className="table-cell" style={{ fontSize: '13px', color: 'var(--discord-text-link)' }}>
                     @{user.x_id}
                   </td>
-                  <td
-                    style={{
-                      padding: '10px 16px',
-                      fontSize: '13px',
-                      color: 'var(--discord-text-normal)',
-                      borderBottom: '1px solid var(--discord-border)',
-                    }}
-                  >
-                    {user.casts[0] || '—'}
-                  </td>
-                  <td
-                    style={{
-                      padding: '10px 16px',
-                      fontSize: '13px',
-                      color: 'var(--discord-text-normal)',
-                      borderBottom: '1px solid var(--discord-border)',
-                    }}
-                  >
-                    {user.casts[1] || '—'}
-                  </td>
-                  <td
-                    style={{
-                      padding: '10px 16px',
-                      fontSize: '13px',
-                      color: 'var(--discord-text-normal)',
-                      borderBottom: '1px solid var(--discord-border)',
-                    }}
-                  >
-                    {user.casts[2] || '—'}
-                  </td>
-                  <td
-                    style={{
-                      padding: '10px 16px',
-                      fontSize: '12px',
-                      color: 'var(--discord-text-muted)',
-                      borderBottom: '1px solid var(--discord-border)',
-                    }}
-                  >
+                  <td className="table-cell" style={{ fontSize: '13px' }}>{user.casts[0] || '—'}</td>
+                  <td className="table-cell" style={{ fontSize: '13px' }}>{user.casts[1] || '—'}</td>
+                  <td className="table-cell" style={{ fontSize: '13px' }}>{user.casts[2] || '—'}</td>
+                  <td className="table-cell" style={{ fontSize: '12px', color: 'var(--discord-text-muted)' }}>
                     {user.note || '—'}
                   </td>
                 </tr>

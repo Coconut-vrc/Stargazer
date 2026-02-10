@@ -67,99 +67,38 @@ export const LotteryPage: React.FC = () => {
     <div className="page-wrapper">
       <div className="page-card-narrow">
         <h1 className="page-header-title page-header-title--sm">抽選条件</h1>
-        <p
-          className="page-header-subtitle"
-          style={{
-            fontSize: '12px',
-            marginBottom: '20px',
-          }}
-        >
+        <p className="page-header-subtitle" style={{ fontSize: '12px', marginBottom: '20px' }}>
           営業モードと抽選条件を選択してください
         </p>
 
-        <div
-          style={{
-            marginBottom: '18px',
-            display: 'flex',
-            gap: '8px',
-          }}
-        >
-            <button
-              type="button"
-              onClick={() => setBusinessMode('special')}
-              style={{
-                flex: 1,
-                padding: '8px 10px',
-                borderRadius: '6px',
-                border:
-                  businessMode === 'special'
-                    ? '1px solid var(--discord-accent-blue)'
-                    : '1px solid var(--discord-border)',
-                backgroundColor:
-                  businessMode === 'special'
-                    ? 'var(--discord-accent-blue)'
-                    : 'var(--discord-bg-secondary)',
-                color: businessMode === 'special' ? '#fff' : 'var(--discord-text-normal)',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              特殊営業（完全リクイン制）
-            </button>
-            <button
-              type="button"
-              onClick={() => setBusinessMode('normal')}
-              style={{
-                flex: 1,
-                padding: '8px 10px',
-                borderRadius: '6px',
-                border:
-                  businessMode === 'normal'
-                    ? '1px solid var(--discord-accent-blue)'
-                    : '1px solid var(--discord-border)',
-                backgroundColor:
-                  businessMode === 'normal'
-                    ? 'var(--discord-accent-blue)'
-                    : 'var(--discord-bg-secondary)',
-                color: businessMode === 'normal' ? '#fff' : 'var(--discord-text-normal)',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              通常営業
-            </button>
+        <div className="btn-toggle-group" style={{ marginBottom: '18px' }}>
+          <button
+            type="button"
+            onClick={() => setBusinessMode('special')}
+            className={`btn-toggle ${businessMode === 'special' ? 'active' : ''}`}
+          >
+            特殊営業（完全リクイン制）
+          </button>
+          <button
+            type="button"
+            onClick={() => setBusinessMode('normal')}
+            className={`btn-toggle ${businessMode === 'normal' ? 'active' : ''}`}
+          >
+            通常営業
+          </button>
         </div>
 
         <div className="form-group">
           <label className="form-label">
             {businessMode === 'special' ? '当選人数' : '当選者数'}
           </label>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-            }}
-          >
+          <div className="form-inline-group">
             <input
               type="number"
               value={count}
               min={1}
               onChange={(e) => setCount(Number(e.target.value))}
-              style={{
-                width: '90px',
-                backgroundColor: 'var(--discord-bg-sidebar)',
-                border: '1px solid var(--discord-border)',
-                padding: '10px 12px',
-                borderRadius: '6px',
-                color: 'var(--discord-text-normal)',
-                fontSize: '18px',
-                textAlign: 'center',
-                outline: 'none',
-                boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.4)',
-              }}
+              className="form-number-input"
             />
             {businessMode === 'special' && (
               <span className="form-inline-note">※ 抽選で選ぶ最大人数</span>
@@ -170,124 +109,46 @@ export const LotteryPage: React.FC = () => {
         {businessMode === 'normal' && (
           <div className="form-group">
             <label className="form-label">総テーブル数</label>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
+            <div className="form-inline-group">
               <input
                 type="number"
                 value={totalTables}
                 min={count}
                 onChange={(e) => setTotalTables(Number(e.target.value))}
-                style={{
-                  width: '90px',
-                  backgroundColor: 'var(--discord-bg-sidebar)',
-                  border: '1px solid var(--discord-border)',
-                  padding: '10px 12px',
-                  borderRadius: '6px',
-                  color: 'var(--discord-text-normal)',
-                  fontSize: '18px',
-                  textAlign: 'center',
-                  outline: 'none',
-                  boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.4)',
-                }}
+                className="form-number-input"
               />
               <span className="form-inline-note">※ 当選者を含む、用意済みテーブルの総数</span>
             </div>
           </div>
         )}
 
-        <div style={{ marginBottom: '26px' }}>
+        <div className="form-group" style={{ marginBottom: '26px' }}>
           <label className="form-label">マッチング方式</label>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-            }}
-          >
-              <button
-                type="button"
-                onClick={() => setMatchingMode('random')}
-                style={{
-                  width: '100%',
-                  borderRadius: '6px',
-                  padding: '10px 12px',
-                  cursor: 'pointer',
-                  backgroundColor:
-                    matchingMode === 'random'
-                      ? 'var(--discord-accent-blue)'
-                      : 'var(--discord-bg-sidebar)',
-                  border: matchingMode === 'random'
-                    ? '1px solid var(--discord-accent-blue)'
-                    : '1px solid var(--discord-border)',
-                  color: matchingMode === 'random' ? '#fff' : 'var(--discord-text-normal)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  fontSize: '12px',
-                  fontWeight: matchingMode === 'random' ? 600 : 500,
-                  transition:
-                    'background-color 0.12s ease-out, color 0.12s ease-out, border-color 0.12s ease-out',
-                }}
-              >
-                <span>ランダムマッチング（希望優先）</span>
-                <span
-                  style={{
-                    fontSize: '10px',
-                    opacity: matchingMode === 'random' ? 1 : 0.6,
-                  }}
-                >
-                  {matchingMode === 'random' ? '選択中' : 'クリックして選択'}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setMatchingMode('rotation')}
-                style={{
-                  width: '100%',
-                  borderRadius: '6px',
-                  padding: '10px 12px',
-                  cursor: 'pointer',
-                  backgroundColor:
-                    matchingMode === 'rotation'
-                      ? 'var(--discord-accent-blue)'
-                      : 'var(--discord-bg-sidebar)',
-                  border: matchingMode === 'rotation'
-                    ? '1px solid var(--discord-accent-blue)'
-                    : '1px solid var(--discord-border)',
-                  color:
-                    matchingMode === 'rotation' ? '#fff' : 'var(--discord-text-normal)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  fontSize: '12px',
-                  fontWeight: matchingMode === 'rotation' ? 600 : 500,
-                  transition:
-                    'background-color 0.12s ease-out, color 0.12s ease-out, border-color 0.12s ease-out',
-                }}
-              >
-                <span>循環方式マッチング（ローテーション）</span>
-                <span
-                  style={{
-                    fontSize: '10px',
-                    opacity: matchingMode === 'rotation' ? 1 : 0.6,
-                  }}
-                >
-                  {matchingMode === 'rotation' ? '選択中' : 'クリックして選択'}
-                </span>
-              </button>
-            </div>
+          <div className="btn-option-group">
+            <button
+              type="button"
+              onClick={() => setMatchingMode('random')}
+              className={`btn-option ${matchingMode === 'random' ? 'active' : ''}`}
+            >
+              <span>ランダムマッチング（希望優先）</span>
+              <span className="btn-option-status">
+                {matchingMode === 'random' ? '選択中' : 'クリックして選択'}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMatchingMode('rotation')}
+              className={`btn-option ${matchingMode === 'rotation' ? 'active' : ''}`}
+            >
+              <span>循環方式マッチング（ローテーション）</span>
+              <span className="btn-option-status">
+                {matchingMode === 'rotation' ? '選択中' : 'クリックして選択'}
+              </span>
+            </button>
           </div>
+        </div>
 
-        <button
-          onClick={run}
-          className="btn-primary"
-          style={{ width: '100%', marginTop: '4px' }}
-        >
+        <button onClick={run} className="btn-primary" style={{ width: '100%', marginTop: '4px' }}>
           抽選を開始する
         </button>
       </div>

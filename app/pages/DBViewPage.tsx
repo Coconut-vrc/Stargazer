@@ -140,14 +140,7 @@ const DBViewPageComponent: React.FC = () => {
 
   return (
     <div className="page-wrapper">
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px',
-        }}
-      >
+      <div className="page-header-row">
         <h1 className="page-header-title page-header-title--md">名簿データベース</h1>
         <button
           onClick={() => setActivePage('lotteryCondition')}
@@ -165,13 +158,7 @@ const DBViewPageComponent: React.FC = () => {
         </button>
       </div>
 
-      <div style={{ 
-        backgroundColor: 'var(--discord-bg-dark)', 
-        borderRadius: '8px', 
-        overflowX: 'auto', // 横スクロール追加
-        WebkitOverflowScrolling: 'touch',
-        border: '1px solid var(--discord-border)',
-      }}>
+      <div className="table-container">
         <DiscordTable
           columns={columns}
           rows={userData}

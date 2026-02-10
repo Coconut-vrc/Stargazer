@@ -140,56 +140,19 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
     await syncToSheet(cast.name, 'B', sheetValue);
   };
 
-  const commonInputStyle: React.CSSProperties = {
-    backgroundColor: 'var(--discord-bg-dark)',
-    border: '1px solid var(--discord-border)',
-    color: 'var(--discord-text-normal)',
-    padding: '10px 12px',
-    borderRadius: '4px',
-    fontSize: '14px',
-    outline: 'none',
-    width: '100%',
-    boxSizing: 'border-box'
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: '12px',
-    color: 'var(--discord-text-muted)',
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    marginBottom: '8px'
-  };
-
   const presentCount = casts.filter((c) => c.is_present).length;
   const totalCount = casts.length;
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-      <header style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-          <h1 style={{ color: 'var(--discord-text-header)', fontSize: '24px', margin: 0, fontWeight: 700 }}>
-            キャスト・NG管理
-          </h1>
-          <div
-            style={{
-              backgroundColor: 'var(--discord-bg-secondary)',
-              padding: '12px 20px',
-              borderRadius: '6px',
-              border: '1px solid var(--discord-border)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px',
-              alignItems: 'flex-end',
-            }}
-          >
-            <div style={{ fontSize: '11px', color: 'var(--discord-text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
-              出席状況
-            </div>
-            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--discord-text-normal)' }}>
-              <span style={{ color: 'var(--discord-accent-green)' }}>{presentCount}</span>
-              <span style={{ fontSize: '14px', color: 'var(--discord-text-muted)', fontWeight: 500, marginLeft: '4px' }}>
-                / {totalCount}
-              </span>
+    <div className="page-wrapper" style={{ maxWidth: '1200px' }}>
+      <header className="page-header">
+        <div className="page-header-row page-header-row--flex-start">
+          <h1 className="page-header-title page-header-title--lg">キャスト・NG管理</h1>
+          <div className="status-card">
+            <div className="status-card__label">出席状況</div>
+            <div className="status-card__value">
+              <span className="status-card__value-accent">{presentCount}</span>
+              <span className="status-card__value-suffix">/ {totalCount}</span>
             </div>
           </div>
         </div>
@@ -197,84 +160,39 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
         {/* キャスト新規登録フォーム */}
-        <div style={{
-          backgroundColor: 'var(--discord-bg-secondary)',
-          padding: '20px',
-          borderRadius: '8px',
-          border: '1px solid var(--discord-border)',
-          display: 'flex',
-          gap: '16px',
-          alignItems: 'flex-end'
-        }}>
+        <div className="form-card form-card--flex-row">
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-            <label style={labelStyle}>キャストを新規登録</label>
+            <label className="form-label">キャストを新規登録</label>
             <input
               placeholder="キャスト名を入力..."
-              style={commonInputStyle}
+              className="form-input"
               value={inputCastName}
               onChange={(e) => setInputCastName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddCast()}
             />
           </div>
-          <button
-            onClick={handleAddCast}
-            style={{
-              backgroundColor: 'var(--discord-accent-green)',
-              color: '#fff',
-              border: 'none',
-              padding: '0 24px',
-              borderRadius: '4px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              height: '40px'
-            }}
-          >
+          <button onClick={handleAddCast} className="btn-success" style={{ height: '40px', padding: '0 24px' }}>
             登録
           </button>
         </div>
 
         {/* NGユーザー登録フォーム */}
-        <div style={{
-          backgroundColor: 'var(--discord-bg-secondary)',
-          padding: '20px',
-          borderRadius: '8px',
-          border: '1px solid var(--discord-border)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
-          position: 'relative',
-          zIndex: 100
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative' }} ref={dropdownRef}>
-            <label style={labelStyle}>対象キャスト</label>
+        <div className="form-card form-card--flex-col" style={{ position: 'relative', zIndex: 100 }}>
+          <div className="dropdown" style={{ display: 'flex', flexDirection: 'column', flex: 1 }} ref={dropdownRef}>
+            <label className="form-label">対象キャスト</label>
             <div
-              style={{ ...commonInputStyle, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              className="form-input dropdown-toggle"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
               <span>{selectedCastName || '選択中...'}</span>
               <span style={{ fontSize: '10px' }}>▼</span>
             </div>
             {isDropdownOpen && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                right: 0,
-                marginTop: '4px',
-                backgroundColor: 'var(--discord-bg-dark)',
-                border: '1px solid var(--discord-border)',
-                borderRadius: '4px',
-                zIndex: 9999,
-                maxHeight: '200px',
-                overflowY: 'auto',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.15)'
-              }}>
+              <div className="dropdown-menu">
                 {casts.map(c => (
                   <div
                     key={c.name}
-                    style={{ padding: '10px 12px', cursor: 'pointer', fontSize: '14px', color: 'var(--discord-text-normal)' }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--discord-bg-hover)'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    className="dropdown-item"
                     onClick={() => {
                       setSelectedCastName(c.name);
                       setIsDropdownOpen(false);
@@ -288,10 +206,10 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', flex: 2 }}>
-            <label style={labelStyle}>NGユーザーを追加</label>
+            <label className="form-label">NGユーザーを追加</label>
             <input
               placeholder="ユーザー名を入力..."
-              style={commonInputStyle}
+              className="form-input"
               value={inputNgName}
               onChange={(e) => setInputNgName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddNg()}
@@ -299,20 +217,7 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              onClick={handleAddNg}
-              style={{
-                backgroundColor: 'var(--discord-accent-blue)',
-                color: '#fff',
-                border: 'none',
-                padding: '10px 24px',
-                borderRadius: '4px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                height: '40px',
-                minWidth: '96px',
-              }}
-            >
+            <button onClick={handleAddNg} className="btn-primary" style={{ height: '40px', minWidth: '96px' }}>
               追加
             </button>
           </div>

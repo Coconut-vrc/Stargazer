@@ -428,15 +428,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
         </button>
       </div>
 
-      <div
-        style={{
-          backgroundColor: 'var(--discord-bg-dark)',
-          borderRadius: '8px',
-          border: '1px solid var(--discord-border)',
-          overflow: 'hidden',
-          marginBottom: '32px',
-        }}
-      >
+      <div className="table-container" style={{ marginBottom: '32px' }}>
         <DiscordTable<UserBean>
           columns={columns}
           rows={winners}
@@ -444,6 +436,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
           tableStyle={{
             width: '100%',
             borderCollapse: 'collapse',
+            minWidth: '700px',
           }}
           headerRowStyle={{
             backgroundColor: 'var(--discord-bg-secondary)',
@@ -466,14 +459,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
           各キャストが各ローテーションで接客するユーザーの一覧です。
         </p>
 
-        <div
-          style={{
-            backgroundColor: 'var(--discord-bg-dark)',
-            borderRadius: '8px',
-            border: '1px solid var(--discord-border)',
-            overflow: 'hidden',
-          }}
-        >
+        <div className="table-container">
           <DiscordTable<CastViewRow>
             columns={castColumns}
             rows={castViewRows}
@@ -481,6 +467,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
             tableStyle={{
               width: '100%',
               borderCollapse: 'collapse',
+              minWidth: '600px',
             }}
             headerRowStyle={{
               backgroundColor: 'var(--discord-bg-secondary)',

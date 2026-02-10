@@ -14,6 +14,7 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useAppContext, type PageType } from '../stores/AppContext';
 import { SheetService } from '../infrastructures/googleSheets/sheet_service';
 import '../css/layout.css';
+import '../common.css';
 
 export const AppContainer: React.FC = () => {
   const {
@@ -27,6 +28,7 @@ export const AppContainer: React.FC = () => {
     themeMode,
     setThemeMode,
     businessMode,
+    setBusinessMode,
   } = useAppContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
@@ -87,19 +89,62 @@ export const AppContainer: React.FC = () => {
     }
   };
 
+  /**
+   * 希望キャストをパースする（営業モードに応じて）
+   * - 特殊営業: E列、F列、G列からそれぞれ1つずつ読み込む
+   * - 通常営業: E列にカンマ区切りで1~3名の希望が入っている
+   * - 常に3要素の配列を返す（不足分は空文字列で埋める）
+   */
+  const parseCastsFromRow = (row: any[], mode: 'special' | 'normal'): string[] => {
+    let parsed: string[];
+    
+    if (mode === 'normal') {
+      // 通常営業: E列（row[4]）にカンマ区切りで希望が入っている
+      const eColumn = (row[4] || '').toString().trim();
+      if (!eColumn) {
+        parsed = [];
+      } else {
+        // カンマで分割し、空白を除去、最大3名まで
+        parsed = eColumn
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+          .slice(0, 3);
+        // 重複除去
+        parsed = Array.from(new Set(parsed));
+      }
+    } else {
+      // 特殊営業: E列、F列、G列からそれぞれ1つずつ
+      parsed = [row[4], row[5], row[6]]
+        .map((val) => (val || '').toString().trim())
+        .filter(Boolean);
+    }
+    
+    // 常に3要素の配列にする（不足分は空文字列で埋める）
+    while (parsed.length < 3) {
+      parsed.push('');
+    }
+    
+    return parsed.slice(0, 3);
+  };
+
   const loadData = async (userUrl: string, castUrl: string) => {
     try {
       const userValues = await sheetService.fetchSheetData(userUrl, 'A2:I1000');
-      const importedUsers = userValues.map((row) => ({
-        timestamp: row[0] || '',
-        name: row[1] || '',
-        x_id: row[2] || '',
-        first_flag: row[3] || '',
-        casts: [row[4], row[5], row[6]].filter(Boolean),
-        note: row[7] || '',
-        is_pair_ticket: row[8] === '1',
-        raw_extra: []
-      }));
+      
+      const importedUsers = userValues.map((row) => {
+        const casts = parseCastsFromRow(row, businessMode);
+        return {
+          timestamp: row[0] || '',
+          name: row[1] || '',
+          x_id: row[2] || '',
+          first_flag: row[3] || '',
+          casts: casts,
+          note: row[7] || '',
+          is_pair_ticket: row[8] === '1',
+          raw_extra: []
+        };
+      });
 
       const castValues = await sheetService.fetchSheetData(castUrl, 'A2:C50');
       const importedCasts = castValues
@@ -164,16 +209,19 @@ export const AppContainer: React.FC = () => {
         return;
       }
 
-      const winners = rows.map((row: any[]) => ({
-        timestamp: row[0] || '',
-        name: row[1] || '',
-        x_id: row[2] || '',
-        first_flag: row[3] || '',
-        casts: [row[4], row[5], row[6]].filter(Boolean),
-        note: row[7] || '',
-        is_pair_ticket: row[8] === '1',
-        raw_extra: [],
-      }));
+      const winners = rows.map((row: any[]) => {
+        const casts = parseCastsFromRow(row, businessMode);
+        return {
+          timestamp: row[0] || '',
+          name: row[1] || '',
+          x_id: row[2] || '',
+          first_flag: row[3] || '',
+          casts: casts,
+          note: row[7] || '',
+          is_pair_ticket: row[8] === '1',
+          raw_extra: [],
+        };
+      });
 
       setCurrentWinners(winners);
       setMatchingMode(importModalMatchingMode);
@@ -341,70 +389,25 @@ export const AppContainer: React.FC = () => {
         </main>
 
         {showResultImportModal && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              backgroundColor: 'rgba(0,0,0,0.6)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 9999,
-            }}
-          >
+          <div className="modal-overlay" onClick={() => { setShowResultImportModal(false); setResultSheets([]); }}>
             <div
-              style={{
-                backgroundColor: 'var(--discord-bg-dark)',
-                borderRadius: '8px',
-                border: '1px solid var(--discord-border)',
-                padding: '24px 28px',
-                width: '100%',
-                maxWidth: '520px',
-              }}
+              className="modal-content"
+              style={{ maxWidth: '520px' }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <h2
-                style={{
-                  color: 'var(--discord-text-header)',
-                  fontSize: '18px',
-                  marginBottom: '8px',
-                }}
-              >
+              <h2 style={{ color: 'var(--discord-text-header)', fontSize: '18px', marginBottom: '8px', fontWeight: 600 }}>
                 既存の抽選結果を取り込みますか？
               </h2>
-              <p
-                style={{
-                  color: 'var(--discord-text-muted)',
-                  fontSize: '13px',
-                  marginBottom: '16px',
-                }}
-              >
+              <p className="modal-message" style={{ marginBottom: '16px', fontSize: '13px' }}>
                 このブックには過去の抽選結果シートが見つかりました。読み込むシートとマッチング方式を選択できます。
               </p>
 
-              <div style={{ marginBottom: '16px' }}>
-                <div
-                  style={{
-                    color: 'var(--discord-text-muted)',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    marginBottom: '6px',
-                  }}
-                >
-                  抽選結果シート
-                </div>
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label className="form-label">抽選結果シート</label>
                 <select
                   value={selectedResultSheet}
                   onChange={(e) => setSelectedResultSheet(e.target.value)}
-                  style={{
-                    width: '100%',
-                    backgroundColor: 'var(--discord-bg-dark)',
-                    border: '1px solid var(--discord-border)',
-                    padding: '8px 10px',
-                    borderRadius: '4px',
-                    color: 'var(--discord-text-normal)',
-                    fontSize: '14px',
-                  }}
+                  className="form-input"
                 >
                   {resultSheets.map((name) => (
                     <option key={name} value={name}>
@@ -414,86 +417,27 @@ export const AppContainer: React.FC = () => {
                 </select>
               </div>
 
-              <div style={{ marginBottom: '20px' }}>
-                <div
-                  style={{
-                    color: 'var(--discord-text-muted)',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    marginBottom: '6px',
-                  }}
-                >
-                  マッチング方式
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '8px',
-                  }}
-                >
+              <div className="form-group" style={{ marginBottom: '20px' }}>
+                <label className="form-label">マッチング方式</label>
+                <div className="btn-toggle-group">
                   <button
                     type="button"
                     onClick={() => setImportModalMatchingMode('random')}
-                    style={{
-                      flex: 1,
-                      padding: '8px 10px',
-                      borderRadius: '4px',
-                      border:
-                        importModalMatchingMode === 'random'
-                          ? '1px solid var(--discord-accent-blue)'
-                          : '1px solid var(--discord-border)',
-                      backgroundColor:
-                        importModalMatchingMode === 'random'
-                          ? 'var(--discord-accent-blue)'
-                          : 'var(--discord-bg-secondary)',
-                      color:
-                        importModalMatchingMode === 'random'
-                          ? '#fff'
-                          : 'var(--discord-text-normal)',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
+                    className={`btn-toggle ${importModalMatchingMode === 'random' ? 'active' : ''}`}
                   >
                     ランダム（希望優先）
                   </button>
                   <button
                     type="button"
                     onClick={() => setImportModalMatchingMode('rotation')}
-                    style={{
-                      flex: 1,
-                      padding: '8px 10px',
-                      borderRadius: '4px',
-                      border:
-                        importModalMatchingMode === 'rotation'
-                          ? '1px solid var(--discord-accent-blue)'
-                          : '1px solid var(--discord-border)',
-                      backgroundColor:
-                        importModalMatchingMode === 'rotation'
-                          ? 'var(--discord-accent-blue)'
-                          : 'var(--discord-bg-secondary)',
-                      color:
-                        importModalMatchingMode === 'rotation'
-                          ? '#fff'
-                          : 'var(--discord-text-normal)',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
+                    className={`btn-toggle ${importModalMatchingMode === 'rotation' ? 'active' : ''}`}
                   >
                     循環方式（ローテーション）
                   </button>
                 </div>
               </div>
 
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  gap: '8px',
-                }}
-              >
+              <div className="modal-buttons">
                 <button
                   type="button"
                   onClick={() => {
@@ -502,11 +446,12 @@ export const AppContainer: React.FC = () => {
                   }}
                   style={{
                     padding: '8px 16px',
-                    borderRadius: '4px',
+                    borderRadius: '6px',
                     border: '1px solid var(--discord-border)',
                     backgroundColor: 'var(--discord-bg-secondary)',
                     color: 'var(--discord-text-normal)',
-                    fontSize: '13px',
+                    fontSize: '14px',
+                    fontWeight: 600,
                     cursor: 'pointer',
                   }}
                 >
@@ -516,14 +461,10 @@ export const AppContainer: React.FC = () => {
                   type="button"
                   onClick={handleImportExistingResult}
                   disabled={isImportingResult}
+                  className="btn-primary"
                   style={{
-                    padding: '8px 16px',
-                    borderRadius: '4px',
-                    border: 'none',
-                    backgroundColor: 'var(--discord-accent-blue)',
-                    color: '#fff',
-                    fontSize: '13px',
-                    fontWeight: 600,
+                    padding: '8px 20px',
+                    fontSize: '14px',
                     cursor: isImportingResult ? 'not-allowed' : 'pointer',
                     opacity: isImportingResult ? 0.7 : 1,
                   }}

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useAppContext } from '../stores/AppContext';
 
 interface ImportPageProps {
   onSuccess: (userUrl: string, castUrl: string) => void;
 }
 
 export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
+  const { businessMode, setBusinessMode } = useAppContext();
   // ログアウト時にクリアされるよう、初期値は空。URLは毎回入力または同期後にRepositoryに保持される
   const [userUrl, setUserUrl] = useState('');
   const [castUrl, setCastUrl] = useState('');
@@ -49,6 +51,31 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
         >
           スプレッドシートのURLを同期します。
         </p>
+
+        <div className="form-group" style={{ marginBottom: '20px' }}>
+          <label className="form-label">営業モード</label>
+          <div className="btn-toggle-group">
+            <button
+              type="button"
+              onClick={() => setBusinessMode('special')}
+              className={`btn-toggle ${businessMode === 'special' ? 'active' : ''}`}
+            >
+              特殊営業（完全リクイン制）
+            </button>
+            <button
+              type="button"
+              onClick={() => setBusinessMode('normal')}
+              className={`btn-toggle ${businessMode === 'normal' ? 'active' : ''}`}
+            >
+              通常営業
+            </button>
+          </div>
+          <p className="form-inline-note" style={{ marginTop: '8px' }}>
+            {businessMode === 'special'
+              ? '※ 希望キャストは3つの別項目（E列、F列、G列）から読み込みます'
+              : '※ 希望キャストは1項目（E列）のカンマ区切りから読み込みます'}
+          </p>
+        </div>
 
         <label style={labelStyle}>応募者名簿 URL</label>
         <input style={inputStyle} value={userUrl} onChange={(e) => setUserUrl(e.target.value)} />

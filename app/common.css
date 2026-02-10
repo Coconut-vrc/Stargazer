@@ -316,10 +316,268 @@ tbody tr:nth-child(even) {
   color: var(--discord-text-muted);
 }
 
+.form-input {
+  background-color: var(--discord-bg-dark);
+  border: 1px solid var(--discord-border);
+  color: var(--discord-text-normal);
+  padding: 10px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  border-color: var(--discord-accent-blue);
+  box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.2);
+}
+
+select.form-input {
+  cursor: pointer;
+}
+
 .stack-vertical-4 {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+/* ========================================
+   Form controls
+   ======================================== */
+
+.form-inline-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-number-input {
+  width: 90px;
+  background-color: var(--discord-bg-sidebar);
+  border: 1px solid var(--discord-border);
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: var(--discord-text-normal);
+  font-size: 18px;
+  text-align: center;
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+
+.form-card {
+  background-color: var(--discord-bg-secondary);
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid var(--discord-border);
+}
+
+.form-card--flex-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.form-card--flex-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ========================================
+   Button variants
+   ======================================== */
+
+.btn-toggle-group {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-toggle {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--discord-border);
+  background-color: var(--discord-bg-secondary);
+  color: var(--discord-text-normal);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.12s ease-out, color 0.12s ease-out, border-color 0.12s ease-out;
+}
+
+.btn-toggle.active {
+  border-color: var(--discord-accent-blue);
+  background-color: var(--discord-accent-blue);
+  color: #fff;
+}
+
+.btn-option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-option {
+  width: 100%;
+  border-radius: 6px;
+  padding: 10px 12px;
+  cursor: pointer;
+  border: 1px solid var(--discord-border);
+  background-color: var(--discord-bg-sidebar);
+  color: var(--discord-text-normal);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color 0.12s ease-out, color 0.12s ease-out, border-color 0.12s ease-out;
+}
+
+.btn-option.active {
+  border-color: var(--discord-accent-blue);
+  background-color: var(--discord-accent-blue);
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn-option-status {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.btn-option.active .btn-option-status {
+  opacity: 1;
+}
+
+/* ========================================
+   Table styles
+   ======================================== */
+
+.table-container {
+  background-color: var(--discord-bg-dark);
+  border-radius: 8px;
+  border: 1px solid var(--discord-border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-header-cell {
+  padding: 12px 16px;
+  text-align: left;
+  color: var(--discord-text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  background-color: var(--discord-bg-secondary);
+}
+
+.table-cell {
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--discord-text-normal);
+  border-bottom: 1px solid var(--discord-border);
+}
+
+/* ========================================
+   Status cards
+   ======================================== */
+
+.status-card {
+  background-color: var(--discord-bg-secondary);
+  padding: 12px 20px;
+  border-radius: 6px;
+  border: 1px solid var(--discord-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.status-card__label {
+  font-size: 11px;
+  color: var(--discord-text-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.status-card__value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--discord-text-normal);
+}
+
+.status-card__value-accent {
+  color: var(--discord-accent-green);
+}
+
+.status-card__value-suffix {
+  font-size: 14px;
+  color: var(--discord-text-muted);
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+/* ========================================
+   Dropdown
+   ======================================== */
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown-toggle {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background-color: var(--discord-bg-dark);
+  border: 1px solid var(--discord-border);
+  border-radius: 4px;
+  z-index: 9999;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
+
+.dropdown-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--discord-text-normal);
+}
+
+.dropdown-item:hover {
+  background-color: var(--discord-bg-hover);
+}
+
+/* ========================================
+   Page header layouts
+   ======================================== */
+
+.page-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.page-header-row--flex-start {
+  align-items: flex-start;
+  margin-bottom: 12px;
 }
 
 /* ========================================
@@ -484,6 +742,70 @@ tbody tr:nth-child(even) {
 }
 
 /* ========================================
+   Modal
+   ======================================== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: modalFadeIn 0.2s ease-out;
+  padding: 16px;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-content {
+  background-color: var(--discord-bg-dark);
+  border-radius: 12px;
+  border: 1px solid var(--discord-border);
+  padding: 28px 32px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: center;
+}
+
+.modal-message {
+  color: var(--discord-text-normal);
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+  white-space: pre-wrap;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ========================================
    Animations
    ======================================== */
 
@@ -518,5 +840,41 @@ tbody tr:nth-child(even) {
   button {
     padding: 8px 16px;
     font-size: 13px;
+  }
+
+  .page-wrapper {
+    padding: 20px 16px;
+  }
+
+  .page-card-narrow {
+    padding: 20px 24px;
+    margin: 20px auto;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .modal-overlay {
+    padding: 20px;
+  }
+
+  .modal-content {
+    padding: 24px 20px;
+    border-radius: 12px;
+  }
+
+  .modal-message {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  .modal-buttons {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .modal-buttons button {
+    width: 100%;
   }
 }
