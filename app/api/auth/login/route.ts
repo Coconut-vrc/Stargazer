@@ -41,7 +41,7 @@ export async function POST(request: Request) {
         secure: process.env.NODE_ENV === 'production', // 本番環境ではHTTPSのみ
         sameSite: 'lax',
         path: '/',
-        maxAge: 60 * 60 * 24 * 7, // 1週間有効
+        maxAge: 60 * 60 * 24, // 1日有効
       });
 
       return response;
