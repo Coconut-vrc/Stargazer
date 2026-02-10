@@ -7,14 +7,16 @@ import { ImportPage } from './ImportPage';
 import { DBViewPage } from './DBViewPage';
 import { CastManagementPage } from './CastManagementPage';
 import { LotteryPage } from './LotteryPage';
+import { LotteryResultPage } from './LotteryResultPage';
 import { MatchingPage } from './MatchingPage';
 import { LoginPage } from './LoginPage';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useAppContext, type PageType } from '../stores/AppContext';
 import { SheetService } from '../infrastructures/googleSheets/sheet_service';
 import './AppContainer.css';
 
 export const AppContainer: React.FC = () => {
-  const { activePage, setActivePage, repository, currentWinners } = useAppContext();
+  const { activePage, setActivePage, repository, currentWinners, matchingMode } = useAppContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // --- 認証状態管理 ---
@@ -86,94 +88,103 @@ export const AppContainer: React.FC = () => {
   const sidebarButtons: { text: string; page: PageType }[] = [
     { text: 'データ読取', page: 'import' },
     { text: 'DBデータ確認', page: 'db' },
-    { text: 'キャスト管理', page: 'cast' },
+    { text: '抽選条件', page: 'lotteryCondition' },
     { text: '抽選', page: 'lottery' },
     { text: 'マッチング', page: 'matching' },
+    { text: 'キャスト管理', page: 'cast' },
   ];
 
-  // 認証チェック中は何も表示しない（ログイン画面が一瞬出るのを防ぐ）
-  if (isChecking) return null; 
-
-  // 未ログインなら、他の画面を一切見せずにログイン画面を出す
-  if (!isLoggedIn) {
-    return <LoginPage onLoginSuccess={() => setIsLoggedIn(true)} />;
-  }
-
   const renderPage = () => {
+    // 認証チェック中は何も表示しない（ログイン画面が一瞬出るのを防ぐ）
+    if (isChecking) return null; 
+
+    // 未ログインなら、他の画面を一切見せずにログイン画面を出す
+    if (!isLoggedIn) {
+      return <LoginPage onLoginSuccess={() => setIsLoggedIn(true)} />;
+    }
+
     switch (activePage) {
-      case 'import': return <ImportPage onSuccess={loadData} />;
-      case 'db': return <DBViewPage />;
-      case 'cast': return <CastManagementPage repository={repository} />;
-      case 'lottery': 
-        // 【修正】Propsを渡さず、コンポーネントを呼ぶだけにする
+      case 'import':
+        return <ImportPage onSuccess={loadData} />;
+      case 'db':
+        return <DBViewPage />;
+      case 'cast':
+        return <CastManagementPage repository={repository} />;
+      case 'lotteryCondition':
         return <LotteryPage />;
+      case 'lottery':
+        return <LotteryResultPage />;
       case 'matching':
         return (
           <MatchingPage
             winners={currentWinners}
             allUserData={repository.getAllApplyUsers()}
             repository={repository}
+            matchingMode={matchingMode}
           />
         );
-      default: return <ImportPage onSuccess={loadData} />;
+      default:
+        return <ImportPage onSuccess={loadData} />;
     }
   };
 
   return (
-    <div className="app-container">
-      {/* スマホヘッダー */}
-      <div className="mobile-header">
-        <div className="logo">chocomelapp</div>
-        <button className="menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-
-      {/* サイドバー */}
-      <aside className={`sidebar ${isMenuOpen ? 'open' : ''}`}>
-        <div className="sidebar-inner">
-          <div className="sidebar-title"></div>
-          {sidebarButtons.map((button, index) => (
-            <button
-              key={index}
-              className={`sidebar-button ${activePage === button.page ? 'active' : ''}`}
-              onClick={() => {
-                setActivePage(button.page);
-                setIsMenuOpen(false);
-              }}
-            >
-              {button.text}
-            </button>
-          ))}
-          
-          {/* ログアウトボタンをサイドバー下部に追加 */}
-          <div style={{ marginTop: 'auto', padding: '10px' }}>
-            <button 
-              onClick={handleLogout}
-              className="sidebar-button logout"
-              style={{ 
-                color: '#ff4444', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '8px', 
-                width: '100%', 
-                background: 'none', 
-                border: 'none', 
-                cursor: 'pointer' 
-              }}
-            >
-              <LogOut size={18} />
-              ログアウト
-            </button>
-          </div>
+    <ErrorBoundary>
+      <div className="app-container">
+        {/* スマホヘッダー */}
+        <div className="mobile-header">
+          <div className="logo">chocomelapp</div>
+          <button className="menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
-      </aside>
 
-      {isMenuOpen && <div className="overlay" onClick={() => setIsMenuOpen(false)} />}
+        {/* サイドバー */}
+        <aside className={`sidebar ${isMenuOpen ? 'open' : ''}`}>
+          <div className="sidebar-inner">
+            <div className="sidebar-title"></div>
+            {sidebarButtons.map((button, index) => (
+              <button
+                key={index}
+                className={`sidebar-button ${activePage === button.page ? 'active' : ''}`}
+                onClick={() => {
+                  setActivePage(button.page);
+                  setIsMenuOpen(false);
+                }}
+              >
+                {button.text}
+              </button>
+            ))}
+            
+            {/* ログアウトボタンをサイドバー下部に追加 */}
+            <div style={{ marginTop: 'auto', padding: '10px' }}>
+              <button 
+                onClick={handleLogout}
+                className="sidebar-button logout"
+                style={{ 
+                  color: '#ff4444', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  width: '100%', 
+                  background: 'none', 
+                  border: 'none', 
+                  cursor: 'pointer' 
+                }}
+              >
+                <LogOut size={18} />
+                ログアウト
+              </button>
+            </div>
+          </div>
+        </aside>
 
-      <main className="main-content">
-        {renderPage()}
-      </main>
-    </div>
+        {isMenuOpen && <div className="overlay" onClick={() => setIsMenuOpen(false)} />}
+
+        <main className="main-content">
+          {renderPage()}
+        </main>
+      </div>
+    </ErrorBoundary>
   );
 };

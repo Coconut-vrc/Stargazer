@@ -59,6 +59,13 @@
   z-index: 2000;
 }
 
+.sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 4px;
+}
+
 .sidebar-button {
   background: transparent;
   border: none;

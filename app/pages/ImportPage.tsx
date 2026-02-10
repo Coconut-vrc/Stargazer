@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { DiscordColors } from '../common/types/discord-colors';
 
 interface ImportPageProps {
   onSuccess: (userUrl: string, castUrl: string) => void;
@@ -10,16 +9,16 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
   const [castUrl, setCastUrl] = useState('https://docs.google.com/spreadsheets/d/1rc_QdWi805TaZ_2e8uV_odpc4DRQNVnC5ET6W63LzPw/edit');
 
   const cardStyle: React.CSSProperties = {
-    backgroundColor: DiscordColors.bgDark,
+    backgroundColor: 'var(--discord-bg-dark)',
     borderRadius: '8px',
     padding: '24px 32px',
     maxWidth: '600px',
     margin: '24px auto',
-    border: `1px solid ${DiscordColors.border}`,
+    border: '1px solid var(--discord-border)',
   };
 
   const labelStyle: React.CSSProperties = {
-    color: DiscordColors.textMuted,
+    color: 'var(--discord-text-muted)',
     fontSize: '12px',
     fontWeight: 700,
     textTransform: 'uppercase',
@@ -29,18 +28,18 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    backgroundColor: DiscordColors.bgDark,
-    border: `1px solid ${DiscordColors.border}`,
+    backgroundColor: 'var(--discord-bg-dark)',
+    border: '1px solid var(--discord-border)',
     padding: '10px 12px',
     borderRadius: '4px',
-    color: DiscordColors.textNormal,
+    color: 'var(--discord-text-normal)',
     fontSize: '16px',
     marginBottom: '20px',
     outline: 'none',
   };
 
   const buttonStyle: React.CSSProperties = {
-    backgroundColor: DiscordColors.accentBlue,
+    backgroundColor: 'var(--discord-accent-blue)',
     color: '#fff',
     border: 'none',
     padding: '12px 24px',
@@ -55,10 +54,10 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
   return (
     <div style={{ padding: '24px 16px' }}>
       <div style={cardStyle}>
-        <h2 style={{ color: DiscordColors.textHeader, fontSize: '20px', marginBottom: '4px' }}>
+        <h2 style={{ color: 'var(--discord-text-header)', fontSize: '20px', marginBottom: '4px' }}>
           外部連携設定
         </h2>
-        <p style={{ color: DiscordColors.textMuted, fontSize: '14px', marginBottom: '24px' }}>
+        <p style={{ color: 'var(--discord-text-muted)', fontSize: '14px', marginBottom: '24px' }}>
           スプレッドシートのURLを同期します。
         </p>
 
@@ -72,7 +71,7 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
           style={buttonStyle}
           onClick={() => onSuccess(userUrl, castUrl)}
           onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#4752c4'; }}
-          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = DiscordColors.accentBlue; }}
+          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'var(--discord-accent-blue)'; }}
         >
           保存して同期を開始
         </button>

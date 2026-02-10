@@ -18,10 +18,12 @@
   --discord-bg-hover: rgba(255, 255, 255, 0.08);
   --discord-bg-selected: rgba(255, 255, 255, 0.08);
   --discord-bg-alt: rgba(0, 0, 0, 0.15);
+  --discord-bg-sidebar: rgba(0, 0, 0, 0.2);
 
   --discord-text-normal: #dbdee1;
   --discord-text-muted: rgba(255, 255, 255, 0.4);
   --discord-text-link: #00a8fc;
+  --discord-text-header: #f2f3f5;
   --discord-text-success: #23a559;
   --discord-text-warning: #f0b232;
   --discord-text-danger: #ed4245;

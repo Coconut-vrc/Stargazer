@@ -1,6 +1,5 @@
 // F:\DEVELOPFOLDER\dev-core\pages\LoginPage.tsx
 import React, { useState } from 'react';
-import { DiscordColors } from '../common/types/discord-colors';
 
 export const LoginPage: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess }) => {
   const [password, setPassword] = useState('');
@@ -22,21 +21,21 @@ export const LoginPage: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuc
 
   return (
     <div style={{
-      backgroundColor: DiscordColors.bgDark,
+      backgroundColor: 'var(--discord-bg-dark)',
       height: '100vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
     }}>
       <div style={{
-        backgroundColor: DiscordColors.bgSecondary,
+        backgroundColor: 'var(--discord-bg-secondary)',
         padding: '32px',
         borderRadius: '8px',
         width: '400px',
         textAlign: 'center',
         boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
       }}>
-        <p style={{ color: DiscordColors.textMuted, marginBottom: '20px' }}>管理用パスワードを入力してください</p>
+        <p style={{ color: 'var(--discord-text-muted)', marginBottom: '20px' }}>管理用パスワードを入力してください</p>
         
         <input
           type="password"
@@ -46,23 +45,23 @@ export const LoginPage: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuc
           style={{
             width: '100%',
             padding: '10px',
-            backgroundColor: DiscordColors.bgDark,
-            border: `1px solid ${error ? DiscordColors.accentRed : DiscordColors.border}`,
+            backgroundColor: 'var(--discord-bg-dark)',
+            border: `1px solid ${error ? 'var(--discord-accent-red)' : 'var(--discord-border)'}`,
             borderRadius: '4px',
-            color: DiscordColors.textNormal,
+            color: 'var(--discord-text-normal)',
             marginBottom: '16px',
             outline: 'none'
           }}
         />
         
-        {error && <p style={{ color: DiscordColors.accentRed, fontSize: '12px', marginBottom: '16px' }}>{error}</p>}
+        {error && <p style={{ color: 'var(--discord-accent-red)', fontSize: '12px', marginBottom: '16px' }}>{error}</p>}
         
         <button
           onClick={handleLogin}
           style={{
             width: '100%',
             padding: '12px',
-            backgroundColor: DiscordColors.accentBlue,
+            backgroundColor: 'var(--discord-accent-blue)',
             color: 'white',
             border: 'none',
             borderRadius: '4px',

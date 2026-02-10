@@ -2,25 +2,13 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import type { UserBean, CastBean } from '../common/types/entities';
+export type { UserBean, CastBean } from '../common/types/entities';
 
-export interface UserBean {
-  timestamp: string;
-  name: string;
-  x_id: string;
-  first_flag: string;
-  casts: string[];
-  note: string;
-  is_pair_ticket: boolean;
-  raw_extra: any[];
-}
+export type PageType = 'import' | 'db' | 'cast' | 'lotteryCondition' | 'lottery' | 'matching';
 
-export interface CastBean {
-  name: string;
-  is_present: boolean;
-  ng_users: string[]; 
-}
-
-export type PageType = 'import' | 'db' | 'cast' | 'lottery' | 'matching';
+// マッチング方式
+export type MatchingMode = 'rotation' | 'random';
 
 export class Repository {
   private users: UserBean[] = [];
@@ -42,6 +30,8 @@ interface AppContextType {
   repository: Repository;
   currentWinners: UserBean[];
   setCurrentWinners: (winners: UserBean[]) => void;
+  matchingMode: MatchingMode;
+  setMatchingMode: (mode: MatchingMode) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -50,11 +40,18 @@ const repositoryInstance = new Repository();
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [activePage, setActivePage] = useState<PageType>('import');
   const [currentWinners, setCurrentWinners] = useState<UserBean[]>([]);
+   // デフォルトは「ランダムマッチング」（希望重視モード）
+  const [matchingMode, setMatchingMode] = useState<MatchingMode>('random');
 
   return (
     <AppContext.Provider value={{
-      activePage, setActivePage, repository: repositoryInstance,
-      currentWinners, setCurrentWinners
+      activePage,
+      setActivePage,
+      repository: repositoryInstance,
+      currentWinners,
+      setCurrentWinners,
+      matchingMode,
+      setMatchingMode,
     }}>
       {children}
     </AppContext.Provider>
