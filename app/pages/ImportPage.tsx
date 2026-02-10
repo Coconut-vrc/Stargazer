@@ -102,7 +102,7 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
               onClick={() => setBusinessMode('special')}
               className={`btn-toggle ${businessMode === 'special' ? 'active' : ''}`}
             >
-              特殊営業（完全リクイン制）
+              特殊営業（完全事前抽選制）
             </button>
             <button
               type="button"

@@ -884,7 +884,7 @@ export const GuidePage: React.FC = () => {
                   borderRadius: '50%',
                   backgroundColor: 'var(--discord-accent-blue)'
                 }} />
-                特殊営業（完全リクイン制）
+                特殊営業（完全事前抽選制）
               </h4>
               <ul style={{ 
                 margin: 0, 
