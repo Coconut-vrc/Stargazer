@@ -1,9 +1,10 @@
 // pages/CastManagementPage.tsx の全量
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { CastBean } from '../common/types/entities';
 import { Repository } from '../stores/AppContext';
 import { SheetService } from '../infrastructures/googleSheets/sheet_service';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repository }) => {
   const [casts, setCasts] = useState<CastBean[]>([]);
@@ -12,6 +13,8 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
   const [inputCastName, setInputCastName] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [confirmMessage, setConfirmMessage] = useState<{ message: string; onConfirm: () => void } | null>(null);
 
   const sheetService = new SheetService();
   const FALLBACK_CAST_SHEET_URL =
@@ -51,7 +54,7 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
     const newName = inputCastName.trim();
     if (!newName) return;
     if (casts.some(c => c.name === newName)) {
-      alert('そのキャストは既に登録されてるよ');
+      setAlertMessage('そのキャストは既に登録されてるよ');
       return;
     }
 
@@ -77,30 +80,31 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
     }
   };
   const handleDeleteCast = async (castName: string) => {
-    if (!window.confirm(`「${castName}」を削除しますか？`)) return;
-
     const allCasts = repository.getAllCasts();
     const rowIndex = allCasts.findIndex((c) => c.name === castName);
     if (rowIndex === -1) return;
 
-    const castSheetUrl = repository.getCastSheetUrl() || FALLBACK_CAST_SHEET_URL;
-    const range = `A${rowIndex + 2}:C${rowIndex + 2}`;
+    setConfirmMessage({
+      message: `「${castName}」を削除しますか？`,
+      onConfirm: async () => {
+        setConfirmMessage(null);
+        const castSheetUrl = repository.getCastSheetUrl() || FALLBACK_CAST_SHEET_URL;
+        const range = `A${rowIndex + 2}:C${rowIndex + 2}`;
 
-    try {
-      // シート上の該当行を空行にする
-      await sheetService.updateSheetData(castSheetUrl, range, [['', '', '']]);
-
-      const updated = allCasts.filter((c) => c.name !== castName);
-      repository.saveCasts(updated);
-      setCasts(updated);
-
-      if (selectedCastName === castName) {
-        setSelectedCastName(updated[0]?.name ?? '');
-      }
-    } catch (e) {
-      console.error('キャスト削除失敗:', e);
-      alert('キャストの削除に失敗しました');
-    }
+        try {
+          await sheetService.updateSheetData(castSheetUrl, range, [['', '', '']]);
+          const updated = allCasts.filter((c) => c.name !== castName);
+          repository.saveCasts(updated);
+          setCasts(updated);
+          if (selectedCastName === castName) {
+            setSelectedCastName(updated[0]?.name ?? '');
+          }
+        } catch (e) {
+          console.error('キャスト削除失敗:', e);
+          setAlertMessage('キャストの削除に失敗しました');
+        }
+      },
+    });
   };
 
   const handleAddNg = async () => {
@@ -156,12 +160,39 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
     marginBottom: '8px'
   };
 
+  const presentCount = casts.filter((c) => c.is_present).length;
+  const totalCount = casts.length;
+
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
       <header style={{ marginBottom: '24px' }}>
-        <h1 style={{ color: 'var(--discord-text-header)', fontSize: '24px', margin: 0, fontWeight: 700 }}>
-          キャスト・NG管理
-        </h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+          <h1 style={{ color: 'var(--discord-text-header)', fontSize: '24px', margin: 0, fontWeight: 700 }}>
+            キャスト・NG管理
+          </h1>
+          <div
+            style={{
+              backgroundColor: 'var(--discord-bg-secondary)',
+              padding: '12px 20px',
+              borderRadius: '6px',
+              border: '1px solid var(--discord-border)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              alignItems: 'flex-end',
+            }}
+          >
+            <div style={{ fontSize: '11px', color: 'var(--discord-text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
+              出席状況
+            </div>
+            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--discord-text-normal)' }}>
+              <span style={{ color: 'var(--discord-accent-green)' }}>{presentCount}</span>
+              <span style={{ fontSize: '14px', color: 'var(--discord-text-muted)', fontWeight: 500, marginLeft: '4px' }}>
+                / {totalCount}
+              </span>
+            </div>
+          </div>
+        </div>
       </header>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
@@ -230,19 +261,19 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
                 left: 0,
                 right: 0,
                 marginTop: '4px',
-                backgroundColor: '#18191c',
+                backgroundColor: 'var(--discord-bg-dark)',
                 border: '1px solid var(--discord-border)',
                 borderRadius: '4px',
                 zIndex: 9999,
                 maxHeight: '200px',
                 overflowY: 'auto',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.6)'
+                boxShadow: '0 8px 16px rgba(0,0,0,0.15)'
               }}>
                 {casts.map(c => (
                   <div
                     key={c.name}
                     style={{ padding: '10px 12px', cursor: 'pointer', fontSize: '14px', color: 'var(--discord-text-normal)' }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#35373c'}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--discord-bg-hover)'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     onClick={() => {
                       setSelectedCastName(c.name);
@@ -352,6 +383,23 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
           </div>
         ))}
       </div>
+
+      {alertMessage && (
+        <ConfirmModal
+          message={alertMessage}
+          onConfirm={() => setAlertMessage(null)}
+          type="alert"
+        />
+      )}
+      {confirmMessage && (
+        <ConfirmModal
+          message={confirmMessage.message}
+          onConfirm={confirmMessage.onConfirm}
+          onCancel={() => setConfirmMessage(null)}
+          confirmLabel="OK"
+          type="confirm"
+        />
+      )}
     </div>
   );
 };

@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../stores/AppContext';
 import { SheetService } from '../infrastructures/googleSheets/sheet_service';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 export const LotteryResultPage: React.FC = () => {
   const { currentWinners, setActivePage, repository } = useAppContext();
   const [isExporting, setIsExporting] = useState(false);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const sheetService = new SheetService();
 
   const handleExport = async () => {
     if (currentWinners.length === 0) {
-      alert('当選者がいないため、エクスポートできません。');
+      setAlertMessage('当選者がいないため、エクスポートできません。');
       return;
     }
 
     const userSheetUrl = repository.getUserSheetUrl();
     if (!userSheetUrl) {
-      alert('応募者名簿のURLが設定されていません。先に「外部連携設定」で同期してください。');
+      setAlertMessage('応募者名簿のURLが設定されていません。先に「外部連携設定」で同期してください。');
       return;
     }
 
@@ -56,10 +58,10 @@ export const LotteryResultPage: React.FC = () => {
       ]);
 
       await sheetService.createSheetAndWriteData(userSheetUrl, sheetName, [header, ...rows]);
-      alert(`スプレッドシートに「${sheetName}」として保存しました。`);
+      setAlertMessage(`スプレッドシートに「${sheetName}」として保存しました。`);
     } catch (e) {
       console.error('抽選結果エクスポート失敗:', e);
-      alert('抽選結果のエクスポートに失敗しました。');
+      setAlertMessage('抽選結果のエクスポートに失敗しました。');
     } finally {
       setIsExporting(false);
     }
@@ -310,6 +312,14 @@ export const LotteryResultPage: React.FC = () => {
           マッチング開始
         </button>
       </div>
+
+      {alertMessage && (
+        <ConfirmModal
+          message={alertMessage}
+          onConfirm={() => setAlertMessage(null)}
+          type="alert"
+        />
+      )}
     </div>
   );
 }

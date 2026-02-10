@@ -71,19 +71,19 @@
   left: 0;
   right: 0;
   height: 60px;
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(13, 11, 30, 0.85); /* ダークテーマ背景と統一 */
   backdrop-filter: blur(10px);
   z-index: 1000;
   padding: 0 20px;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .logo {
   font-weight: 800;
   font-size: 1.1rem;
-  color: #ffffff;
+  color: var(--discord-text-normal); /* ダークテーマのテキストカラーと統一 */
 }
 
 .menu-toggle {
@@ -157,6 +157,10 @@
 .app-container.theme-shokomel .menu-toggle {
   background: #ff8fb8;
   color: #ffffff;
+}
+
+.app-container.theme-shokomel .logo {
+  color: #8B5A3C; /* チョコレート色 */
 }
 
 .main-content {

@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useAppContext } from '../stores/AppContext';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 export const LotteryPage: React.FC = () => {
   const {
@@ -13,26 +14,54 @@ export const LotteryPage: React.FC = () => {
   } = useAppContext();
   const [count, setCount] = useState(15);
   const [totalTables, setTotalTables] = useState(15);
+  const [confirmMessage, setConfirmMessage] = useState<string | null>(null);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
-  const run = useCallback(() => {
-    // 出席キャスト数を確認し、当選人数がそれを超えていれば抽選を止める
-    const allCasts = repository.getAllCasts();
-    const activeCastCount = allCasts.filter((c) => c.is_present).length;
-    if (count > activeCastCount) {
-      alert('出席キャスト数を超えているため、抽選人数を調整してください。');
-      return;
-    }
-
-    if (businessMode === 'normal' && totalTables < count) {
-      alert('総テーブル数は当選者数以上にしてください。');
-      return;
-    }
-
+  const doRun = useCallback(() => {
     const all = repository.getAllApplyUsers();
     const shuffled = [...all].sort(() => 0.5 - Math.random());
     setCurrentWinners(shuffled.slice(0, count));
     setActivePage('lottery');
-  }, [businessMode, count, totalTables, repository, setActivePage, setCurrentWinners]);
+  }, [count, repository, setActivePage, setCurrentWinners]);
+
+  const run = useCallback(() => {
+    const allCasts = repository.getAllCasts();
+    const activeCastCount = allCasts.filter((c) => c.is_present).length;
+
+    if (count > activeCastCount) {
+      setAlertMessage('出席キャスト数を超えているため、抽選人数を調整してください。');
+      return;
+    }
+
+    if (businessMode === 'normal' && totalTables < count) {
+      setAlertMessage('総テーブル数は当選者数以上にしてください。');
+      return;
+    }
+
+    if (businessMode === 'special' && count !== activeCastCount) {
+      setConfirmMessage(
+        `出席者数（${activeCastCount}人）と当選人数（${count}人）が一致していませんがよろしいですか？`
+      );
+      return;
+    }
+    if (businessMode === 'normal' && totalTables !== activeCastCount) {
+      setConfirmMessage(
+        `出席者数（${activeCastCount}人）と総テーブル数（${totalTables}人）が一致していませんがよろしいですか？`
+      );
+      return;
+    }
+
+    doRun();
+  }, [businessMode, count, totalTables, repository, doRun]);
+
+  const handleConfirmOk = useCallback(() => {
+    doRun();
+    setConfirmMessage(null);
+  }, [doRun]);
+
+  const handleConfirmCancel = useCallback(() => {
+    setConfirmMessage(null);
+  }, []);
 
   return (
     <div className="page-wrapper">
@@ -262,6 +291,23 @@ export const LotteryPage: React.FC = () => {
           抽選を開始する
         </button>
       </div>
+
+      {confirmMessage && (
+        <ConfirmModal
+          message={confirmMessage}
+          onConfirm={handleConfirmOk}
+          onCancel={handleConfirmCancel}
+          confirmLabel="OK"
+          type="confirm"
+        />
+      )}
+      {alertMessage && (
+        <ConfirmModal
+          message={alertMessage}
+          onConfirm={() => setAlertMessage(null)}
+          type="alert"
+        />
+      )}
     </div>
   );
 };

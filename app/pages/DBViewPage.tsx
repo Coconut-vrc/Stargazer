@@ -1,33 +1,38 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { useAppContext } from '../stores/AppContext';
 import { DiscordTable, DiscordTableColumn } from '../components/DiscordTable';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 /**
  * X IDセル専用コンポーネント
  */
-const XLinkCell: React.FC<{ xId: string; baseStyle: React.CSSProperties }> = ({ xId, baseStyle }) => {
-  const handle = xId? xId.replace(/^@/, '') : '';
+const XLinkCell: React.FC<{
+  xId: string;
+  baseStyle: React.CSSProperties;
+  onConfirmOpen: (url: string) => void;
+}> = ({ xId, baseStyle, onConfirmOpen }) => {
+  const handle = xId ? xId.replace(/^@/, '') : '';
   const cellStyle: React.CSSProperties = {
-   ...baseStyle,
-    cursor: 'pointer',
-    color: 'var(--discord-text-link)',
+    ...baseStyle,
+    cursor: handle ? 'pointer' : 'default',
+    color: handle ? 'var(--discord-text-link)' : 'var(--discord-text-normal)',
     transition: 'background-color 0.17s ease',
   };
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!handle) return;
-    window.open(`https://x.com/${handle}`, '_blank', 'noopener,noreferrer');
+    onConfirmOpen(`https://x.com/${handle}`);
   };
 
   return (
     <td
       style={cellStyle}
       onClick={handleClick}
-      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--discord-bg-hover)')}
+      onMouseEnter={(e) => handle && (e.currentTarget.style.backgroundColor = 'var(--discord-bg-hover)')}
       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
     >
-      {handle? `@${handle}` : '—'}
+      {handle ? `@${handle}` : '—'}
     </td>
   );
 };
@@ -35,6 +40,22 @@ const XLinkCell: React.FC<{ xId: string; baseStyle: React.CSSProperties }> = ({ 
 const DBViewPageComponent: React.FC = () => {
   const { repository, setActivePage } = useAppContext();
   const userData = repository.getAllApplyUsers();
+  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+
+  const handleConfirmOpen = useCallback((url: string) => {
+    setPendingUrl(url);
+  }, []);
+
+  const handleOpenUrl = useCallback(() => {
+    if (pendingUrl) {
+      window.open(pendingUrl, '_blank', 'noopener,noreferrer');
+      setPendingUrl(null);
+    }
+  }, [pendingUrl]);
+
+  const handleCancelOpen = useCallback(() => {
+    setPendingUrl(null);
+  }, []);
 
   const tableHeaderStyle: React.CSSProperties = {
     textAlign: 'left',
@@ -62,9 +83,26 @@ const DBViewPageComponent: React.FC = () => {
         renderCell: (user) => <td style={cellStyle}>{user.name}</td>,
       },
       {
-        header: 'X ID',
+        header: (
+          <>
+            X ID
+            <span
+              style={{
+                fontSize: '9px',
+                fontWeight: 400,
+                color: 'var(--discord-text-muted)',
+                marginLeft: '6px',
+                fontStyle: 'italic',
+              }}
+            >
+              （クリックでユーザーページに遷移）
+            </span>
+          </>
+        ),
         headerStyle: tableHeaderStyle,
-        renderCell: (user) => <XLinkCell xId={user.x_id} baseStyle={cellStyle} />,
+        renderCell: (user) => (
+          <XLinkCell xId={user.x_id} baseStyle={cellStyle} onConfirmOpen={handleConfirmOpen} />
+        ),
       },
       {
         header: '希望1',
@@ -143,6 +181,16 @@ const DBViewPageComponent: React.FC = () => {
           emptyRow={undefined}
         />
       </div>
+
+      {pendingUrl && (
+        <ConfirmModal
+          message={`外部サイト（X）に遷移しますか？\n${pendingUrl}`}
+          onConfirm={handleOpenUrl}
+          onCancel={handleCancelOpen}
+          confirmLabel="OK"
+          type="confirm"
+        />
+      )}
     </div>
   );
 };
