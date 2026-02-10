@@ -31,18 +31,26 @@ export class Repository {
     if (cast) cast.is_present = isPresent;
   }
 
-  setUserSheetUrl(url: string) {
+  setUserSheetUrl(url: string | null) {
     this.userSheetUrl = url;
   }
   getUserSheetUrl(): string | null {
     return this.userSheetUrl;
   }
 
-  setCastSheetUrl(url: string) {
+  setCastSheetUrl(url: string | null) {
     this.castSheetUrl = url;
   }
   getCastSheetUrl(): string | null {
     return this.castSheetUrl;
+  }
+
+  /** ログアウトやセッションリセット時にメモリ上の状態を全クリアする */
+  resetAll() {
+    this.users = [];
+    this.casts = [];
+    this.userSheetUrl = null;
+    this.castSheetUrl = null;
   }
 }
 

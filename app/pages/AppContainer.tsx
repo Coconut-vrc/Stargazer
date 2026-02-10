@@ -61,6 +61,15 @@ export const AppContainer: React.FC = () => {
     checkAuth();
   }, []);
 
+  // ログイン状態が false になったタイミングで、メモリ上のシートURLや読み込み済みデータを全て破棄する
+  useEffect(() => {
+    if (!isLoggedIn) {
+      repository.resetAll();
+      setCurrentWinners([]);
+      setMatchingMode('random');
+    }
+  }, [isLoggedIn, repository, setCurrentWinners, setMatchingMode]);
+
   // --- ログアウト処理 ---
   const handleLogout = async () => {
     try {

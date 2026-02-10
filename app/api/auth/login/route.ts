@@ -5,8 +5,19 @@ export async function POST(request: Request) {
   try {
     const { password } = await request.json();
 
+    const expectedPassword = process.env.CHOCOMELAPP_ADMIN_PASSWORD;
+
+    // 環境変数が未設定の場合は常に失敗させる（安全側に倒す）
+    if (!expectedPassword) {
+      console.error('CHOCOMELAPP_ADMIN_PASSWORD is not set');
+      return NextResponse.json(
+        { success: false, message: 'サーバー側の設定エラーが発生しているよ' },
+        { status: 500 },
+      );
+    }
+
     // パスワードチェック
-    if (password === 'Valentine3745') {
+    if (password === expectedPassword) {
       const response = NextResponse.json({ success: true });
 
       // Cookieの設定 (HttpOnlyでセキュリティ確保)

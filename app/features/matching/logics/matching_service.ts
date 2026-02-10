@@ -1,7 +1,6 @@
 // features/matching/logics/matching_service.ts
 
-import { UserBean, CastBean } from "../../../common/types/entities";
-import type { MatchingMode } from "../../../stores/AppContext";
+import type { UserBean, CastBean, MatchingMode } from "../../../stores/AppContext";
 
 /**
  * マッチング結果の1枠分を表すインターフェース
