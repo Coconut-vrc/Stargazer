@@ -37,26 +37,16 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           {type === 'confirm' && onCancel && (
             <button
               type="button"
+              className="modal-btn-cancel"
               onClick={onCancel}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '6px',
-                border: '1px solid var(--discord-border)',
-                backgroundColor: 'var(--discord-bg-secondary)',
-                color: 'var(--discord-text-normal)',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
             >
               {cancelLabel}
             </button>
           )}
           <button
             type="button"
+            className="btn-primary modal-btn-confirm"
             onClick={onConfirm}
-            className="btn-primary"
-            style={{ padding: '8px 20px', fontSize: '14px' }}
           >
             {confirmLabel}
           </button>

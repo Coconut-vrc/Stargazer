@@ -86,48 +86,15 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
     onSuccess(userUrl, castUrl);
   };
 
-  const cardStyle: React.CSSProperties = {
-    backgroundColor: 'var(--discord-bg-dark)',
-    borderRadius: '8px',
-    padding: '24px 32px',
-    maxWidth: '600px',
-    margin: '24px auto',
-    border: '1px solid var(--discord-border)',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    color: 'var(--discord-text-muted)',
-    fontSize: '12px',
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    marginBottom: '8px',
-    display: 'block',
-  };
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    backgroundColor: 'var(--discord-bg-dark)',
-    border: '1px solid var(--discord-border)',
-    padding: '10px 12px',
-    borderRadius: '4px',
-    color: 'var(--discord-text-normal)',
-    fontSize: '16px',
-    marginBottom: '20px',
-    outline: 'none',
-  };
-
   return (
     <div className="page-wrapper">
-      <div style={cardStyle}>
+      <div className="page-card-narrow">
         <h2 className="page-header-title page-header-title--md">外部連携設定</h2>
-        <p
-          className="page-header-subtitle"
-          style={{ fontSize: '14px', marginBottom: '24px' }}
-        >
+        <p className="page-header-subtitle form-subtitle-mb">
           スプレッドシートのURLを同期します。
         </p>
 
-        <div className="form-group" style={{ marginBottom: '20px' }}>
+        <div className="form-group form-group-spacing">
           <label className="form-label">営業モード</label>
           <div className="btn-toggle-group">
             <button
@@ -145,19 +112,19 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
               通常営業
             </button>
           </div>
-          <p className="form-inline-note" style={{ marginTop: '8px' }}>
+          <p className="form-inline-note form-note-mt">
             {businessMode === 'special'
               ? '※ 希望キャストは3つの別項目（E列、F列、G列）から読み込みます'
               : '※ 希望キャストは1項目（E列）のカンマ区切りから読み込みます'}
           </p>
         </div>
 
-        <label style={labelStyle}>応募者名簿 URL</label>
+        <label className="form-label">応募者名簿 URL</label>
         <input
           type="url"
           list="user-url-list"
           autoComplete="url"
-          style={inputStyle}
+          className="form-input form-input-mb"
           value={userUrl}
           onChange={(e) => setUserUrl(e.target.value)}
           placeholder="https://docs.google.com/spreadsheets/d/..."
@@ -168,12 +135,12 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
           ))}
         </datalist>
 
-        <label style={labelStyle}>キャストリスト URL</label>
+        <label className="form-label">キャストリスト URL</label>
         <input
           type="url"
           list="cast-url-list"
           autoComplete="url"
-          style={inputStyle}
+          className="form-input form-input-mb"
           value={castUrl}
           onChange={(e) => setCastUrl(e.target.value)}
           placeholder="https://docs.google.com/spreadsheets/d/..."
@@ -185,8 +152,7 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
         </datalist>
 
         <button
-          className="btn-primary"
-          style={{ width: '100%' }}
+          className="btn-primary btn-full-width"
           onClick={handleSave}
         >
           保存して同期を開始

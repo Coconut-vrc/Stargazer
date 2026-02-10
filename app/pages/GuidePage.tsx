@@ -9,55 +9,25 @@ export const GuidePage: React.FC = () => {
     id: string;
     tooltip: string;
     children: React.ReactNode;
-    style?: React.CSSProperties;
-  }> = ({ id, tooltip, children, style }) => (
+    className?: string;
+  }> = ({ id, tooltip, children, className }) => (
     <div
-      style={{ position: 'relative', ...style }}
+      className={`guide-tooltip-wrapper ${className ?? ''}`.trim()}
       onMouseEnter={() => setHoveredElement(id)}
       onMouseLeave={() => setHoveredElement(null)}
     >
       {children}
       {hoveredElement === id && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '100%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            marginBottom: '8px',
-            padding: '8px 12px',
-            backgroundColor: 'var(--discord-bg-dark)',
-            color: 'var(--discord-text-normal)',
-            fontSize: '12px',
-            borderRadius: '6px',
-            border: '1px solid var(--discord-border)',
-            whiteSpace: 'nowrap',
-            zIndex: 1000,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            pointerEvents: 'none',
-          }}
-        >
+        <div className="guide-tooltip-bubble">
           {tooltip}
-          <div
-            style={{
-              position: 'absolute',
-              top: '100%',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: 0,
-              height: 0,
-              borderLeft: '6px solid transparent',
-              borderRight: '6px solid transparent',
-              borderTop: '6px solid var(--discord-bg-dark)',
-            }}
-          />
+          <div className="guide-tooltip-arrow" />
         </div>
       )}
     </div>
   );
 
   return (
-    <div className="page-wrapper" style={{ maxWidth: '1000px' }}>
+    <div className="page-wrapper guide-page-narrow">
       <style>{`
         @media (max-width: 768px) {
           .guide-section-grid {
@@ -81,58 +51,28 @@ export const GuidePage: React.FC = () => {
         }
       `}</style>
       {/* ヘッダー */}
-      <header className="page-header" style={{ marginBottom: '32px', textAlign: 'center' }}>
-        <div className="guide-header-flex" style={{ 
-          display: 'inline-flex', 
-          alignItems: 'center', 
-          gap: '12px',
-          marginBottom: '12px'
-        }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, var(--discord-accent-blue), var(--discord-accent-green))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff',
-          }}>
+      <header className="page-header guide-header-centered">
+        <div className="guide-header-flex guide-header-flex-inline">
+          <div className="guide-header-icon">
             <HelpCircle size={28} />
           </div>
           <h1 className="page-header-title page-header-title--lg" style={{ margin: 0 }}>
             使い方ガイド
           </h1>
         </div>
-        <p className="page-header-subtitle" style={{ fontSize: '15px' }}>
+        <p className="page-header-subtitle guide-subtitle-lg">
           chocomelappの基本的な使い方を説明します
         </p>
       </header>
 
       {/* データフロー */}
-      <section style={{ marginBottom: '48px' }}>
-        <h2 className="page-header-title page-header-title--md" style={{ 
-          marginBottom: '20px', 
-          fontSize: '22px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
+      <section className="guide-section">
+        <h2 className="page-header-title page-header-title--md guide-section-title">
           <BarChart3 size={22} />
           基本的な流れ
         </h2>
-        <div style={{ 
-          background: 'linear-gradient(135deg, var(--discord-bg-secondary), var(--discord-bg-dark))',
-          padding: '24px', 
-          borderRadius: '12px',
-          border: '1px solid var(--discord-border)',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <div className="guide-flow-grid" style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '16px'
-          }}>
+        <div className="guide-flow-box">
+          <div className="guide-flow-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
             {[
               { icon: FileText, text: 'データ読取', desc: 'スプレッドシートからデータを読み込み' },
               { icon: Database, text: 'DBデータ確認', desc: '読み込んだデータを確認' },
@@ -141,26 +81,12 @@ export const GuidePage: React.FC = () => {
               { icon: CheckCircle, text: 'マッチング構成確認', desc: '抽選結果を確認・エクスポート' },
               { icon: BarChart3, text: 'マッチング結果', desc: 'マッチング結果を確認・エクスポート' },
             ].map((item, idx) => (
-              <div
-                key={idx}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  padding: '16px',
-                  backgroundColor: 'var(--discord-bg-dark)',
-                  borderRadius: '8px',
-                  border: '1px solid var(--discord-border)',
-                  transition: 'transform 0.2s',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-              >
-                <item.icon size={24} style={{ color: 'var(--discord-accent-blue)', marginBottom: '8px' }} />
-                <div style={{ fontWeight: 600, color: 'var(--discord-text-header)', marginBottom: '4px' }}>
+              <div key={idx} className="guide-flow-item">
+                <item.icon size={24} className="guide-flow-item-icon" />
+                <div className="guide-flow-item-title">
                   {idx + 1}. {item.text}
                 </div>
-                <div style={{ fontSize: '12px', color: 'var(--discord-text-muted)', textAlign: 'center' }}>
+                <div className="guide-flow-item-desc">
                   {item.desc}
                 </div>
               </div>
@@ -170,19 +96,13 @@ export const GuidePage: React.FC = () => {
       </section>
 
       {/* 各画面の説明 */}
-      <section style={{ marginBottom: '48px' }}>
-        <h2 className="page-header-title page-header-title--md" style={{ 
-          marginBottom: '24px', 
-          fontSize: '22px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
+      <section className="guide-section">
+        <h2 className="page-header-title page-header-title--md guide-section-title">
           <Settings size={22} />
           各画面の機能
         </h2>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        <div className="guide-stack-vertical">
           {/* データ読取 */}
           <div style={{ 
             background: 'linear-gradient(135deg, var(--discord-bg-secondary), var(--discord-bg-dark))',

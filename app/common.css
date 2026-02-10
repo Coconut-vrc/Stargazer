@@ -452,6 +452,161 @@ select.form-input {
 }
 
 /* ========================================
+   テキスト（意味が分かる名前）
+   ======================================== */
+
+.text-user-name {
+  font-weight: 600;
+  color: var(--discord-text-normal);
+}
+
+.text-x-id {
+  font-size: 12px;
+  color: var(--discord-text-link);
+}
+
+.text-body-sm {
+  font-size: 14px;
+  color: var(--discord-text-normal);
+}
+
+.text-unassigned {
+  color: var(--discord-accent-red);
+  font-size: 14px;
+}
+
+/* ========================================
+   マッチング用バッジ
+   ======================================== */
+
+.rank-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.rank-badge--out {
+  background-color: var(--discord-bg-secondary);
+  color: var(--discord-text-muted);
+}
+
+.rank-badge--1 {
+  font-weight: bold;
+  background-color: #f5c400;
+  color: #000;
+}
+
+.rank-badge--2 {
+  font-weight: bold;
+  background-color: #a8a8a8;
+  color: #000;
+}
+
+.rank-badge--3 {
+  font-weight: bold;
+  background-color: #ad6f2d;
+  color: #fff;
+}
+
+.rank-badge--other {
+  font-weight: bold;
+  background-color: var(--discord-accent-blue);
+  color: #fff;
+}
+
+/* ========================================
+   余白・レイアウト（分かりやすい名前）
+   ======================================== */
+
+.page-header-tight {
+  margin-bottom: 16px;
+}
+
+.action-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.section-block {
+  background-color: var(--discord-bg-primary);
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.section-block-with-mb {
+  background-color: var(--discord-bg-primary);
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 32px;
+}
+
+.section-title-inline {
+  margin-bottom: 4px;
+  font-size: 18px;
+}
+
+.section-subtitle-inline {
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.table-cell-padding {
+  padding: 12px;
+}
+
+.table-empty-cell {
+  padding: 40px;
+  text-align: center;
+  color: var(--discord-text-muted);
+}
+
+/* ========================================
+   エクスポートボタン
+   ======================================== */
+
+.btn-export-secondary {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid var(--discord-border);
+  background-color: var(--discord-bg-secondary);
+  color: var(--discord-text-normal);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-export-secondary:hover:not(:disabled) {
+  background-color: var(--discord-bg-hover);
+}
+
+.btn-export-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.btn-export-primary {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  background-color: var(--discord-accent-green);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-export-primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.btn-export-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* ========================================
    Table styles
    ======================================== */
 
@@ -742,6 +897,269 @@ select.form-input {
 }
 
 /* ========================================
+   ガイドページ用
+   ======================================== */
+
+.guide-section {
+  margin-bottom: 48px;
+}
+
+.guide-section-title {
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.guide-header-centered {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.guide-header-flex {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.guide-body-text {
+  color: var(--discord-text-normal);
+  margin-bottom: 16px;
+  line-height: 1.7;
+}
+
+.guide-label-muted {
+  color: var(--discord-text-muted);
+  font-size: 13px;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.guide-list {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--discord-text-normal);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.guide-grid-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.guide-stack-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.guide-sample-preview {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: var(--discord-bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--discord-border);
+}
+
+.guide-sample-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--discord-text-header);
+}
+
+.guide-sample-label {
+  font-size: 11px;
+  color: var(--discord-text-muted);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.guide-sample-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+
+.guide-sample-table thead tr {
+  background-color: var(--discord-bg-secondary);
+}
+
+.guide-sample-table th {
+  padding: 6px;
+  text-align: left;
+  font-size: 9px;
+  color: var(--discord-text-muted);
+  font-weight: 600;
+}
+
+.guide-sample-table td {
+  padding: 6px;
+  color: var(--discord-text-normal);
+}
+
+.guide-sample-table .cell-link {
+  color: var(--discord-text-link);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.guide-mode-card {
+  padding: 20px;
+  background-color: var(--discord-bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--discord-border);
+}
+
+.guide-mode-card h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--discord-text-header);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.guide-mode-list {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--discord-text-normal);
+  font-size: 14px;
+  line-height: 2;
+}
+
+.guide-page-narrow {
+  max-width: 1000px;
+}
+
+.guide-header-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--discord-accent-blue), var(--discord-accent-green));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.guide-header-flex-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.guide-subtitle-lg {
+  font-size: 15px;
+}
+
+.guide-tooltip-wrapper {
+  position: relative;
+}
+
+.guide-tooltip-bubble {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background-color: var(--discord-bg-dark);
+  color: var(--discord-text-normal);
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--discord-border);
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+.guide-tooltip-arrow {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid var(--discord-bg-dark);
+}
+
+.guide-flow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.guide-flow-item-icon {
+  display: block;
+  color: var(--discord-accent-blue);
+  margin-bottom: 8px;
+}
+
+.guide-flow-item-title {
+  font-weight: 600;
+  color: var(--discord-text-header);
+  margin-bottom: 4px;
+}
+
+.guide-flow-item-desc {
+  font-size: 12px;
+  color: var(--discord-text-muted);
+  text-align: center;
+}
+
+.guide-flow-box {
+  background: linear-gradient(135deg, var(--discord-bg-secondary), var(--discord-bg-dark));
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid var(--discord-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.guide-flow-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  background-color: var(--discord-bg-dark);
+  border-radius: 8px;
+  border: 1px solid var(--discord-border);
+  transition: transform 0.2s;
+}
+
+.guide-flow-item:hover {
+  transform: translateY(-2px);
+}
+
+.guide-section-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.guide-mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .guide-grid-two,
+  .guide-section-grid,
+  .guide-mode-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========================================
    Modal
    ======================================== */
 
@@ -803,6 +1221,43 @@ select.form-input {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.modal-btn-cancel {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--discord-border);
+  background-color: var(--discord-bg-secondary);
+  color: var(--discord-text-normal);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modal-btn-confirm {
+  padding: 8px 20px;
+  font-size: 14px;
+}
+
+.btn-full-width {
+  width: 100%;
+}
+
+.form-subtitle-mb {
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.form-group-spacing {
+  margin-bottom: 20px;
+}
+
+.form-note-mt {
+  margin-top: 8px;
+}
+
+.form-input-mb {
+  margin-bottom: 20px;
 }
 
 /* ========================================

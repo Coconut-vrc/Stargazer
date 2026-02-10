@@ -62,41 +62,11 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
    */
   const renderRankBadge = useCallback((rank: number) => {
     if (rank === 0) {
-      return (
-        <span
-          style={{
-            fontSize: '10px',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            backgroundColor: 'var(--discord-bg-secondary)',
-            color: 'var(--discord-text-muted)',
-          }}
-        >
-          希望外
-        </span>
-      );
+      return <span className="rank-badge rank-badge--out">希望外</span>;
     }
-
-    // 1:金、2:銀、3:銅っぽい配色
-    const rankConfigs: Record<number, { bg: string; text: string }> = {
-      1: { bg: '#F5C400', text: '#000' },
-      2: { bg: '#A8A8A8', text: '#000' },
-      3: { bg: '#AD6F2D', text: '#fff' },
-    };
-
-    const config = rankConfigs[rank] || { bg: 'var(--discord-accent-blue)', text: '#fff' };
-
+    const modifier = rank >= 1 && rank <= 3 ? `rank-badge--${rank}` : 'rank-badge--other';
     return (
-      <span
-        style={{
-          fontSize: '10px',
-          padding: '2px 6px',
-          borderRadius: '4px',
-          fontWeight: 'bold',
-          backgroundColor: config.bg,
-          color: config.text,
-        }}
-      >
+      <span className={`rank-badge ${modifier}`}>
         第{rank}希望
       </span>
     );
@@ -116,13 +86,9 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
           textTransform: 'uppercase',
         },
         renderCell: (user) => (
-          <td
-            style={{
-              padding: '12px',
-            }}
-          >
-            <div style={{ fontWeight: 600, color: 'var(--discord-text-normal)' }}>{user.name}</div>
-            <div style={{ fontSize: '12px', color: 'var(--discord-text-link)' }}>@{user.x_id}</div>
+          <td className="table-cell-padding">
+            <div className="text-user-name">{user.name}</div>
+            <div className="text-x-id">@{user.x_id}</div>
           </td>
         ),
       },
@@ -139,18 +105,14 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
           const matched = matchingResult.get(user.x_id) || [];
           const slot = matched[roundIdx];
           return (
-            <td
-              style={{
-                padding: '12px',
-              }}
-            >
+            <td className="table-cell-padding">
               {slot ? (
                 <div className="stack-vertical-4">
-                  <div style={{ fontSize: '14px', color: 'var(--discord-text-normal)' }}>{slot.cast.name}</div>
+                  <div className="text-body-sm">{slot.cast.name}</div>
                   <div>{renderRankBadge(slot.rank)}</div>
                 </div>
               ) : (
-                <span style={{ color: 'var(--discord-accent-red)', fontSize: '14px' }}>未配置</span>
+                <span className="text-unassigned">未配置</span>
               )}
             </td>
           );
@@ -211,12 +173,8 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
           textTransform: 'uppercase',
         },
         renderCell: (row) => (
-          <td
-            style={{
-              padding: '12px',
-            }}
-          >
-            <div style={{ fontWeight: 600, color: 'var(--discord-text-normal)' }}>{row.castName}</div>
+          <td className="table-cell-padding">
+            <div className="text-user-name">{row.castName}</div>
           </td>
         ),
       },
@@ -232,23 +190,15 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
         renderCell: (row: CastViewRow) => {
           const assignment = row.perRound[roundIdx];
           return (
-            <td
-              style={{
-                padding: '12px',
-              }}
-            >
+            <td className="table-cell-padding">
               {assignment ? (
                 <div className="stack-vertical-4">
-                  <div style={{ fontSize: '14px', color: 'var(--discord-text-normal)' }}>
-                    {assignment.userName}
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--discord-text-link)' }}>
-                    @{assignment.x_id}
-                  </div>
+                  <div className="text-body-sm">{assignment.userName}</div>
+                  <div className="text-x-id">@{assignment.x_id}</div>
                   <div>{renderRankBadge(assignment.rank)}</div>
                 </div>
               ) : (
-                <span style={{ color: 'var(--discord-accent-red)', fontSize: '14px' }}>未配置</span>
+                <span className="text-unassigned">未配置</span>
               )}
             </td>
           );
@@ -261,14 +211,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
   const emptyRow = useMemo(
     () => (
       <tr>
-        <td
-          colSpan={3}
-          style={{
-            padding: '40px',
-            textAlign: 'center',
-            color: 'var(--discord-text-muted)',
-          }}
-        >
+        <td colSpan={3} className="table-empty-cell">
           当選者がいません。抽選ページから抽選を行ってください。
         </td>
       </tr>
@@ -279,14 +222,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
   const castEmptyRow = useMemo(
     () => (
       <tr>
-        <td
-          colSpan={rotationCount + 1}
-          style={{
-            padding: '40px',
-            textAlign: 'center',
-            color: 'var(--discord-text-muted)',
-          }}
-        >
+        <td colSpan={rotationCount + 1} className="table-empty-cell">
           キャストがいません。キャスト管理ページから出席キャストを設定してください。
         </td>
       </tr>
@@ -400,15 +336,101 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
 
   const downloadPng = useCallback(
     (node: HTMLElement, filename: string) => {
-      return toPng(node, {
-        backgroundColor: '#313338',
-        pixelRatio: 2,
-        cacheBust: true,
-      }).then((dataUrl) => {
-        const link = document.createElement('a');
-        link.download = filename;
-        link.href = dataUrl;
-        link.click();
+      // 要素とその子要素のスタイルを一時的に保存・変更
+      const originalStyles: Array<{ element: HTMLElement; styles: { [key: string]: string } }> = [];
+      
+      // 再帰的に要素と子要素の overflow を解除
+      const collectAndModifyStyles = (el: HTMLElement) => {
+        const computedStyle = window.getComputedStyle(el);
+        const styles: { [key: string]: string } = {};
+        
+        // overflow 関連のスタイルを保存して解除
+        if (computedStyle.overflow !== 'visible' || computedStyle.overflowX !== 'visible' || computedStyle.overflowY !== 'visible') {
+          styles.overflow = el.style.overflow;
+          styles.overflowX = el.style.overflowX;
+          styles.overflowY = el.style.overflowY;
+          styles.maxHeight = el.style.maxHeight;
+          styles.maxWidth = el.style.maxWidth;
+          
+          el.style.overflow = 'visible';
+          el.style.overflowX = 'visible';
+          el.style.overflowY = 'visible';
+          el.style.maxHeight = 'none';
+          el.style.maxWidth = 'none';
+          
+          originalStyles.push({ element: el, styles });
+        }
+        
+        // 子要素も再帰的に処理
+        Array.from(el.children).forEach((child) => {
+          if (child instanceof HTMLElement) {
+            collectAndModifyStyles(child);
+          }
+        });
+      };
+      
+      collectAndModifyStyles(node);
+      
+      // スクロール位置をリセット
+      const originalScrollTop = node.scrollTop;
+      const originalScrollLeft = node.scrollLeft;
+      node.scrollTop = 0;
+      node.scrollLeft = 0;
+      
+      // 少し待ってからレンダリング（スタイル変更が反映されるまで）
+      return new Promise<void>((resolve, reject) => {
+        setTimeout(() => {
+          // 要素の実際のサイズを取得
+          const scrollWidth = node.scrollWidth;
+          const scrollHeight = node.scrollHeight;
+          
+          toPng(node, {
+            backgroundColor: '#313338',
+            pixelRatio: 2,
+            cacheBust: true,
+            width: scrollWidth,
+            height: scrollHeight,
+            useCORS: true,
+          })
+            .then((dataUrl) => {
+              // スタイルを元に戻す
+              originalStyles.forEach(({ element, styles }) => {
+                Object.entries(styles).forEach(([key, value]) => {
+                  if (value) {
+                    (element.style as any)[key] = value;
+                  } else {
+                    (element.style as any)[key] = '';
+                  }
+                });
+              });
+              
+              // スクロール位置を元に戻す
+              node.scrollTop = originalScrollTop;
+              node.scrollLeft = originalScrollLeft;
+              
+              const link = document.createElement('a');
+              link.download = filename;
+              link.href = dataUrl;
+              link.click();
+              resolve();
+            })
+            .catch((error) => {
+              // エラー時もスタイルを元に戻す
+              originalStyles.forEach(({ element, styles }) => {
+                Object.entries(styles).forEach(([key, value]) => {
+                  if (value) {
+                    (element.style as any)[key] = value;
+                  } else {
+                    (element.style as any)[key] = '';
+                  }
+                });
+              });
+              
+              node.scrollTop = originalScrollTop;
+              node.scrollLeft = originalScrollLeft;
+              reject(error);
+            });
+        }, 100);
       });
     },
     [],
@@ -454,7 +476,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
 
   return (
     <div className="fade-in page-wrapper">
-      <header className="page-header" style={{ marginBottom: '16px' }}>
+      <header className="page-header page-header-tight">
         <h1 className="page-header-title page-header-title--lg">マッチング結果</h1>
         <p className="page-header-subtitle">
           {rotationCount}ローテーション制（
@@ -463,74 +485,34 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
         </p>
       </header>
 
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: '10px',
-          marginBottom: '12px',
-        }}
-      >
+      <div className="action-bar">
         <button
           type="button"
+          className="btn-export-secondary"
           onClick={handleExportPngUser}
           disabled={isExportingPngUser || winners.length === 0}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '4px',
-            border: '1px solid var(--discord-border)',
-            backgroundColor: 'var(--discord-bg-secondary)',
-            color: 'var(--discord-text-normal)',
-            fontSize: '13px',
-            fontWeight: 600,
-            cursor: isExportingPngUser || winners.length === 0 ? 'not-allowed' : 'pointer',
-            opacity: isExportingPngUser || winners.length === 0 ? 0.7 : 1,
-          }}
         >
           {isExportingPngUser ? '出力中...' : 'PNGで保存（当選者別）'}
         </button>
         <button
           type="button"
+          className="btn-export-secondary"
           onClick={handleExportPngCast}
           disabled={isExportingPngCast || winners.length === 0}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '4px',
-            border: '1px solid var(--discord-border)',
-            backgroundColor: 'var(--discord-bg-secondary)',
-            color: 'var(--discord-text-normal)',
-            fontSize: '13px',
-            fontWeight: 600,
-            cursor: isExportingPngCast || winners.length === 0 ? 'not-allowed' : 'pointer',
-            opacity: isExportingPngCast || winners.length === 0 ? 0.7 : 1,
-          }}
         >
           {isExportingPngCast ? '出力中...' : 'PNGで保存（キャスト別）'}
         </button>
         <button
           type="button"
+          className="btn-export-primary"
           onClick={handleExport}
           disabled={isExporting || winners.length === 0}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '4px',
-            border: 'none',
-            backgroundColor: 'var(--discord-accent-green)',
-            color: '#fff',
-            fontSize: '13px',
-            fontWeight: 600,
-            cursor: isExporting || winners.length === 0 ? 'not-allowed' : 'pointer',
-            opacity: isExporting || winners.length === 0 ? 0.7 : 1,
-          }}
         >
           {isExporting ? 'エクスポート中...' : 'マッチング結果をシートに保存'}
         </button>
       </div>
 
-      <div
-        ref={userTableRef}
-        style={{ backgroundColor: 'var(--discord-bg-primary)', padding: '16px', borderRadius: '8px', marginBottom: '32px' }}
-      >
+      <div ref={userTableRef} className="section-block-with-mb">
         <div className="table-container">
           <DiscordTable<UserBean>
             columns={columns}
@@ -549,17 +531,11 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
         </div>
       </div>
 
-      <section ref={castTableRef} style={{ backgroundColor: 'var(--discord-bg-primary)', padding: '16px', borderRadius: '8px' }}>
-        <h2
-          className="page-header-title page-header-title--md"
-          style={{ marginBottom: '4px', fontSize: '18px' }}
-        >
+      <section ref={castTableRef} className="section-block">
+        <h2 className="page-header-title page-header-title--md section-title-inline">
           キャスト別マッチング
         </h2>
-        <p
-          className="page-header-subtitle"
-          style={{ marginBottom: '12px', fontSize: '13px' }}
-        >
+        <p className="page-header-subtitle section-subtitle-inline">
           各キャストが各ローテーションで接客するユーザーの一覧です。
         </p>
 
