@@ -137,10 +137,10 @@ export const GuidePage: React.FC = () => {
                     <li>営業モードを選択</li>
                     <li>応募者名簿のURLを入力</li>
                     <li>キャストリストのURLを入力</li>
-                    <li>「保存して同期を開始」をクリック</li>
+                    <li>「データを取り込む」をクリック</li>
                   </ul>
                   <p style={{ color: 'var(--discord-text-muted)', fontSize: '12px', marginTop: '10px', lineHeight: '1.6' }}>
-                    ※ 同じブックに過去の抽選結果シートがある場合は、取り込むかどうか選択できます。
+                    ※ 前回のセッションが残っている場合（同じ端末・同じブラウザ）は、インポート方法を選ぶモーダルが表示されます。「続きから」「新規抽選」「保存した抽選結果を読み取る」のいずれかを選んでOKを押します。
                   </p>
                 </div>
               </div>
@@ -238,7 +238,7 @@ export const GuidePage: React.FC = () => {
                     />
                   </TooltipElement>
                 </div>
-                <TooltipElement id="save-button" tooltip="データを読み込んで同期を開始">
+                <TooltipElement id="save-button" tooltip="データを取り込む（前回セッションありのときは続きから／新規抽選／保存結果の読み取りを選択）">
                   <button
                     style={{
                       width: '100%',
@@ -1015,6 +1015,10 @@ export const GuidePage: React.FC = () => {
         </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {[
+            {
+              q: '「データを取り込む」を押したらモーダルが出ました。何を選べばいいですか？',
+              a: '前回の利用が同じブラウザに残っているときに表示されます。「続きから」はキャストリストだけ再読み込みして前回の抽選結果を引き継ぎます。「新規抽選」は応募者・キャストを読み直して抽選を最初から行います。「保存した抽選結果を読み取る」は、同じスプレッドシート内の過去の抽選結果シートから当選者を復元します。'
+            },
             {
               q: '抽選結果やマッチング結果はどこに保存されますか？',
               a: GUIDE.SHEET_NAME_FORMAT
