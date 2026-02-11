@@ -167,9 +167,15 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
           <div className="cast-presence-summary__list">
             {presentCasts.length > 0 ? (
               presentCasts.map((c) => (
-                <span key={c.name} className="cast-presence-summary__chip cast-presence-summary__chip--present">
+                <button
+                  key={c.name}
+                  type="button"
+                  className="cast-presence-summary__chip cast-presence-summary__chip--present"
+                  onClick={() => togglePresence(c)}
+                  title="クリックで欠席に切り替え"
+                >
                   {c.name}
-                </span>
+                </button>
               ))
             ) : (
               <span className="cast-presence-summary__empty">—</span>
@@ -181,9 +187,15 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
           <div className="cast-presence-summary__list">
             {absentCasts.length > 0 ? (
               absentCasts.map((c) => (
-                <span key={c.name} className="cast-presence-summary__chip cast-presence-summary__chip--absent">
+                <button
+                  key={c.name}
+                  type="button"
+                  className="cast-presence-summary__chip cast-presence-summary__chip--absent"
+                  onClick={() => togglePresence(c)}
+                  title="クリックで出席に切り替え"
+                >
                   {c.name}
-                </span>
+                </button>
               ))
             ) : (
               <span className="cast-presence-summary__empty">—</span>
@@ -191,6 +203,9 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
           </div>
         </div>
       </div>
+      <p className="cast-presence-summary__hint">
+        名前をタップ／クリックすると出席・欠席を切り替えられます。
+      </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
         {/* キャスト新規登録フォーム */}

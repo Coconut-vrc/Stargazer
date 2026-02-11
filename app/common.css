@@ -872,6 +872,16 @@ select.form-input {
   border-radius: 4px;
   font-size: 12px;
   font-weight: 600;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.cast-presence-summary__chip:hover {
+  opacity: 0.9;
+}
+.cast-presence-summary__chip:active {
+  transform: scale(0.98);
 }
 
 .cast-presence-summary__chip--present {
@@ -888,6 +898,13 @@ select.form-input {
   font-size: 12px;
   color: var(--discord-text-muted);
   font-style: italic;
+}
+
+.cast-presence-summary__hint {
+  font-size: 11px;
+  color: var(--discord-text-muted);
+  margin: -16px 0 20px 0;
+  padding: 0 4px;
 }
 
 @media (max-width: 768px) {
