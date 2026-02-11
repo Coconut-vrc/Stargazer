@@ -42,6 +42,10 @@ export const ALERT = {
   NO_USER_SHEET_URL_EXPORT: '応募者名簿のURLが設定されていません。先に「外部連携設定」で同期してください。',
 } as const;
 
+/** キャスト管理画面の注意書き */
+export const CAST_PAGE_NOTICE =
+  '※ 必ず先に「データ読取」でURLを取り込み、データを取り込んでからキャストの新規登録・削除を行ってください。インポート前に登録すると、あとで取り込みしたときに上書きされてデータがずれることがあります。';
+
 /** ガイドページ用 */
 export const GUIDE = {
   SUBTITLE: `${APP_NAME}の基本的な使い方を説明します`,

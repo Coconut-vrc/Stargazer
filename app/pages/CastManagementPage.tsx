@@ -5,6 +5,7 @@ import type { CastBean } from '../common/types/entities';
 import { Repository } from '../stores/AppContext';
 import { SheetService } from '../infrastructures/googleSheets/sheet_service';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { CAST_PAGE_NOTICE } from '../common/copy';
 
 export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repository }) => {
   const [casts, setCasts] = useState<CastBean[]>([]);
@@ -216,6 +217,23 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
           </div>
         </div>
       </header>
+
+      <div
+        className="cast-page-notice"
+        role="alert"
+        style={{
+          padding: '12px 16px',
+          marginBottom: '20px',
+          borderRadius: '8px',
+          backgroundColor: 'rgba(240, 178, 50, 0.15)',
+          border: '1px solid var(--discord-text-warning, #f0b232)',
+          color: 'var(--discord-text-normal)',
+          fontSize: '13px',
+          lineHeight: 1.6,
+        }}
+      >
+        {CAST_PAGE_NOTICE}
+      </div>
 
       {/* 出席者・欠席者 一覧（一目でわかる枠） */}
       <div className="cast-presence-summary">
