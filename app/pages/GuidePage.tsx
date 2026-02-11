@@ -252,7 +252,7 @@ export const GuidePage: React.FC = () => {
                       cursor: 'default'
                     }}
                   >
-                    保存して同期を開始
+                    データを取り込む
                   </button>
                 </TooltipElement>
               </div>

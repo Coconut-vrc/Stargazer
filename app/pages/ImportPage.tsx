@@ -157,7 +157,7 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
           className="btn-primary btn-full-width"
           onClick={handleSave}
         >
-          保存して同期を開始
+          データを取り込む
         </button>
       </div>
     </div>
