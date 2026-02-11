@@ -201,6 +201,46 @@
   color: #8B5A3C; /* チョコレート色 */
 }
 
+/* しょこめるテーマ: モーダルを明るいトーンに（ダーク用の固定色を上書き） */
+.app-container.theme-shokomel .modal-overlay {
+  background-color: rgba(90, 47, 115, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.app-container.theme-shokomel .modal-content {
+  background-color: var(--discord-bg-dark);
+  border-color: var(--discord-border);
+  box-shadow: 0 20px 60px rgba(90, 47, 115, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.app-container.theme-shokomel .modal-title {
+  color: var(--discord-text-header);
+}
+
+.app-container.theme-shokomel .modal-message {
+  color: var(--discord-text-normal);
+}
+
+.app-container.theme-shokomel .modal-btn-cancel {
+  background-color: var(--discord-button-secondary);
+  color: var(--discord-text-normal);
+  border-color: var(--discord-border);
+}
+
+.app-container.theme-shokomel .modal-btn-cancel:hover {
+  background-color: var(--discord-button-secondary-hover);
+}
+
+.app-container.theme-shokomel .btn-primary.modal-btn-confirm {
+  background-color: var(--discord-button-primary);
+  color: #fff;
+}
+
+.app-container.theme-shokomel .btn-primary.modal-btn-confirm:hover {
+  background-color: var(--discord-button-primary-hover);
+}
+
 .main-content {
   flex: 1;
   overflow-y: auto;
