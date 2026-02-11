@@ -11,5 +11,5 @@ export const STORAGE_KEYS = {
   CAST_URL_HISTORY: 'chocomelapp_cast_url_history',
 } as const;
 
-/** URL履歴の最大件数 */
-export const URL_HISTORY_MAX = 10;
+/** URL履歴の最大件数（前回分＝1件のみ保持） */
+export const URL_HISTORY_MAX = 1;

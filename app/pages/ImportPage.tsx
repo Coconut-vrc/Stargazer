@@ -23,13 +23,13 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
       if (savedUserHistory) {
         const parsed = JSON.parse(savedUserHistory);
         if (Array.isArray(parsed)) {
-          setUserUrlHistory(parsed.slice(0, 3));
+          setUserUrlHistory(parsed.slice(0, URL_HISTORY_MAX));
         }
       }
       if (savedCastHistory) {
         const parsed = JSON.parse(savedCastHistory);
         if (Array.isArray(parsed)) {
-          setCastUrlHistory(parsed.slice(0, 3)); // 最大3件まで
+          setCastUrlHistory(parsed.slice(0, URL_HISTORY_MAX));
         }
       }
     } catch (e) {

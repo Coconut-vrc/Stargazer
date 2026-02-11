@@ -142,6 +142,8 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
 
   const presentCount = casts.filter((c) => c.is_present).length;
   const totalCount = casts.length;
+  const presentCasts = casts.filter((c) => c.is_present);
+  const absentCasts = casts.filter((c) => !c.is_present);
 
   return (
     <div className="page-wrapper" style={{ maxWidth: '1200px' }}>
@@ -157,6 +159,38 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
           </div>
         </div>
       </header>
+
+      {/* 出席者・欠席者 一覧（一目でわかる枠） */}
+      <div className="cast-presence-summary">
+        <div className="cast-presence-summary__col cast-presence-summary__col--present">
+          <div className="cast-presence-summary__label">出席者 ({presentCasts.length})</div>
+          <div className="cast-presence-summary__list">
+            {presentCasts.length > 0 ? (
+              presentCasts.map((c) => (
+                <span key={c.name} className="cast-presence-summary__chip cast-presence-summary__chip--present">
+                  {c.name}
+                </span>
+              ))
+            ) : (
+              <span className="cast-presence-summary__empty">—</span>
+            )}
+          </div>
+        </div>
+        <div className="cast-presence-summary__col cast-presence-summary__col--absent">
+          <div className="cast-presence-summary__label">欠席者 ({absentCasts.length})</div>
+          <div className="cast-presence-summary__list">
+            {absentCasts.length > 0 ? (
+              absentCasts.map((c) => (
+                <span key={c.name} className="cast-presence-summary__chip cast-presence-summary__chip--absent">
+                  {c.name}
+                </span>
+              ))
+            ) : (
+              <span className="cast-presence-summary__empty">—</span>
+            )}
+          </div>
+        </div>
+      </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
         {/* キャスト新規登録フォーム */}
