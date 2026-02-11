@@ -10,35 +10,46 @@ export interface MatchedCast {
   rank: number; // 1:第1希望, 2:第2希望, 3:第3希望, 0:希望外
 }
 
+/** 1テーブル分のスロット（当選者 or 空テーブル） */
+export interface TableSlot {
+  user: UserBean | null;
+  matches: MatchedCast[];
+}
+
+export type MatchingResult = {
+  userMap: Map<string, MatchedCast[]>;
+  /** 通常営業で総テーブル数指定時のみ。空テーブル含む全スロット */
+  tableSlots?: TableSlot[];
+};
+
 export class MatchingService {
   /**
    * マッチング実行（ローテーション数可変）
    *
-   * - ローテーションは「循環方式」：各ユーザーは基準となるテーブルから
-   *   ラウンドごとに 1 テーブルずつずれていく
-   * - 第一〜第三希望および希望外に重みを付けたスコアを用いて、
-   *   各ユーザーの満足度が最大化されるように配置
-   * - 同じ入力でも毎回同じ結果にならないように、重みに基づいたランダム選択を行う
+   * - totalTables 指定時（通常営業）：総テーブル数に合わせて空スロットも含めローテ／配置する
+   * - ローテーションは「循環方式」：テーブル順にキャストがずれていく
    *
    * @param winners 当選者リスト
    * @param allCasts 全キャストリスト
    * @param mode マッチング方式（循環 or ランダム）
    * @param rotationCount ローテーション数（例: 2 or 3）
+   * @param totalTables 通常営業時の総テーブル数（空テーブル含む）。指定時は tableSlots を返す
    */
   static runMatching(
     winners: UserBean[],
     allCasts: CastBean[],
     mode: MatchingMode,
     rotationCount: number = 2,
-  ): Map<string, MatchedCast[]> {
-    const result = new Map<string, MatchedCast[]>();
+    totalTables?: number,
+  ): MatchingResult {
+    const userMap = new Map<string, MatchedCast[]>();
+    let tableSlots: TableSlot[] | undefined;
 
     // 出勤しているキャストのみ対象
     const activeCasts = allCasts.filter((c) => c.is_present);
 
-    // 当選者 or 出勤キャストがいなければそのまま返却
     if (winners.length === 0 || activeCasts.length === 0) {
-      return result;
+      return { userMap };
     }
 
     // ローテーション数（最低1）
@@ -99,11 +110,33 @@ export class MatchingService {
 
       const userCount = winners.length;
       const castCount = shuffledCasts.length;
+      // 通常営業で総テーブル数指定時は全テーブル（空含む）をスロット数に。全キャストでローテする
+      const slotCount = totalTables != null && totalTables > 0 ? Math.max(totalTables, userCount) : Math.min(userCount, castCount);
+      const baseCasts = totalTables != null && totalTables > 0 ? shuffledCasts : shuffledCasts.slice(0, Math.min(userCount, castCount));
+      const scoringRows = Math.min(userCount, baseCasts.length);
 
-      // テーブル数（行数）よりキャスト数が少ないと「1ラウンド同一キャスト1人まで」を守れないので、
-      // その場合はキャスト数に合わせて当選者の分だけ使う前提。
-      const usableCount = Math.min(userCount, castCount);
-      const baseCasts = shuffledCasts.slice(0, usableCount);
+      function buildTableSlots(
+        baseCasts: CastBean[],
+        winners: UserBean[],
+        ROUNDS: number,
+        chosenOffset: number,
+        slotCount: number,
+      ): TableSlot[] {
+        const slots: TableSlot[] = [];
+        for (let row = 0; row < slotCount; row++) {
+          const history: MatchedCast[] = [];
+          const user = row < winners.length ? winners[row] : null;
+          for (let r = 0; r < ROUNDS; r++) {
+            const idx = (chosenOffset + row - r + baseCasts.length) % baseCasts.length;
+            const cast = baseCasts[idx];
+            const prefRank = user ? getPreferenceRank(user, cast.name) : 0;
+            const rank = prefRank >= 1 && prefRank <= 3 ? prefRank : 0;
+            history.push({ cast, rank });
+          }
+          slots.push({ user: user ?? null, matches: history });
+        }
+        return slots;
+      }
 
       type OffsetCandidate = { offset: number; weight: number };
       const offsetCandidates: OffsetCandidate[] = [];
@@ -112,7 +145,7 @@ export class MatchingService {
         let totalScore = 0;
         let valid = true;
 
-        for (let row = 0; row < usableCount; row++) {
+        for (let row = 0; row < scoringRows; row++) {
           const user = winners[row];
 
           for (let r = 0; r < ROUNDS; r++) {
@@ -139,33 +172,30 @@ export class MatchingService {
       }
 
       if (offsetCandidates.length === 0) {
-        // すべての offset が NG で潰れるような極端なケースでは、
-        // ローテーションは維持しつつも満足度最小のペナルティを負って 0 番を使用。
-        for (let row = 0; row < usableCount; row++) {
+        const chosenOffset = 0;
+        for (let row = 0; row < scoringRows; row++) {
           const user = winners[row];
           const history: MatchedCast[] = [];
-
           for (let r = 0; r < ROUNDS; r++) {
-            const idx = (row - r + baseCasts.length) % baseCasts.length;
+            const idx = (chosenOffset + row - r + baseCasts.length) % baseCasts.length;
             const cast = baseCasts[idx];
             const prefRank = isNg(user, cast) ? 0 : getPreferenceRank(user, cast.name);
             const rank = prefRank >= 1 && prefRank <= 3 ? prefRank : 0;
             history.push({ cast, rank });
           }
-
-          result.set(user.x_id, history);
+          userMap.set(user.x_id, history);
         }
-
-        return result;
+        if (totalTables != null && totalTables > 0) {
+          tableSlots = buildTableSlots(baseCasts, winners, ROUNDS, chosenOffset, slotCount);
+        }
+        return { userMap, tableSlots };
       }
 
-      // 満足度（totalScore）に基づき offset を重み付きランダムで選択
       const chosenOffset = offsetCandidates[weightedRandomIndex(offsetCandidates)].offset;
 
-      for (let row = 0; row < usableCount; row++) {
+      for (let row = 0; row < scoringRows; row++) {
         const user = winners[row];
         const history: MatchedCast[] = [];
-
         for (let r = 0; r < ROUNDS; r++) {
           const idx = (chosenOffset + row - r + baseCasts.length) % baseCasts.length;
           const cast = baseCasts[idx];
@@ -173,11 +203,12 @@ export class MatchingService {
           const rank = prefRank >= 1 && prefRank <= 3 ? prefRank : 0;
           history.push({ cast, rank });
         }
-
-        result.set(user.x_id, history);
+        userMap.set(user.x_id, history);
       }
-
-      return result;
+      if (totalTables != null && totalTables > 0) {
+        tableSlots = buildTableSlots(baseCasts, winners, ROUNDS, chosenOffset, slotCount);
+      }
+      return { userMap, tableSlots };
     }
 
     // --- ランダムマッチング（希望優先・同一ラウンド重複なし） ---
@@ -270,6 +301,6 @@ export class MatchingService {
       }
     }
 
-    return resultMap;
+    return { userMap: resultMap };
   }
 }

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>レイアウトモック - マッチング結果</title>
+  <link rel="stylesheet" href="../../common.css" />
+  <link rel="stylesheet" href="../../css/layout.css" />
+</head>
+<body>
+  <div class="app-container theme-dark">
+    <aside class="sidebar">
+      <div class="sidebar-inner">
+        <button type="button" class="sidebar-button">抽選条件</button>
+        <button type="button" class="sidebar-button">抽選</button>
+        <button type="button" class="sidebar-button active">マッチング</button>
+        <div class="sidebar-block sidebar-block--push">
+          <button type="button" class="sidebar-button logout">ログアウト</button>
+        </div>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="page-wrapper fade-in">
+        <header class="page-header page-header-tight">
+          <h1 class="page-header-title page-header-title--lg">マッチング結果</h1>
+          <p class="page-header-subtitle">
+            3ローテーション制（循環ローテーション＋重み付きランダム）
+          </p>
+        </header>
+
+        <div class="action-bar">
+          <button type="button" class="btn-export-secondary">PNGで保存（テーブル別）</button>
+          <button type="button" class="btn-export-secondary">PNGで保存（キャスト別）</button>
+          <button type="button" class="btn-export-primary">マッチング結果をシートに保存</button>
+        </div>
+
+        <div class="section-block-with-mb">
+          <div class="table-container">
+            <table style="width: 100%; border-collapse: collapse; min-width: 700px;">
+              <thead>
+                <tr style="background-color: var(--discord-bg-secondary);">
+                  <th class="table-cell-padding" style="text-align: left; font-size: 12px; color: var(--discord-text-muted); text-transform: uppercase;">テーブル番号 / 当選者</th>
+                  <th class="table-cell-padding" style="text-align: left; font-size: 12px; color: var(--discord-text-muted); text-transform: uppercase;">1ローテ目</th>
+                  <th class="table-cell-padding" style="text-align: left; font-size: 12px; color: var(--discord-text-muted); text-transform: uppercase;">2ローテ目</th>
+                  <th class="table-cell-padding" style="text-align: left; font-size: 12px; color: var(--discord-text-muted); text-transform: uppercase;">3ローテ目</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="table-cell-padding">
+                    <div class="text-body-sm table-cell-table-index">テーブル 1</div>
+                    <div class="text-user-name">サンプルユーザー1</div>
+                    <div class="text-x-id">@user1</div>
+                  </td>
+                  <td class="table-cell-padding">
+                    <div class="stack-vertical-4">
+                      <div class="text-body-sm">キャストA</div>
+                      <span class="rank-badge rank-badge--1">第1希望</span>
+                    </div>
+                  </td>
+                  <td class="table-cell-padding">
+                    <div class="stack-vertical-4">
+                      <div class="text-body-sm">キャストB</div>
+                      <span class="rank-badge rank-badge--out">希望外</span>
+                    </div>
+                  </td>
+                  <td class="table-cell-padding">
+                    <div class="stack-vertical-4">
+                      <div class="text-body-sm">キャストC</div>
+                      <span class="rank-badge rank-badge--2">第2希望</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="table-cell-padding">
+                    <div class="text-body-sm table-cell-table-index">テーブル 2</div>
+                    <span class="text-unassigned">空</span>
+                  </td>
+                  <td class="table-cell-padding"><div class="text-body-sm">キャストD</div></td>
+                  <td class="table-cell-padding"><div class="text-body-sm">キャストE</div></td>
+                  <td class="table-cell-padding"><div class="text-body-sm">キャストF</div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <section class="section-block">
+          <h2 class="page-header-title page-header-title--md section-title-inline">キャスト別マッチング</h2>
+          <p class="page-header-subtitle section-subtitle-inline">
+            各キャストが各ローテーションで接客するユーザーの一覧です。
+          </p>
+          <div class="table-container">
+            <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
+              <thead>
+                <tr style="background-color: var(--discord-bg-secondary);">
+                  <th class="table-cell-padding" style="text-align: left; font-size: 12px; color: var(--discord-text-muted);">キャスト</th>
+                  <th class="table-cell-padding" style="text-align: left; font-size: 12px; color: var(--discord-text-muted);">1ローテ目</th>
+                  <th class="table-cell-padding" style="text-align: left; font-size: 12px; color: var(--discord-text-muted);">2ローテ目</th>
+                  <th class="table-cell-padding" style="text-align: left; font-size: 12px; color: var(--discord-text-muted);">3ローテ目</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="table-cell-padding"><div class="text-user-name">キャストA</div></td>
+                  <td class="table-cell-padding">サンプルユーザー1 / @user1</td>
+                  <td class="table-cell-padding">—</td>
+                  <td class="table-cell-padding">—</td>
+                </tr>
+                <tr>
+                  <td class="table-cell-padding"><div class="text-user-name">キャストB</div></td>
+                  <td class="table-cell-padding">—</td>
+                  <td class="table-cell-padding">サンプルユーザー1 / @user1</td>
+                  <td class="table-cell-padding">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

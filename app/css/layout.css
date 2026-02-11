@@ -53,6 +53,28 @@
   --discord-button-primary-hover: #ff6f9f;
   --discord-button-secondary: rgba(255, 255, 255, 0.85);
   --discord-button-secondary-hover: rgba(255, 255, 255, 0.95);
+
+  /* 出席/欠席ボタンを判別しやすく（緑＝出席・グレー紫＝欠席） */
+  --cast-present-bg: #3da87a;
+  --cast-absent-bg: #b8a8c4;
+}
+
+.app-container.theme-shokomel .cast-card__status-dot--present {
+  background-color: var(--cast-present-bg);
+}
+
+.app-container.theme-shokomel .cast-card__status-dot--absent {
+  background-color: var(--cast-absent-bg);
+}
+
+.app-container.theme-shokomel .cast-card__presence-button--present {
+  background-color: var(--cast-present-bg);
+  color: #fff;
+}
+
+.app-container.theme-shokomel .cast-card__presence-button--absent {
+  background-color: var(--cast-absent-bg);
+  color: #4a284f;
 }
 
 .app-container.theme-shokomel .main-content {

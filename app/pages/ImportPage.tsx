@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../stores/AppContext';
+import { BUSINESS_MODE_SPECIAL_LABEL, BUSINESS_MODE_NORMAL } from '../common/copy';
+import { STORAGE_KEYS, URL_HISTORY_MAX } from '../common/config';
 
 interface ImportPageProps {
   onSuccess: (userUrl: string, castUrl: string) => void;
@@ -16,12 +18,12 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
   // localStorageからURL履歴を読み込む
   useEffect(() => {
     try {
-      const savedUserHistory = localStorage.getItem('chocomelapp_user_url_history');
-      const savedCastHistory = localStorage.getItem('chocomelapp_cast_url_history');
+      const savedUserHistory = localStorage.getItem(STORAGE_KEYS.USER_URL_HISTORY);
+      const savedCastHistory = localStorage.getItem(STORAGE_KEYS.CAST_URL_HISTORY);
       if (savedUserHistory) {
         const parsed = JSON.parse(savedUserHistory);
         if (Array.isArray(parsed)) {
-          setUserUrlHistory(parsed.slice(0, 3)); // 最大3件まで
+          setUserUrlHistory(parsed.slice(0, 3));
         }
       }
       if (savedCastHistory) {
@@ -48,7 +50,7 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
     if (!url || !url.trim()) return;
     
     try {
-      const key = type === 'user' ? 'chocomelapp_user_url_history' : 'chocomelapp_cast_url_history';
+      const key = type === 'user' ? STORAGE_KEYS.USER_URL_HISTORY : STORAGE_KEYS.CAST_URL_HISTORY;
       
       // localStorageから最新の履歴を取得（状態が古い可能性があるため）
       const savedHistory = localStorage.getItem(key);
@@ -61,7 +63,7 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
       const updatedHistory = [
         url.trim(),
         ...currentHistory.filter((u: string) => u && u.trim() !== url.trim())
-      ].slice(0, 10); // 最大10件まで
+      ].slice(0, URL_HISTORY_MAX);
 
       localStorage.setItem(key, JSON.stringify(updatedHistory));
       
@@ -102,14 +104,14 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
               onClick={() => setBusinessMode('special')}
               className={`btn-toggle ${businessMode === 'special' ? 'active' : ''}`}
             >
-              特殊営業（完全事前抽選制）
+              {BUSINESS_MODE_SPECIAL_LABEL}
             </button>
             <button
               type="button"
               onClick={() => setBusinessMode('normal')}
               className={`btn-toggle ${businessMode === 'normal' ? 'active' : ''}`}
             >
-              通常営業
+              {BUSINESS_MODE_NORMAL}
             </button>
           </div>
           <p className="form-inline-note form-note-mt">

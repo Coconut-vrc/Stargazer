@@ -1,12 +1,14 @@
 import React, { useCallback, useState } from 'react';
 import { useAppContext } from '../stores/AppContext';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { BUSINESS_MODE_SPECIAL_LABEL, BUSINESS_MODE_NORMAL } from '../common/copy';
 
 export const LotteryPage: React.FC = () => {
   const {
     setActivePage,
     repository,
     setCurrentWinners,
+    setTotalTables: setTotalTablesInContext,
     matchingMode,
     setMatchingMode,
     businessMode,
@@ -21,8 +23,9 @@ export const LotteryPage: React.FC = () => {
     const all = repository.getAllApplyUsers();
     const shuffled = [...all].sort(() => 0.5 - Math.random());
     setCurrentWinners(shuffled.slice(0, count));
+    if (businessMode === 'normal') setTotalTablesInContext(totalTables);
     setActivePage('lottery');
-  }, [count, repository, setActivePage, setCurrentWinners]);
+  }, [count, repository, setActivePage, setCurrentWinners, businessMode, totalTables, setTotalTablesInContext]);
 
   const run = useCallback(() => {
     const allCasts = repository.getAllCasts();
@@ -67,24 +70,24 @@ export const LotteryPage: React.FC = () => {
     <div className="page-wrapper">
       <div className="page-card-narrow">
         <h1 className="page-header-title page-header-title--sm">抽選条件</h1>
-        <p className="page-header-subtitle" style={{ fontSize: '12px', marginBottom: '20px' }}>
+        <p className="page-header-subtitle page-header-subtitle--tight">
           営業モードと抽選条件を選択してください
         </p>
 
-        <div className="btn-toggle-group" style={{ marginBottom: '18px' }}>
+        <div className="btn-toggle-group btn-toggle-group--mb">
           <button
             type="button"
             onClick={() => setBusinessMode('special')}
             className={`btn-toggle ${businessMode === 'special' ? 'active' : ''}`}
           >
-            特殊営業（完全事前抽選制）
+            {BUSINESS_MODE_SPECIAL_LABEL}
           </button>
           <button
             type="button"
             onClick={() => setBusinessMode('normal')}
             className={`btn-toggle ${businessMode === 'normal' ? 'active' : ''}`}
           >
-            通常営業
+            {BUSINESS_MODE_NORMAL}
           </button>
         </div>
 
@@ -97,7 +100,10 @@ export const LotteryPage: React.FC = () => {
               type="number"
               value={count}
               min={1}
-              onChange={(e) => setCount(Number(e.target.value))}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                setCount(Number.isFinite(v) && v >= 1 ? v : count);
+              }}
               className="form-number-input"
             />
             {businessMode === 'special' && (
@@ -114,7 +120,10 @@ export const LotteryPage: React.FC = () => {
                 type="number"
                 value={totalTables}
                 min={count}
-                onChange={(e) => setTotalTables(Number(e.target.value))}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setTotalTables(Number.isFinite(v) && v >= count ? v : totalTables);
+                }}
                 className="form-number-input"
               />
               <span className="form-inline-note">※ 当選者を含む、用意済みテーブルの総数</span>
@@ -122,7 +131,7 @@ export const LotteryPage: React.FC = () => {
           </div>
         )}
 
-        <div className="form-group" style={{ marginBottom: '26px' }}>
+        <div className="form-group form-group--mb-lg">
           <label className="form-label">マッチング方式</label>
           <div className="btn-option-group">
             <button
@@ -148,7 +157,7 @@ export const LotteryPage: React.FC = () => {
           </div>
         </div>
 
-        <button onClick={run} className="btn-primary" style={{ width: '100%', marginTop: '4px' }}>
+        <button onClick={run} className="btn-primary btn-primary--full">
           抽選を開始する
         </button>
       </div>

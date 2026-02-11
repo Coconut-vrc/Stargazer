@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>レイアウトモック - 抽選条件</title>
+  <link rel="stylesheet" href="../../common.css" />
+  <link rel="stylesheet" href="../../css/layout.css" />
+</head>
+<body>
+  <div class="app-container theme-dark">
+    <aside class="sidebar">
+      <div class="sidebar-inner">
+        <button type="button" class="sidebar-button">ガイド</button>
+        <button type="button" class="sidebar-button">データ読取</button>
+        <button type="button" class="sidebar-button">抽選条件</button>
+        <button type="button" class="sidebar-button active">抽選条件</button>
+        <div class="sidebar-block sidebar-block--push">
+          <button type="button" class="sidebar-button logout">ログアウト</button>
+        </div>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="page-wrapper">
+        <div class="page-card-narrow">
+          <h1 class="page-header-title page-header-title--sm">抽選条件</h1>
+          <p class="page-header-subtitle page-header-subtitle--tight">
+            営業モードと抽選条件を選択してください
+          </p>
+
+          <div class="btn-toggle-group btn-toggle-group--mb">
+            <button type="button" class="btn-toggle">特別営業（完全事前抽選制）</button>
+            <button type="button" class="btn-toggle active">通常営業</button>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">当選者数</label>
+            <div class="form-inline-group">
+              <input type="number" class="form-number-input" value="15" min="1" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">総テーブル数</label>
+            <div class="form-inline-group">
+              <input type="number" class="form-number-input" value="15" min="15" />
+              <span class="form-inline-note">※ 当選者を含む、用意済みテーブルの総数</span>
+            </div>
+          </div>
+
+          <div class="form-group form-group--mb-lg">
+            <label class="form-label">マッチング方式</label>
+            <div class="btn-option-group">
+              <button type="button" class="btn-option">
+                <span>ランダムマッチング（希望優先）</span>
+                <span class="btn-option-status">クリックして選択</span>
+              </button>
+              <button type="button" class="btn-option active">
+                <span>循環方式マッチング（ローテーション）</span>
+                <span class="btn-option-status">選択中</span>
+              </button>
+            </div>
+          </div>
+
+          <button type="button" class="btn-primary btn-primary--full">抽選を開始する</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

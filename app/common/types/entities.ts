@@ -12,7 +12,7 @@ export interface UserBean {
   first_flag: string;
   /** 希望キャスト名リスト（E〜G列から生成） */
   casts: string[];
-  /** 備考（H列） */
+  /** 意気込み（H列） */
   note: string;
   /** ペアチケットフラグ（I列: '1' なら true） */
   is_pair_ticket: boolean;

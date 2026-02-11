@@ -1,4 +1,4 @@
-// F:\DEVELOPFOLDER\dev-core\pages\LoginPage.tsx
+// app/pages/LoginPage.tsx
 import React, { useState } from 'react';
 
 export const LoginPage: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess }) => {

@@ -12,8 +12,12 @@ import { MatchingPage } from './MatchingPage';
 import { LoginPage } from './LoginPage';
 import { GuidePage } from './GuidePage';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { ConfirmModal } from '../components/ConfirmModal';
+import { ResultImportModal } from '../components/ResultImportModal';
 import { useAppContext, type PageType } from '../stores/AppContext';
 import { SheetService } from '../infrastructures/googleSheets/sheet_service';
+import { USER_SHEET, USER_SHEET_MIN_COLUMNS, USER_SHEET_BY_MODE, CAST_SHEET, SHEET_RANGES, RESULT_SHEET_PREFIX } from '../common/sheetColumns';
+import { BUSINESS_MODE_SPECIAL, BUSINESS_MODE_NORMAL, NAV, ALERT, APP_NAME } from '../common/copy';
 import '../css/layout.css';
 import '../common.css';
 
@@ -30,6 +34,8 @@ export const AppContainer: React.FC = () => {
     setThemeMode,
     businessMode,
     setBusinessMode,
+    totalTables,
+    setTotalTables,
   } = useAppContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
@@ -46,6 +52,10 @@ export const AppContainer: React.FC = () => {
   const [importModalMatchingMode, setImportModalMatchingMode] =
     useState<'random' | 'rotation'>('random');
   const [isImportingResult, setIsImportingResult] = useState(false);
+  /** 取り込み時の列数チェックエラー（設定時はカスタムモーダル表示） */
+  const [columnCheckError, setColumnCheckError] = useState<string | null>(null);
+  /** 汎用アラート（ブラウザ alert の代わりにカスタムモーダル表示） */
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
   // --- 【重要】起動時にCookieがあるか確認し、ログイン状態を復元する ---
   useEffect(() => {
@@ -70,8 +80,9 @@ export const AppContainer: React.FC = () => {
       repository.resetAll();
       setCurrentWinners([]);
       setMatchingMode('random');
+      setTotalTables(15);
     }
-  }, [isLoggedIn, repository, setCurrentWinners, setMatchingMode]);
+  }, [isLoggedIn, repository, setCurrentWinners, setMatchingMode, setTotalTables]);
 
   // --- ログアウト処理 ---
   const handleLogout = async () => {
@@ -82,41 +93,38 @@ export const AppContainer: React.FC = () => {
         repository.resetAll();
         setCurrentWinners([]);
         setMatchingMode('random');
+        setTotalTables(15);
         setActivePage('import');
         setIsLoggedIn(false);
       }
     } catch (err) {
-      alert('ログアウトに失敗したよ');
+      setAlertMessage(ALERT.LOGOUT_FAILED);
     }
   };
 
   /**
    * 希望キャストをパースする（営業モードに応じて）
-   * - 特殊営業: E列、F列、G列からそれぞれ1つずつ読み込む
+   * - 特別営業: E列、F列、G列からそれぞれ1つずつ読み込む
    * - 通常営業: E列にカンマ区切りで1~3名の希望が入っている
    * - 常に3要素の配列を返す（不足分は空文字列で埋める）
    */
   const parseCastsFromRow = (row: any[], mode: 'special' | 'normal'): string[] => {
+    const { CAST_E, CAST_F, CAST_G } = USER_SHEET;
     let parsed: string[];
-    
     if (mode === 'normal') {
-      // 通常営業: E列（row[4]）にカンマ区切りで希望が入っている
-      const eColumn = (row[4] || '').toString().trim();
+      const eColumn = (row[CAST_E] || '').toString().trim();
       if (!eColumn) {
         parsed = [];
       } else {
-        // カンマで分割し、空白を除去、最大3名まで
         parsed = eColumn
           .split(',')
           .map((s: string) => s.trim())
           .filter(Boolean)
           .slice(0, 3);
-        // 重複除去
         parsed = Array.from(new Set(parsed));
       }
     } else {
-      // 特殊営業: E列、F列、G列からそれぞれ1つずつ
-      parsed = [row[4], row[5], row[6]]
+      parsed = [row[CAST_E], row[CAST_F], row[CAST_G]]
         .map((val) => (val || '').toString().trim())
         .filter(Boolean);
     }
@@ -131,28 +139,44 @@ export const AppContainer: React.FC = () => {
 
   const loadData = async (userUrl: string, castUrl: string) => {
     try {
-      const userValues = await sheetService.fetchSheetData(userUrl, 'A2:I1000');
-      
+      const userValues = await sheetService.fetchSheetData(userUrl, SHEET_RANGES.USER);
+      const requiredCols = businessMode === 'normal' ? USER_SHEET_MIN_COLUMNS.normal : USER_SHEET_MIN_COLUMNS.special;
+      const shortRows = userValues
+        .map((row, i) => ({ sheetRow: i + 2, len: Array.isArray(row) ? row.length : 0 }))
+        .filter(({ len }) => len > 0 && len < requiredCols);
+      if (shortRows.length > 0) {
+        const sample = shortRows.length > 5
+          ? `行 ${shortRows.slice(0, 5).map((r) => r.sheetRow).join(', ')} 他${shortRows.length}行`
+          : `行 ${shortRows.map((r) => r.sheetRow).join(', ')}`;
+        setColumnCheckError(
+          `選択した営業モードと列数が一致しません。\n` +
+          `${businessMode === 'normal' ? BUSINESS_MODE_NORMAL : BUSINESS_MODE_SPECIAL}では${requiredCols}列以上必要です。\n不足している行: ${sample}`
+        );
+        return;
+      }
+
+      const { TIMESTAMP, NAME, X_ID, FIRST_FLAG } = USER_SHEET;
+      const { NOTE, IS_PAIR_TICKET } = USER_SHEET_BY_MODE[businessMode];
       const importedUsers = userValues.map((row) => {
         const casts = parseCastsFromRow(row, businessMode);
         return {
-          timestamp: row[0] || '',
-          name: row[1] || '',
-          x_id: row[2] || '',
-          first_flag: row[3] || '',
+          timestamp: row[TIMESTAMP] || '',
+          name: row[NAME] || '',
+          x_id: row[X_ID] || '',
+          first_flag: row[FIRST_FLAG] || '',
           casts: casts,
-          note: row[7] || '',
-          is_pair_ticket: row[8] === '1',
+          note: row[NOTE] || '',
+          is_pair_ticket: row[IS_PAIR_TICKET] === '1',
           raw_extra: []
         };
       });
 
-      const castValues = await sheetService.fetchSheetData(castUrl, 'A2:C50');
+      const castValues = await sheetService.fetchSheetData(castUrl, SHEET_RANGES.CAST);
       const importedCasts = castValues
         .map((row) => ({
-          name: row[0] || '',
-          is_present: row[1] === '1',
-          ng_users: row[2] ? row[2].split(',').map((s: string) => s.trim()) : [],
+          name: row[CAST_SHEET.NAME] || '',
+          is_present: row[CAST_SHEET.IS_PRESENT] === '1',
+          ng_users: row[CAST_SHEET.NG_USERS] ? (row[CAST_SHEET.NG_USERS] as string).split(',').map((s: string) => s.trim()) : [],
         }))
         .filter(c => c.name); // 空行はスキップ
 
@@ -165,7 +189,7 @@ export const AppContainer: React.FC = () => {
       // 既存の抽選結果シートがあるか確認し、あればモーダル表示
       try {
         const sheets = await sheetService.listSheets(userUrl);
-        const filtered = sheets.filter((name) => name.startsWith('抽選結果_'));
+        const filtered = sheets.filter((name) => name.startsWith(RESULT_SHEET_PREFIX));
         if (filtered.length > 0) {
           setResultSheets(filtered);
           setSelectedResultSheet(filtered[0]);
@@ -178,51 +202,52 @@ export const AppContainer: React.FC = () => {
     } catch (error) {
       // エラーの詳細情報はサーバー側のログにのみ記録
       console.error('Data Load Error:', error);
-      // ユーザーには汎用的なエラーメッセージのみ表示（情報漏洩防止）
-      alert('データの読み取りに失敗しました。URLを確認してください。');
+      setAlertMessage(ALERT.LOAD_FAILED);
     }
   };
 
   const sidebarButtons: { text: string; page: PageType }[] = [
-    { text: 'ガイド', page: 'guide' },
-    { text: 'データ読取', page: 'import' },
-    { text: 'DBデータ確認', page: 'db' },
-    { text: '抽選条件', page: 'lotteryCondition' },
-    { text: '抽選', page: 'lottery' },
-    { text: 'マッチング', page: 'matching' },
-    { text: 'キャスト管理', page: 'cast' },
+    { text: NAV.GUIDE, page: 'guide' },
+    { text: NAV.IMPORT, page: 'import' },
+    { text: NAV.DB, page: 'db' },
+    { text: NAV.LOTTERY_CONDITION, page: 'lotteryCondition' },
+    { text: NAV.LOTTERY, page: 'lottery' },
+    { text: NAV.MATCHING, page: 'matching' },
+    { text: NAV.CAST, page: 'cast' },
   ];
 
   const handleImportExistingResult = async () => {
     if (!selectedResultSheet) {
-      alert('読み込む抽選結果シートを選択してください。');
+      setAlertMessage(ALERT.SELECT_RESULT_SHEET);
       return;
     }
     const userSheetUrl = repository.getUserSheetUrl();
     if (!userSheetUrl) {
-      alert('応募者名簿のURLが設定されていません。');
+      setAlertMessage(ALERT.NO_USER_SHEET_URL);
       return;
     }
 
     setIsImportingResult(true);
     try {
-      const range = `${selectedResultSheet}!A2:I1000`;
+      const range = `${selectedResultSheet}!${SHEET_RANGES.USER}`;
       const rows = await sheetService.fetchSheetData(userSheetUrl, range);
       if (!rows || rows.length === 0) {
-        alert('選択したシートにデータがありません。');
+        setAlertMessage(ALERT.NO_DATA_IN_SHEET);
         return;
       }
 
+      const { TIMESTAMP, NAME, X_ID, FIRST_FLAG } = USER_SHEET;
+      const { NOTE, IS_PAIR_TICKET } = USER_SHEET_BY_MODE[businessMode];
       const winners = rows.map((row: any[]) => {
         const casts = parseCastsFromRow(row, businessMode);
         return {
-          timestamp: row[0] || '',
-          name: row[1] || '',
-          x_id: row[2] || '',
-          first_flag: row[3] || '',
+          timestamp: row[TIMESTAMP] || '',
+          name: row[NAME] || '',
+          x_id: row[X_ID] || '',
+          first_flag: row[FIRST_FLAG] || '',
           casts: casts,
-          note: row[7] || '',
-          is_pair_ticket: row[8] === '1',
+          note: row[NOTE] || '',
+          is_pair_ticket: row[IS_PAIR_TICKET] === '1',
           raw_extra: [],
         };
       });
@@ -232,10 +257,8 @@ export const AppContainer: React.FC = () => {
       setShowResultImportModal(false);
       setActivePage('lottery');
     } catch (e) {
-      // エラーの詳細情報はサーバー側のログにのみ記録
       console.error('既存抽選結果取り込みエラー:', e);
-      // ユーザーには汎用的なエラーメッセージのみ表示
-      alert('既存の抽選結果の取り込みに失敗しました。');
+      setAlertMessage(ALERT.IMPORT_RESULT_FAILED);
     } finally {
       setIsImportingResult(false);
     }
@@ -267,10 +290,10 @@ export const AppContainer: React.FC = () => {
         return (
           <MatchingPage
             winners={currentWinners}
-            allUserData={repository.getAllApplyUsers()}
             repository={repository}
             matchingMode={matchingMode}
             businessMode={businessMode}
+            totalTables={totalTables}
           />
         );
       default:
@@ -283,7 +306,7 @@ export const AppContainer: React.FC = () => {
       <div className={`app-container theme-${themeMode}`}>
         {/* スマホヘッダー */}
         <div className="mobile-header">
-          <div className="logo">chocomelapp</div>
+          <div className="logo">{APP_NAME}</div>
           <button className="menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -307,81 +330,31 @@ export const AppContainer: React.FC = () => {
             ))}
 
             {/* テーマ切り替え */}
-            <div style={{ marginTop: '16px', padding: '8px' }}>
-              <div
-                style={{
-                  fontSize: '11px',
-                  textTransform: 'uppercase',
-                  color: '#949ba4',
-                  marginBottom: '6px',
-                  fontWeight: 600,
-                }}
-              >
-                テーマ
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '6px',
-                  background: 'rgba(0,0,0,0.2)',
-                  borderRadius: '999px',
-                  padding: '3px',
-                }}
-              >
+            <div className="sidebar-block">
+              <div className="sidebar-theme-label">テーマ</div>
+              <div className="sidebar-theme-pills">
                 <button
                   type="button"
                   onClick={() => setThemeMode('dark')}
-                  style={{
-                    flex: 1,
-                    borderRadius: '999px',
-                    padding: '6px 8px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    border: 'none',
-                    backgroundColor:
-                      themeMode === 'dark' ? 'var(--discord-accent-blue)' : 'transparent',
-                    color: themeMode === 'dark' ? '#fff' : '#949ba4',
-                  }}
+                  className={`sidebar-theme-pill ${themeMode === 'dark' ? 'active' : ''}`}
                 >
                   ダーク
                 </button>
                 <button
                   type="button"
                   onClick={() => setThemeMode('shokomel')}
-                  style={{
-                    flex: 1,
-                    borderRadius: '999px',
-                    padding: '6px 8px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    border: 'none',
-                    backgroundColor:
-                      themeMode === 'shokomel'
-                        ? 'var(--discord-accent-blue)'
-                        : 'transparent',
-                    color: themeMode === 'shokomel' ? '#fff' : '#949ba4',
-                  }}
+                  className={`sidebar-theme-pill ${themeMode === 'shokomel' ? 'active' : ''}`}
                 >
                   しょこめる
                 </button>
               </div>
             </div>
-            
-            {/* ログアウトボタンをサイドバー下部に追加 */}
-            <div style={{ marginTop: 'auto', padding: '10px' }}>
-              <button 
+
+            {/* ログアウトボタン */}
+            <div className="sidebar-block sidebar-block--push">
+              <button
                 onClick={handleLogout}
                 className="sidebar-button logout"
-                style={{ 
-                  color: '#ff4444', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '8px', 
-                  width: '100%', 
-                  background: 'none', 
-                  border: 'none', 
-                  cursor: 'pointer' 
-                }}
               >
                 <LogOut size={18} />
                 ログアウト
@@ -392,97 +365,38 @@ export const AppContainer: React.FC = () => {
 
         {isMenuOpen && <div className="overlay" onClick={() => setIsMenuOpen(false)} />}
 
+        {columnCheckError !== null && (
+          <ConfirmModal
+            type="alert"
+            message={columnCheckError}
+            onConfirm={() => setColumnCheckError(null)}
+            confirmLabel="OK"
+          />
+        )}
+        {alertMessage !== null && (
+          <ConfirmModal
+            type="alert"
+            message={alertMessage}
+            onConfirm={() => setAlertMessage(null)}
+            confirmLabel="OK"
+          />
+        )}
+
         <main className="main-content">
           {renderPage()}
         </main>
 
-        {showResultImportModal && (
-          <div className="modal-overlay" onClick={() => { setShowResultImportModal(false); setResultSheets([]); }}>
-            <div
-              className="modal-content"
-              style={{ maxWidth: '520px' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 style={{ color: 'var(--discord-text-header)', fontSize: '18px', marginBottom: '8px', fontWeight: 600 }}>
-                既存の抽選結果を取り込みますか？
-              </h2>
-              <p className="modal-message" style={{ marginBottom: '16px', fontSize: '13px' }}>
-                このブックには過去の抽選結果シートが見つかりました。読み込むシートとマッチング方式を選択できます。
-              </p>
-
-              <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label className="form-label">抽選結果シート</label>
-                <select
-                  value={selectedResultSheet}
-                  onChange={(e) => setSelectedResultSheet(e.target.value)}
-                  className="form-input"
-                >
-                  {resultSheets.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group" style={{ marginBottom: '20px' }}>
-                <label className="form-label">マッチング方式</label>
-                <div className="btn-toggle-group">
-                  <button
-                    type="button"
-                    onClick={() => setImportModalMatchingMode('random')}
-                    className={`btn-toggle ${importModalMatchingMode === 'random' ? 'active' : ''}`}
-                  >
-                    ランダム（希望優先）
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setImportModalMatchingMode('rotation')}
-                    className={`btn-toggle ${importModalMatchingMode === 'rotation' ? 'active' : ''}`}
-                  >
-                    循環方式（ローテーション）
-                  </button>
-                </div>
-              </div>
-
-              <div className="modal-buttons">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowResultImportModal(false);
-                    setResultSheets([]);
-                  }}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '6px',
-                    border: '1px solid var(--discord-border)',
-                    backgroundColor: 'var(--discord-bg-secondary)',
-                    color: 'var(--discord-text-normal)',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  キャンセル（DB確認へ）
-                </button>
-                <button
-                  type="button"
-                  onClick={handleImportExistingResult}
-                  disabled={isImportingResult}
-                  className="btn-primary"
-                  style={{
-                    padding: '8px 20px',
-                    fontSize: '14px',
-                    cursor: isImportingResult ? 'not-allowed' : 'pointer',
-                    opacity: isImportingResult ? 0.7 : 1,
-                  }}
-                >
-                  {isImportingResult ? '読み込み中...' : 'OK'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ResultImportModal
+          show={showResultImportModal}
+          onClose={() => { setShowResultImportModal(false); setResultSheets([]); }}
+          resultSheets={resultSheets}
+          selectedResultSheet={selectedResultSheet}
+          onSelectSheet={setSelectedResultSheet}
+          matchingMode={importModalMatchingMode}
+          onMatchingModeChange={setImportModalMatchingMode}
+          onConfirm={handleImportExistingResult}
+          isImporting={isImportingResult}
+        />
       </div>
     </ErrorBoundary>
   );

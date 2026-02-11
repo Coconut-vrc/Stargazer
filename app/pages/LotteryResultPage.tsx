@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAppContext } from '../stores/AppContext';
 import { SheetService } from '../infrastructures/googleSheets/sheet_service';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { RESULT_SHEET_PREFIX } from '../common/sheetColumns';
+import { ALERT } from '../common/copy';
 
 export const LotteryResultPage: React.FC = () => {
   const { currentWinners, setActivePage, repository } = useAppContext();
@@ -11,13 +13,13 @@ export const LotteryResultPage: React.FC = () => {
 
   const handleExport = async () => {
     if (currentWinners.length === 0) {
-      setAlertMessage('当選者がいないため、エクスポートできません。');
+      setAlertMessage(ALERT.NO_WINNERS_EXPORT);
       return;
     }
 
     const userSheetUrl = repository.getUserSheetUrl();
     if (!userSheetUrl) {
-      setAlertMessage('応募者名簿のURLが設定されていません。先に「外部連携設定」で同期してください。');
+      setAlertMessage(ALERT.NO_USER_SHEET_URL_EXPORT);
       return;
     }
 
@@ -32,7 +34,7 @@ export const LotteryResultPage: React.FC = () => {
       const ss = String(now.getSeconds()).padStart(2, '0');
 
       // シート名の生成（Google Sheetsのシート名制限に準拠）
-      const baseName = `抽選結果_${yyyy}${mm}${dd}_${hh}${mi}${ss}`;
+      const baseName = `${RESULT_SHEET_PREFIX}${yyyy}${mm}${dd}_${hh}${mi}${ss}`;
       // シート名は最大100文字、制御文字を排除
       const sheetName = baseName.slice(0, 100).replace(/[\x00-\x1F\x7F\[\]\\\/\?*:]/g, '');
 
@@ -44,7 +46,7 @@ export const LotteryResultPage: React.FC = () => {
         '希望1',
         '希望2',
         '希望3',
-        'note',
+        '意気込み',
         'is_pair_ticket',
       ];
 
@@ -87,7 +89,7 @@ export const LotteryResultPage: React.FC = () => {
               <th className="table-header-cell">希望1</th>
               <th className="table-header-cell">希望2</th>
               <th className="table-header-cell">希望3</th>
-              <th className="table-header-cell">備考</th>
+              <th className="table-header-cell">意気込み</th>
             </tr>
           </thead>
           <tbody>
@@ -99,7 +101,7 @@ export const LotteryResultPage: React.FC = () => {
               </tr>
             ) : (
               currentWinners.map((user, index) => (
-                <tr key={user.x_id || index}>
+                <tr key={`${user.x_id ?? user.name ?? ''}-${index}`}>
                   <td className="table-cell" style={{ fontSize: '12px', color: 'var(--discord-text-muted)' }}>
                     #{index + 1}
                   </td>

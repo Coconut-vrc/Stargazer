@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FileText, Database, Users, Settings, CheckCircle, BarChart3, HelpCircle } from 'lucide-react';
+import { BUSINESS_MODE_SPECIAL, BUSINESS_MODE_NORMAL, BUSINESS_MODE_SPECIAL_LABEL, GUIDE } from '../common/copy';
 
 export const GuidePage: React.FC = () => {
   const [hoveredElement, setHoveredElement] = useState<string | null>(null);
@@ -61,7 +62,7 @@ export const GuidePage: React.FC = () => {
           </h1>
         </div>
         <p className="page-header-subtitle guide-subtitle-lg">
-          chocomelappの基本的な使い方を説明します
+          {GUIDE.SUBTITLE}
         </p>
       </header>
 
@@ -74,12 +75,12 @@ export const GuidePage: React.FC = () => {
         <div className="guide-flow-box">
           <div className="guide-flow-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
             {[
-              { icon: FileText, text: 'データ読取', desc: 'スプレッドシートからデータを読み込み' },
-              { icon: Database, text: 'DBデータ確認', desc: '読み込んだデータを確認' },
-              { icon: Users, text: 'キャスト管理', desc: '出席状態を設定' },
-              { icon: Settings, text: '抽選条件', desc: '条件を設定して抽選実行' },
-              { icon: CheckCircle, text: 'マッチング構成確認', desc: '抽選結果を確認・エクスポート' },
-              { icon: BarChart3, text: 'マッチング結果', desc: 'マッチング結果を確認・エクスポート' },
+              { icon: FileText, text: GUIDE.FLOW_DATA_READ, desc: GUIDE.FLOW_DATA_READ_DESC },
+              { icon: Database, text: GUIDE.FLOW_DB, desc: GUIDE.FLOW_DB_DESC },
+              { icon: Users, text: GUIDE.FLOW_CAST, desc: GUIDE.FLOW_CAST_DESC },
+              { icon: Settings, text: GUIDE.FLOW_LOTTERY_CONDITION, desc: GUIDE.FLOW_LOTTERY_CONDITION_DESC },
+              { icon: CheckCircle, text: GUIDE.FLOW_MATCHING_CONFIRM, desc: GUIDE.FLOW_MATCHING_CONFIRM_DESC },
+              { icon: BarChart3, text: GUIDE.FLOW_MATCHING_RESULT, desc: GUIDE.FLOW_MATCHING_RESULT_DESC },
             ].map((item, idx) => (
               <div key={idx} className="guide-flow-item">
                 <item.icon size={24} className="guide-flow-item-icon" />
@@ -104,13 +105,7 @@ export const GuidePage: React.FC = () => {
 
         <div className="guide-stack-vertical">
           {/* データ読取 */}
-          <div style={{ 
-            background: 'linear-gradient(135deg, var(--discord-bg-secondary), var(--discord-bg-dark))',
-            padding: '24px', 
-            borderRadius: '12px',
-            border: '1px solid var(--discord-border)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
+          <div className="guide-card">
             <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
                 <h3 style={{ 
@@ -144,6 +139,9 @@ export const GuidePage: React.FC = () => {
                     <li>キャストリストのURLを入力</li>
                     <li>「保存して同期を開始」をクリック</li>
                   </ul>
+                  <p style={{ color: 'var(--discord-text-muted)', fontSize: '12px', marginTop: '10px', lineHeight: '1.6' }}>
+                    ※ 同じブックに過去の抽選結果シートがある場合は、取り込むかどうか選択できます。
+                  </p>
                 </div>
               </div>
               <div className="guide-sample-preview" style={{ 
@@ -176,7 +174,7 @@ export const GuidePage: React.FC = () => {
                           cursor: 'default'
                         }}
                       >
-                        特殊営業
+                        {BUSINESS_MODE_SPECIAL}
                       </button>
                     </TooltipElement>
                     <TooltipElement id="normal-mode" tooltip="希望キャストを1項目のカンマ区切りから読み込み">
@@ -193,7 +191,7 @@ export const GuidePage: React.FC = () => {
                           cursor: 'default'
                         }}
                       >
-                        通常営業
+                        {BUSINESS_MODE_NORMAL}
                       </button>
                     </TooltipElement>
                   </div>
@@ -262,13 +260,7 @@ export const GuidePage: React.FC = () => {
           </div>
 
           {/* DBデータ確認 */}
-          <div style={{ 
-            background: 'linear-gradient(135deg, var(--discord-bg-secondary), var(--discord-bg-dark))',
-            padding: '24px', 
-            borderRadius: '12px',
-            border: '1px solid var(--discord-border)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
+          <div className="guide-card">
             <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
                 <h3 style={{ 
@@ -346,13 +338,7 @@ export const GuidePage: React.FC = () => {
           </div>
 
           {/* キャスト管理 */}
-          <div style={{ 
-            background: 'linear-gradient(135deg, var(--discord-bg-secondary), var(--discord-bg-dark))',
-            padding: '24px', 
-            borderRadius: '12px',
-            border: '1px solid var(--discord-border)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
+          <div className="guide-card">
             <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
                 <h3 style={{ 
@@ -459,13 +445,7 @@ export const GuidePage: React.FC = () => {
           </div>
 
           {/* 抽選条件 */}
-          <div style={{ 
-            background: 'linear-gradient(135deg, var(--discord-bg-secondary), var(--discord-bg-dark))',
-            padding: '24px', 
-            borderRadius: '12px',
-            border: '1px solid var(--discord-border)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
+          <div className="guide-card">
             <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
                 <h3 style={{ 
@@ -495,8 +475,8 @@ export const GuidePage: React.FC = () => {
                     lineHeight: '1.9'
                   }}>
                     <li>営業モードを選択</li>
-                    <li>当選人数を入力</li>
-                    <li>通常営業の場合は、総テーブル数を入力</li>
+                    <li>当選人数（{BUSINESS_MODE_SPECIAL}）または当選者数（{BUSINESS_MODE_NORMAL}）を入力</li>
+                    <li>{BUSINESS_MODE_NORMAL}の場合は、総テーブル数を入力</li>
                     <li>マッチング方式を選択</li>
                     <li>「抽選を開始する」をクリック</li>
                   </ul>
@@ -531,7 +511,7 @@ export const GuidePage: React.FC = () => {
                         cursor: 'default'
                       }}
                     >
-                      特殊営業
+                      {BUSINESS_MODE_SPECIAL}
                     </button>
                     <button
                       style={{
@@ -546,7 +526,7 @@ export const GuidePage: React.FC = () => {
                         cursor: 'default'
                       }}
                     >
-                      通常営業
+                      {BUSINESS_MODE_NORMAL}
                     </button>
                   </div>
                 </div>
@@ -625,13 +605,7 @@ export const GuidePage: React.FC = () => {
           </div>
 
           {/* マッチング構成確認 */}
-          <div style={{ 
-            background: 'linear-gradient(135deg, var(--discord-bg-secondary), var(--discord-bg-dark))',
-            padding: '24px', 
-            borderRadius: '12px',
-            border: '1px solid var(--discord-border)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
+          <div className="guide-card">
             <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
                 <h3 style={{ 
@@ -738,13 +712,7 @@ export const GuidePage: React.FC = () => {
           </div>
 
           {/* マッチング結果 */}
-          <div style={{ 
-            background: 'linear-gradient(135deg, var(--discord-bg-secondary), var(--discord-bg-dark))',
-            padding: '24px', 
-            borderRadius: '12px',
-            border: '1px solid var(--discord-border)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
+          <div className="guide-card">
             <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
                 <h3 style={{ 
@@ -773,8 +741,8 @@ export const GuidePage: React.FC = () => {
                     fontSize: '14px',
                     lineHeight: '1.9'
                   }}>
-                    <li>ユーザー別マッチング結果の確認</li>
-                    <li>キャスト別マッチング結果の確認</li>
+                    <li>ユーザー別・キャスト別マッチング結果の確認</li>
+                    <li>当選者別・キャスト別の表をPNG画像で保存（共有や撮影に便利）</li>
                     <li>マッチング結果をスプレッドシートにエクスポート</li>
                   </ul>
                 </div>
@@ -820,23 +788,59 @@ export const GuidePage: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
-                <TooltipElement id="export-matching" tooltip="マッチング結果をスプレッドシートに保存">
-                  <button
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      borderRadius: '4px',
-                      border: 'none',
-                      backgroundColor: 'var(--discord-accent-green)',
-                      color: '#fff',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      cursor: 'default'
-                    }}
-                  >
-                    マッチング結果をシートに保存
-                  </button>
-                </TooltipElement>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <TooltipElement id="export-png-user" tooltip="当選者別の表をPNG画像でダウンロード">
+                    <button
+                      style={{
+                        width: '100%',
+                        padding: '6px 8px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--discord-border)',
+                        backgroundColor: 'var(--discord-bg-secondary)',
+                        color: 'var(--discord-text-normal)',
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        cursor: 'default'
+                      }}
+                    >
+                      PNGで保存（当選者別）
+                    </button>
+                  </TooltipElement>
+                  <TooltipElement id="export-png-cast" tooltip="キャスト別の表をPNG画像でダウンロード">
+                    <button
+                      style={{
+                        width: '100%',
+                        padding: '6px 8px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--discord-border)',
+                        backgroundColor: 'var(--discord-bg-secondary)',
+                        color: 'var(--discord-text-normal)',
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        cursor: 'default'
+                      }}
+                    >
+                      PNGで保存（キャスト別）
+                    </button>
+                  </TooltipElement>
+                  <TooltipElement id="export-matching" tooltip="マッチング結果をスプレッドシートに保存">
+                    <button
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        borderRadius: '4px',
+                        border: 'none',
+                        backgroundColor: 'var(--discord-accent-green)',
+                        color: '#fff',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: 'default'
+                      }}
+                    >
+                      マッチング結果をシートに保存
+                    </button>
+                  </TooltipElement>
+                </div>
               </div>
             </div>
           </div>
@@ -855,13 +859,7 @@ export const GuidePage: React.FC = () => {
           <Settings size={22} />
           営業モードの違い
         </h2>
-        <div style={{ 
-          background: 'linear-gradient(135deg, var(--discord-bg-secondary), var(--discord-bg-dark))',
-          padding: '24px', 
-          borderRadius: '12px',
-          border: '1px solid var(--discord-border)',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
+        <div className="guide-card">
           <div className="guide-mode-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             <div style={{
               backgroundColor: 'var(--discord-bg-dark)',
@@ -884,7 +882,7 @@ export const GuidePage: React.FC = () => {
                   borderRadius: '50%',
                   backgroundColor: 'var(--discord-accent-blue)'
                 }} />
-                特殊営業（完全事前抽選制）
+                {BUSINESS_MODE_SPECIAL_LABEL}
               </h4>
               <ul style={{ 
                 margin: 0, 
@@ -920,7 +918,7 @@ export const GuidePage: React.FC = () => {
                   borderRadius: '50%',
                   backgroundColor: 'var(--discord-accent-green)'
                 }} />
-                通常営業
+                {BUSINESS_MODE_NORMAL}
               </h4>
               <ul style={{ 
                 margin: 0, 
@@ -951,13 +949,7 @@ export const GuidePage: React.FC = () => {
           <BarChart3 size={22} />
           マッチング方式の違い
         </h2>
-        <div style={{ 
-          background: 'linear-gradient(135deg, var(--discord-bg-secondary), var(--discord-bg-dark))',
-          padding: '24px', 
-          borderRadius: '12px',
-          border: '1px solid var(--discord-border)',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
+        <div className="guide-card">
           <div className="guide-mode-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             <div style={{
               backgroundColor: 'var(--discord-bg-dark)',
@@ -1025,7 +1017,7 @@ export const GuidePage: React.FC = () => {
           {[
             {
               q: '抽選結果やマッチング結果はどこに保存されますか？',
-              a: '応募者名簿のスプレッドシート内に、新しいシートとして自動的に作成されます。シート名は「抽選結果_YYYYMMDD_HHMMSS」や「マッチング結果_YYYYMMDD_HHMMSS」の形式です。'
+              a: GUIDE.SHEET_NAME_FORMAT
             },
             {
               q: 'NGユーザーとは何ですか？',
@@ -1040,13 +1032,7 @@ export const GuidePage: React.FC = () => {
               a: '「抽選条件」画面に戻って、再度「抽選を開始する」をクリックしてください。新しい抽選結果が生成されます。'
             },
           ].map((item, idx) => (
-            <div key={idx} style={{ 
-              background: 'linear-gradient(135deg, var(--discord-bg-secondary), var(--discord-bg-dark))',
-              padding: '20px', 
-              borderRadius: '12px',
-              border: '1px solid var(--discord-border)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}>
+            <div key={idx} className="guide-card guide-card--compact">
               <h4 style={{ 
                 color: 'var(--discord-text-header)', 
                 fontSize: '15px', 

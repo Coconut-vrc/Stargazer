@@ -75,6 +75,17 @@ const DBViewPageComponent: React.FC = () => {
     borderBottom: '1px solid var(--discord-border)',
   };
 
+  const emptyRow = useMemo(
+    () => (
+      <tr>
+        <td colSpan={6} className="table-cell" style={{ padding: '32px', textAlign: 'center', color: 'var(--discord-text-muted)' }}>
+          データがありません。左メニューの「データ読取」からスプレッドシートを読み込んでください。
+        </td>
+      </tr>
+    ),
+    [],
+  );
+
   const columns: DiscordTableColumn<(typeof userData)[number]>[] = useMemo(
     () => [
       {
@@ -120,7 +131,7 @@ const DBViewPageComponent: React.FC = () => {
         renderCell: (user) => <td style={cellStyle}>{user.casts[2] || '—'}</td>,
       },
       {
-        header: '備考',
+        header: '意気込み',
         headerStyle: tableHeaderStyle,
         renderCell: (user) => (
           <td
@@ -165,7 +176,7 @@ const DBViewPageComponent: React.FC = () => {
           containerStyle={undefined}
           tableStyle={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}
           headerRowStyle={undefined}
-          emptyRow={undefined}
+          emptyRow={emptyRow}
         />
       </div>
 

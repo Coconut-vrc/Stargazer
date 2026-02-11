@@ -4,17 +4,20 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { toPng } from 'html-to-image';
 import { Repository, type UserBean, type MatchingMode, type BusinessMode } from '../stores/AppContext';
-import { MatchingService, MatchedCast } from '../features/matching/logics/matching_service';
+import { MatchingService, MatchedCast, type TableSlot } from '../features/matching/logics/matching_service';
 import { DiscordTable, DiscordTableColumn } from '../components/DiscordTable';
 import { SheetService } from '../infrastructures/googleSheets/sheet_service';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { MATCHING_SHEET_PREFIX } from '../common/sheetColumns';
+import { ROTATION_COUNTS } from '../common/copy';
 
 interface MatchingPageProps {
   winners: UserBean[];
-  allUserData: UserBean[]; // 互換性のために残しているが内部では repository を優先使用
   repository: Repository;
   matchingMode: MatchingMode;
   businessMode: BusinessMode;
+  /** 通常営業時の総テーブル数（空テーブル含む）。指定時はテーブル別表示・tableSlots を使用 */
+  totalTables?: number;
 }
 
 interface CastAssignment {
@@ -28,13 +31,22 @@ interface CastViewRow {
   perRound: (CastAssignment | null)[];
 }
 
+/** 当選者別／テーブル別の共通行（表示用） */
+interface MatchingRow {
+  tableIndex?: number;
+  user: UserBean | null;
+  matches: MatchedCast[];
+}
+
 const MatchingPageComponent: React.FC<MatchingPageProps> = ({
   winners,
   repository,
   matchingMode,
   businessMode,
+  totalTables,
 }) => {
   const [matchingResult, setMatchingResult] = useState<Map<string, MatchedCast[]>>(new Map());
+  const [tableSlots, setTableSlots] = useState<TableSlot[] | undefined>(undefined);
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingPngUser, setIsExportingPngUser] = useState(false);
   const [isExportingPngCast, setIsExportingPngCast] = useState(false);
@@ -46,16 +58,23 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
   // ページ表示時、または当選者が変わった時にマッチングを再計算
   useEffect(() => {
     if (winners.length > 0) {
-      const rotationCount = businessMode === 'normal' ? 3 : 2;
-      const result = MatchingService.runMatching(
+      const rotationCount = ROTATION_COUNTS[businessMode];
+      const totalTablesArg =
+        businessMode === 'normal' && totalTables != null && totalTables > 0 ? totalTables : undefined;
+      const { userMap, tableSlots: slots } = MatchingService.runMatching(
         winners,
         repository.getAllCasts(),
         matchingMode,
         rotationCount,
+        totalTablesArg,
       );
-      setMatchingResult(result);
+      setMatchingResult(userMap);
+      setTableSlots(slots);
+    } else {
+      setMatchingResult(new Map());
+      setTableSlots(undefined);
     }
-  }, [winners, repository, matchingMode, businessMode]);
+  }, [winners, repository, matchingMode, businessMode, totalTables]);
 
   /**
    * 希望ランクに応じたラベルを表示
@@ -72,12 +91,27 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
     );
   }, []);
 
-  const rotationCount = businessMode === 'normal' ? 3 : 2;
+  const rotationCount = ROTATION_COUNTS[businessMode];
 
-  const columns: DiscordTableColumn<UserBean>[] = useMemo(
+  // テーブル別（空含む）のときは tableSlots から、そうでないときは当選者＋matchingResult から行を構築
+  const matchingRows: MatchingRow[] = useMemo(() => {
+    if (tableSlots != null && tableSlots.length > 0) {
+      return tableSlots.map((slot, i) => ({
+        tableIndex: i + 1,
+        user: slot.user,
+        matches: slot.matches,
+      }));
+    }
+    return winners.map((u) => ({
+      user: u,
+      matches: matchingResult.get(u.x_id) ?? [],
+    }));
+  }, [tableSlots, winners, matchingResult]);
+
+  const columns: DiscordTableColumn<MatchingRow>[] = useMemo(
     () => [
       {
-        header: '当選ユーザー',
+        header: tableSlots != null && tableSlots.length > 0 ? 'テーブル番号 / 当選者' : '当選ユーザー',
         headerStyle: {
           padding: '12px',
           textAlign: 'left',
@@ -85,10 +119,21 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
           fontSize: '12px',
           textTransform: 'uppercase',
         },
-        renderCell: (user) => (
+        renderCell: (row) => (
           <td className="table-cell-padding">
-            <div className="text-user-name">{user.name}</div>
-            <div className="text-x-id">@{user.x_id}</div>
+            {row.tableIndex != null && (
+              <div className="text-body-sm table-cell-table-index">
+                テーブル {row.tableIndex}
+              </div>
+            )}
+            {row.user ? (
+              <>
+                <div className="text-user-name">{row.user.name}</div>
+                <div className="text-x-id">@{row.user.x_id}</div>
+              </>
+            ) : (
+              <span className="text-unassigned">空</span>
+            )}
           </td>
         ),
       },
@@ -101,9 +146,8 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
           fontSize: '12px',
           textTransform: 'uppercase',
         },
-        renderCell: (user) => {
-          const matched = matchingResult.get(user.x_id) || [];
-          const slot = matched[roundIdx];
+        renderCell: (row) => {
+          const slot = row.matches[roundIdx];
           return (
             <td className="table-cell-padding">
               {slot ? (
@@ -117,49 +161,47 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
             </td>
           );
         },
-      })) as DiscordTableColumn<UserBean>[],
+      })) as DiscordTableColumn<MatchingRow>[],
     ],
-    [matchingResult, renderRankBadge, rotationCount],
+    [tableSlots, renderRankBadge, rotationCount],
   );
 
-  // キャスト側から見た「各ローテで対応するユーザー」一覧を作る
+  // キャスト側から見た「各ローテで対応するユーザー」一覧を作る（テーブル別時は tableSlots から逆引き）
   const castViewRows: CastViewRow[] = useMemo(() => {
     const allCasts = repository.getAllCasts().filter((c) => c.is_present);
     const basePerRound = Array.from({ length: rotationCount }, () => null as CastAssignment | null);
-
     const map = new Map<string, CastViewRow>();
 
-    // まず出席キャストをベースとして作成
     for (const cast of allCasts) {
-      map.set(cast.name, {
-        castName: cast.name,
-        perRound: [...basePerRound],
-      });
+      map.set(cast.name, { castName: cast.name, perRound: [...basePerRound] });
     }
 
-    // ユーザー側のマッチング結果から逆引き
-    for (const user of winners) {
-      const history = matchingResult.get(user.x_id) ?? [];
-      history.forEach((slot, idx) => {
-        if (!slot || idx >= rotationCount) return;
-        const key = slot.cast.name;
-        const row =
-          map.get(key) ??
-          {
-            castName: key,
-            perRound: [...basePerRound],
-          };
-        row.perRound[idx] = {
-          userName: user.name,
-          x_id: user.x_id,
-          rank: slot.rank,
-        };
-        map.set(key, row);
-      });
+    if (tableSlots != null && tableSlots.length > 0) {
+      for (const slot of tableSlots) {
+        for (let idx = 0; idx < rotationCount && idx < slot.matches.length; idx++) {
+          const m = slot.matches[idx];
+          if (!m) continue;
+          const row = map.get(m.cast.name) ?? { castName: m.cast.name, perRound: [...basePerRound] };
+          row.perRound[idx] = slot.user
+            ? { userName: slot.user.name, x_id: slot.user.x_id, rank: m.rank }
+            : null;
+          map.set(m.cast.name, row);
+        }
+      }
+    } else {
+      for (const user of winners) {
+        const history = matchingResult.get(user.x_id) ?? [];
+        history.forEach((slot, idx) => {
+          if (!slot || idx >= rotationCount) return;
+          const row = map.get(slot.cast.name) ?? { castName: slot.cast.name, perRound: [...basePerRound] };
+          row.perRound[idx] = { userName: user.name, x_id: user.x_id, rank: slot.rank };
+          map.set(slot.cast.name, row);
+        });
+      }
     }
 
     return Array.from(map.values()).sort((a, b) => a.castName.localeCompare(b.castName, 'ja'));
-  }, [repository, winners, matchingResult, rotationCount]);
+  }, [repository, winners, matchingResult, tableSlots, rotationCount]);
 
   const castColumns: DiscordTableColumn<CastViewRow>[] = useMemo(
     () => [
@@ -211,12 +253,12 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
   const emptyRow = useMemo(
     () => (
       <tr>
-        <td colSpan={3} className="table-empty-cell">
+        <td colSpan={rotationCount + 1} className="table-empty-cell">
           当選者がいません。抽選ページから抽選を行ってください。
         </td>
       </tr>
     ),
-    [],
+    [rotationCount],
   );
 
   const castEmptyRow = useMemo(
@@ -257,38 +299,54 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
       const ss = String(now.getSeconds()).padStart(2, '0');
 
       // シート名の生成（Google Sheetsのシート名制限に準拠）
-      const baseName = `マッチング結果_${yyyy}${mm}${dd}_${hh}${mi}${ss}`;
+      const baseName = `${MATCHING_SHEET_PREFIX}${yyyy}${mm}${dd}_${hh}${mi}${ss}`;
       // シート名は最大100文字、制御文字を排除
       const sheetName = baseName.slice(0, 100).replace(/[\x00-\x1F\x7F\[\]\\\/\?*:]/g, '');
 
       const values: (string | number)[][] = [];
 
-      // ユーザー別マッチング結果
-      values.push(['ユーザー別マッチング結果']);
-      const userHeader: string[] = ['name', 'x_id'];
-      for (let r = 0; r < rotationCount; r++) {
-        userHeader.push(`${r + 1}ローテ目_キャスト`);
-        userHeader.push(`${r + 1}ローテ目_ランク`);
-      }
-      values.push(userHeader);
-
-      for (const user of winners) {
-        const history = matchingResult.get(user.x_id) ?? [];
-        const row: (string | number)[] = [user.name, user.x_id];
+      if (tableSlots != null && tableSlots.length > 0) {
+        // テーブル別マッチング結果（空テーブル含む）
+        values.push(['テーブル別マッチング結果']);
+        const tableHeader: string[] = ['テーブル番号', 'name', 'x_id'];
         for (let r = 0; r < rotationCount; r++) {
-          const slot = history[r];
-          row.push(slot?.cast.name ?? '');
-          if (slot) {
-            if (slot.rank >= 1 && slot.rank <= 3) {
-              row.push(`第${slot.rank}希望`);
-            } else {
-              row.push('希望外');
-            }
-          } else {
-            row.push('');
-          }
+          tableHeader.push(`${r + 1}ローテ目_キャスト`);
+          tableHeader.push(`${r + 1}ローテ目_ランク`);
         }
-        values.push(row);
+        values.push(tableHeader);
+        for (let i = 0; i < tableSlots.length; i++) {
+          const slot = tableSlots[i];
+          const row: (string | number)[] = [i + 1, slot.user?.name ?? '空', slot.user?.x_id ?? ''];
+          for (let r = 0; r < rotationCount; r++) {
+            const m = slot.matches[r];
+            row.push(m?.cast.name ?? '');
+            row.push(m && m.rank >= 1 && m.rank <= 3 ? `第${m.rank}希望` : m ? '希望外' : '');
+          }
+          values.push(row);
+        }
+      } else {
+        // ユーザー別マッチング結果
+        values.push(['ユーザー別マッチング結果']);
+        const userHeader: string[] = ['name', 'x_id'];
+        for (let r = 0; r < rotationCount; r++) {
+          userHeader.push(`${r + 1}ローテ目_キャスト`);
+          userHeader.push(`${r + 1}ローテ目_ランク`);
+        }
+        values.push(userHeader);
+        for (const user of winners) {
+          const history = matchingResult.get(user.x_id) ?? [];
+          const row: (string | number)[] = [user.name, user.x_id];
+          for (let r = 0; r < rotationCount; r++) {
+            const slot = history[r];
+            row.push(slot?.cast.name ?? '');
+            if (slot) {
+              row.push(slot.rank >= 1 && slot.rank <= 3 ? `第${slot.rank}希望` : '希望外');
+            } else {
+              row.push('');
+            }
+          }
+          values.push(row);
+        }
       }
 
       values.push([]);
@@ -332,7 +390,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
     } finally {
       setIsExporting(false);
     }
-  }, [winners, matchingResult, repository, rotationCount, castViewRows, sheetService]);
+  }, [winners, matchingResult, tableSlots, repository, rotationCount, castViewRows, sheetService]);
 
   const downloadPng = useCallback(
     (node: HTMLElement, filename: string) => {
@@ -444,7 +502,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
     try {
       const now = new Date();
       const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
-      await downloadPng(userTableRef.current, `マッチング結果_当選者別_${ts}.png`);
+      await downloadPng(userTableRef.current, `${MATCHING_SHEET_PREFIX}当選者別_${ts}.png`);
       setAlertMessage('当選者別のPNGをダウンロードしました。');
     } catch (e) {
       console.error('PNG出力失敗:', e);
@@ -463,7 +521,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
     try {
       const now = new Date();
       const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
-      await downloadPng(castTableRef.current, `マッチング結果_キャスト別_${ts}.png`);
+      await downloadPng(castTableRef.current, `${MATCHING_SHEET_PREFIX}キャスト別_${ts}.png`);
       setAlertMessage('キャスト別のPNGをダウンロードしました。');
     } catch (e) {
       console.error('PNG出力失敗:', e);
@@ -491,7 +549,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
           onClick={handleExportPngUser}
           disabled={isExportingPngUser || winners.length === 0}
         >
-          {isExportingPngUser ? '出力中...' : 'PNGで保存（当選者別）'}
+          {isExportingPngUser ? '出力中...' : tableSlots?.length ? 'PNGで保存（テーブル別）' : 'PNGで保存（当選者別）'}
         </button>
         <button
           type="button"
@@ -513,9 +571,9 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
 
       <div ref={userTableRef} className="section-block-with-mb">
         <div className="table-container">
-          <DiscordTable<UserBean>
+          <DiscordTable<MatchingRow>
             columns={columns}
-            rows={winners}
+            rows={matchingRows}
             containerStyle={undefined}
             tableStyle={{
               width: '100%',

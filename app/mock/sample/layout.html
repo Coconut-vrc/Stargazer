@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>レイアウトモック - アプリ全体</title>
+  <link rel="stylesheet" href="../../common.css" />
+  <link rel="stylesheet" href="../../css/layout.css" />
+</head>
+<body>
+  <div class="app-container theme-dark" id="app">
+    <!-- スマホヘッダー（768px以下で表示） -->
+    <div class="mobile-header">
+      <div class="logo">chocomelapp</div>
+      <button type="button" class="menu-toggle" aria-label="メニュー">≡</button>
+    </div>
+
+    <!-- サイドバー -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-inner">
+        <div class="sidebar-title"></div>
+        <button type="button" class="sidebar-button">ガイド</button>
+        <button type="button" class="sidebar-button">データ読取</button>
+        <button type="button" class="sidebar-button">DBデータ確認</button>
+        <button type="button" class="sidebar-button">抽選条件</button>
+        <button type="button" class="sidebar-button active">抽選</button>
+        <button type="button" class="sidebar-button">マッチング</button>
+        <button type="button" class="sidebar-button">キャスト管理</button>
+
+        <div class="sidebar-block">
+          <div class="sidebar-theme-label">テーマ</div>
+          <div class="sidebar-theme-pills">
+            <button type="button" class="sidebar-theme-pill active">ダーク</button>
+            <button type="button" class="sidebar-theme-pill">しょこめる</button>
+          </div>
+        </div>
+
+        <div class="sidebar-block sidebar-block--push">
+          <button type="button" class="sidebar-button logout">ログアウト</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- メインエリア -->
+    <main class="main-content">
+      <div class="page-wrapper">
+        <h1 class="page-header-title page-header-title--lg">メインコンテンツ</h1>
+        <p class="page-header-subtitle">ここに各ページの内容が表示されます。サイドバーのクラス・テーマ切替・ログアウト位置の参照用モックです。</p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // テーマ切替（モック用）
+    document.querySelectorAll('.sidebar-theme-pill').forEach(function(btn, i) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.sidebar-theme-pill').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        var app = document.getElementById('app');
+        app.classList.remove('theme-dark', 'theme-shokomel');
+        app.classList.add(i === 0 ? 'theme-dark' : 'theme-shokomel');
+      });
+    });
+  </script>
+</body>
+</html>

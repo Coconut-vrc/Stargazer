@@ -451,6 +451,20 @@ select.form-input {
   opacity: 1;
 }
 
+/* スマホ：マッチング方式ボタンを2行表示にして選択切り替え時のがたつきを防止 */
+@media (max-width: 768px) {
+  .btn-option {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 12px;
+  }
+  .btn-option-status {
+    min-height: 1.2em;
+    font-size: 11px;
+  }
+}
+
 /* ========================================
    テキスト（意味が分かる名前）
    ======================================== */
@@ -551,6 +565,80 @@ select.form-input {
   margin-bottom: 12px;
   font-size: 13px;
 }
+
+/* レイアウト用ユーティリティ（インライン代替・モック参照用） */
+.page-header-subtitle--tight {
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+.btn-toggle-group--mb { margin-bottom: 18px; }
+.form-group--mb-sm { margin-bottom: 16px; }
+.form-group--mb-md { margin-bottom: 20px; }
+.form-group--mb-lg { margin-bottom: 26px; }
+.btn-primary--full { width: 100%; margin-top: 4px; }
+.table-cell-table-index { margin-bottom: 4px; }
+.modal-content--narrow { max-width: 520px; }
+.modal-title {
+  color: var(--discord-text-header);
+  font-size: 18px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.modal-message--block { margin-bottom: 16px; font-size: 13px; }
+.sidebar-block { margin-top: 16px; padding: 8px; }
+.sidebar-block--push { margin-top: auto; padding: 10px; }
+.sidebar-theme-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--discord-text-muted);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.sidebar-theme-pills {
+  display: flex;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 999px;
+  padding: 3px;
+}
+.app-container.theme-shokomel .sidebar-theme-pills {
+  background: rgba(145, 86, 163, 0.15);
+}
+.sidebar-theme-pill {
+  flex: 1;
+  border-radius: 999px;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: var(--discord-text-muted);
+}
+.sidebar-theme-pill.active {
+  background: var(--discord-accent-blue);
+  color: #fff;
+}
+/* ログアウトはデプロイ版と同じ #ff4444 を維持（テーマの accent-red とは別） */
+.sidebar-button.logout {
+  color: #ff4444;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.modal-btn-cancel {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.modal-btn-confirm { padding: 8px 20px; font-size: 14px; cursor: pointer; }
+.modal-btn-confirm:disabled { cursor: not-allowed; opacity: 0.7; }
 
 .table-cell-padding {
   padding: 12px;
@@ -1122,6 +1210,19 @@ select.form-input {
   border-radius: 12px;
   border: 1px solid var(--discord-border);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/** 各画面の機能・FAQ などで使うカード（同上スタイルを共通化） */
+.guide-card {
+  background: linear-gradient(135deg, var(--discord-bg-secondary), var(--discord-bg-dark));
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid var(--discord-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.guide-card--compact {
+  padding: 20px;
 }
 
 .guide-flow-item {

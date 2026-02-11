@@ -1,4 +1,4 @@
-// F:\DEVELOPFOLDER\dev-core\app\stores\AppContext.tsx
+// app/stores/AppContext.tsx
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
@@ -66,6 +66,9 @@ interface AppContextType {
   setThemeMode: (mode: ThemeMode) => void;
   businessMode: BusinessMode;
   setBusinessMode: (mode: BusinessMode) => void;
+  /** 通常営業時の総テーブル数（空テーブル含む・マッチングで使用） */
+  totalTables: number;
+  setTotalTables: (n: number) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -78,8 +81,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [matchingMode, setMatchingMode] = useState<MatchingMode>('random');
   // デフォルトはしょこめるテーマ
   const [themeMode, setThemeMode] = useState<ThemeMode>('shokomel');
-  // デフォルトは特殊営業
+  // デフォルトは特別営業
   const [businessMode, setBusinessMode] = useState<BusinessMode>('special');
+  const [totalTables, setTotalTables] = useState<number>(15);
 
   return (
     <AppContext.Provider value={{
@@ -94,6 +98,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setThemeMode,
       businessMode,
       setBusinessMode,
+      totalTables,
+      setTotalTables,
     }}>
       {children}
     </AppContext.Provider>

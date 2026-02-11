@@ -1,4 +1,4 @@
-// F:\DEVELOPFOLDER\dev-core\app\infrastructures\googleSheets\sheet_service.ts
+// app/infrastructures/googleSheets/sheet_service.ts
 export class SheetService {
   /**
    * Google SheetsのURLからspreadsheetIdを抽出

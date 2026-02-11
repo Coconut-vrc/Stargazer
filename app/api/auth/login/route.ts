@@ -1,4 +1,4 @@
-// F:\DEVELOPFOLDER\dev-core\app\api\auth\login\route.ts
+// app/api/auth/login/route.ts
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
         secure: process.env.NODE_ENV === 'production', // 本番環境ではHTTPSのみ
         sameSite: 'lax',
         path: '/',
-        maxAge: 60 * 60 * 24, // 1日有効
+        maxAge: 60 * 60 * 12, // 12時間有効（応急処置）
       });
 
       return response;
