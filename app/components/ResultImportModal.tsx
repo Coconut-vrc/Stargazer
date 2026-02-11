@@ -30,8 +30,7 @@ export const ResultImportModal: React.FC<ResultImportModalProps> = ({
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
-        className="modal-content"
-        style={{ maxWidth: '520px' }}
+        className="modal-content modal-content--narrow"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="modal-title">

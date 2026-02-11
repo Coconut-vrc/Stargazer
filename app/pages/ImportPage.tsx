@@ -4,10 +4,14 @@ import { BUSINESS_MODE_SPECIAL_LABEL, BUSINESS_MODE_NORMAL } from '../common/cop
 import { STORAGE_KEYS, URL_HISTORY_MAX } from '../common/config';
 
 interface ImportPageProps {
-  onSuccess: (userUrl: string, castUrl: string) => void;
+  /**
+   * インポート要求ハンドラ
+   * - hasSession: LocalStorage に前回セッションがあるかどうか
+   */
+  onImportRequest: (userUrl: string, castUrl: string, hasSession: boolean) => void;
 }
 
-export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
+export const ImportPage: React.FC<ImportPageProps> = ({ onImportRequest }) => {
   const { businessMode, setBusinessMode, repository } = useAppContext();
   // RepositoryからURLを読み込んで初期値として設定
   const [userUrl, setUserUrl] = useState('');
@@ -37,13 +41,15 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
     }
   }, []);
 
-  // ページ表示時にRepositoryからURLを読み込む
+  // ページ表示時に Repository から URL を読み込む。無い場合は履歴の先頭で入力欄を埋める（リロード後も前回URLを表示）
   useEffect(() => {
     const savedUserUrl = repository.getUserSheetUrl();
     const savedCastUrl = repository.getCastSheetUrl();
     if (savedUserUrl) setUserUrl(savedUserUrl);
+    else if (userUrlHistory.length > 0) setUserUrl(userUrlHistory[0]);
     if (savedCastUrl) setCastUrl(savedCastUrl);
-  }, [repository]);
+    else if (castUrlHistory.length > 0) setCastUrl(castUrlHistory[0]);
+  }, [repository, userUrlHistory, castUrlHistory]);
 
   // URL履歴をlocalStorageに保存する関数
   const saveUrlToHistory = (url: string, type: 'user' | 'cast') => {
@@ -77,7 +83,7 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
     }
   };
 
-  // 保存ボタンクリック時に履歴に追加
+  // 保存ボタンクリック時に履歴に追加 + インポートフロー起動
   const handleSave = () => {
     if (userUrl.trim()) {
       saveUrlToHistory(userUrl, 'user');
@@ -85,7 +91,16 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onSuccess }) => {
     if (castUrl.trim()) {
       saveUrlToHistory(castUrl, 'cast');
     }
-    onSuccess(userUrl, castUrl);
+    let hasSession = false;
+    try {
+      if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem(STORAGE_KEYS.SESSION);
+        hasSession = !!raw;
+      }
+    } catch (e) {
+      console.error('セッション情報の確認に失敗:', e);
+    }
+    onImportRequest(userUrl, castUrl, hasSession);
   };
 
   return (

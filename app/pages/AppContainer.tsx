@@ -13,11 +13,14 @@ import { LoginPage } from './LoginPage';
 import { GuidePage } from './GuidePage';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { ConfirmModal } from '../components/ConfirmModal';
-import { ResultImportModal } from '../components/ResultImportModal';
+import { ImportFlowModal } from '../components/ImportFlowModal';
 import { useAppContext, type PageType } from '../stores/AppContext';
 import { SheetService } from '../infrastructures/googleSheets/sheet_service';
-import { USER_SHEET, USER_SHEET_MIN_COLUMNS, USER_SHEET_BY_MODE, CAST_SHEET, SHEET_RANGES, RESULT_SHEET_PREFIX } from '../common/sheetColumns';
+import { USER_SHEET_MIN_COLUMNS, SHEET_RANGES, RESULT_SHEET_PREFIX } from '../common/sheetColumns';
+import { mapRowToUserBean, parseCastSheetRows } from '../common/sheetParsers';
 import { BUSINESS_MODE_SPECIAL, BUSINESS_MODE_NORMAL, NAV, ALERT, APP_NAME } from '../common/copy';
+import type { ImportFlowStep } from '../features/importFlow';
+import { STORAGE_KEYS } from '../common/config';
 import '../css/layout.css';
 import '../common.css';
 
@@ -45,13 +48,22 @@ export const AppContainer: React.FC = () => {
   
   const sheetService = new SheetService();
 
-  // 既存抽選結果取り込みモーダル用
-  const [showResultImportModal, setShowResultImportModal] = useState(false);
+  // --- インポートフロー（3択 + 保存結果読み取り）---
+  const [showImportFlowModal, setShowImportFlowModal] = useState(false);
+  const [importFlowStep, setImportFlowStep] = useState<ImportFlowStep>('choice');
+  const [pendingUserUrl, setPendingUserUrl] = useState<string | null>(null);
+  const [pendingCastUrl, setPendingCastUrl] = useState<string | null>(null);
   const [resultSheets, setResultSheets] = useState<string[]>([]);
   const [selectedResultSheet, setSelectedResultSheet] = useState('');
-  const [importModalMatchingMode, setImportModalMatchingMode] =
-    useState<'random' | 'rotation'>('random');
+  const [importModalMatchingMode, setImportModalMatchingMode] = useState<'random' | 'rotation'>('random');
   const [isImportingResult, setIsImportingResult] = useState(false);
+
+  const closeImportFlowModal = () => {
+    setShowImportFlowModal(false);
+    setImportFlowStep('choice');
+    setResultSheets([]);
+  };
+
   /** 取り込み時の列数チェックエラー（設定時はカスタムモーダル表示） */
   const [columnCheckError, setColumnCheckError] = useState<string | null>(null);
   /** 汎用アラート（ブラウザ alert の代わりにカスタムモーダル表示） */
@@ -74,24 +86,27 @@ export const AppContainer: React.FC = () => {
     checkAuth();
   }, []);
 
-  // ログイン状態が false になったタイミングで、メモリ上のシートURLや読み込み済みデータを全て破棄する
+  /** セッション・リポジトリをクリア（新規抽選／保存結果読み取り前。ログアウト時はこのあとデフォルト値を設定） */
+  const clearSessionData = () => {
+    repository.resetAll();
+    setCurrentWinners([]);
+    if (typeof window !== 'undefined') window.localStorage.removeItem(STORAGE_KEYS.SESSION);
+  };
+
   useEffect(() => {
+    if (isChecking) return;
     if (!isLoggedIn) {
-      repository.resetAll();
-      setCurrentWinners([]);
+      clearSessionData();
       setMatchingMode('random');
       setTotalTables(15);
     }
-  }, [isLoggedIn, repository, setCurrentWinners, setMatchingMode, setTotalTables]);
+  }, [isLoggedIn, isChecking, repository, setCurrentWinners, setMatchingMode, setTotalTables]);
 
-  // --- ログアウト処理 ---
   const handleLogout = async () => {
     try {
       const res = await fetch('/api/auth/logout', { method: 'POST' });
       if (res.ok) {
-        // ログアウト直後にメモリ上のシートURL・名簿・キャストを必ずクリアする
-        repository.resetAll();
-        setCurrentWinners([]);
+        clearSessionData();
         setMatchingMode('random');
         setTotalTables(15);
         setActivePage('import');
@@ -102,42 +117,13 @@ export const AppContainer: React.FC = () => {
     }
   };
 
-  /**
-   * 希望キャストをパースする（営業モードに応じて）
-   * - 特別営業: E列、F列、G列からそれぞれ1つずつ読み込む
-   * - 通常営業: E列にカンマ区切りで1~3名の希望が入っている
-   * - 常に3要素の配列を返す（不足分は空文字列で埋める）
-   */
-  const parseCastsFromRow = (row: any[], mode: 'special' | 'normal'): string[] => {
-    const { CAST_E, CAST_F, CAST_G } = USER_SHEET;
-    let parsed: string[];
-    if (mode === 'normal') {
-      const eColumn = (row[CAST_E] || '').toString().trim();
-      if (!eColumn) {
-        parsed = [];
-      } else {
-        parsed = eColumn
-          .split(',')
-          .map((s: string) => s.trim())
-          .filter(Boolean)
-          .slice(0, 3);
-        parsed = Array.from(new Set(parsed));
-      }
-    } else {
-      parsed = [row[CAST_E], row[CAST_F], row[CAST_G]]
-        .map((val) => (val || '').toString().trim())
-        .filter(Boolean);
-    }
-    
-    // 常に3要素の配列にする（不足分は空文字列で埋める）
-    while (parsed.length < 3) {
-      parsed.push('');
-    }
-    
-    return parsed.slice(0, 3);
-  };
+  const loadData = async (
+    userUrl: string,
+    castUrl: string,
+    options?: { resetBefore?: boolean }
+  ) => {
+    if (options?.resetBefore) clearSessionData();
 
-  const loadData = async (userUrl: string, castUrl: string) => {
     try {
       const userValues = await sheetService.fetchSheetData(userUrl, SHEET_RANGES.USER);
       const requiredCols = businessMode === 'normal' ? USER_SHEET_MIN_COLUMNS.normal : USER_SHEET_MIN_COLUMNS.special;
@@ -155,52 +141,16 @@ export const AppContainer: React.FC = () => {
         return;
       }
 
-      const { TIMESTAMP, NAME, X_ID, FIRST_FLAG } = USER_SHEET;
-      const { NOTE, IS_PAIR_TICKET } = USER_SHEET_BY_MODE[businessMode];
-      const importedUsers = userValues.map((row) => {
-        const casts = parseCastsFromRow(row, businessMode);
-        return {
-          timestamp: row[TIMESTAMP] || '',
-          name: row[NAME] || '',
-          x_id: row[X_ID] || '',
-          first_flag: row[FIRST_FLAG] || '',
-          casts: casts,
-          note: row[NOTE] || '',
-          is_pair_ticket: row[IS_PAIR_TICKET] === '1',
-          raw_extra: []
-        };
-      });
-
+      const importedUsers = userValues.map((row: unknown[]) => mapRowToUserBean(row, businessMode));
       const castValues = await sheetService.fetchSheetData(castUrl, SHEET_RANGES.CAST);
-      const importedCasts = castValues
-        .map((row) => ({
-          name: row[CAST_SHEET.NAME] || '',
-          is_present: row[CAST_SHEET.IS_PRESENT] === '1',
-          ng_users: row[CAST_SHEET.NG_USERS] ? (row[CAST_SHEET.NG_USERS] as string).split(',').map((s: string) => s.trim()) : [],
-        }))
-        .filter(c => c.name); // 空行はスキップ
+      const importedCasts = parseCastSheetRows(castValues as unknown[][]);
 
       repository.setUserSheetUrl(userUrl);
       repository.setCastSheetUrl(castUrl);
       repository.saveApplyUsers(importedUsers);
       repository.saveCasts(importedCasts);
       setActivePage('db');
-
-      // 既存の抽選結果シートがあるか確認し、あればモーダル表示
-      try {
-        const sheets = await sheetService.listSheets(userUrl);
-        const filtered = sheets.filter((name) => name.startsWith(RESULT_SHEET_PREFIX));
-        if (filtered.length > 0) {
-          setResultSheets(filtered);
-          setSelectedResultSheet(filtered[0]);
-          setImportModalMatchingMode('random');
-          setShowResultImportModal(true);
-        }
-      } catch (e) {
-        console.error('既存抽選結果シート確認エラー:', e);
-      }
     } catch (error) {
-      // エラーの詳細情報はサーバー側のログにのみ記録
       console.error('Data Load Error:', error);
       setAlertMessage(ALERT.LOAD_FAILED);
     }
@@ -215,6 +165,74 @@ export const AppContainer: React.FC = () => {
     { text: NAV.MATCHING, page: 'matching' },
     { text: NAV.CAST, page: 'cast' },
   ];
+
+  /** キャストシートのみ再読み込み（続きから） */
+  const reloadCastOnly = async (userUrl: string, castUrl: string) => {
+    try {
+      const castValues = await sheetService.fetchSheetData(castUrl, SHEET_RANGES.CAST);
+      const importedCasts = parseCastSheetRows(castValues as unknown[][]);
+      repository.setUserSheetUrl(userUrl);
+      repository.setCastSheetUrl(castUrl);
+      repository.saveCasts(importedCasts);
+      setActivePage('db');
+    } catch (error) {
+      console.error('Cast-only Load Error:', error);
+      setAlertMessage(ALERT.LOAD_FAILED);
+    }
+  };
+
+  /** インポート画面「データを取り込む」: セッションなしなら即フル読込、ありなら3択モーダル表示 */
+  const handleImportRequest = (userUrl: string, castUrl: string, hasSession: boolean) => {
+    if (!hasSession) {
+      loadData(userUrl, castUrl, { resetBefore: true });
+      return;
+    }
+    setPendingUserUrl(userUrl);
+    setPendingCastUrl(castUrl);
+    setImportFlowStep('choice');
+    setShowImportFlowModal(true);
+  };
+
+  /** 3択OK時: pending URL を検証してから action を実行 */
+  const runImportFlowAction = (action: 'continue' | 'new' | 'loadSaved') => {
+    if (!pendingUserUrl || !pendingCastUrl) {
+      closeImportFlowModal();
+      setAlertMessage(ALERT.LOAD_FAILED);
+      return;
+    }
+    if (action === 'continue') {
+      closeImportFlowModal();
+      reloadCastOnly(pendingUserUrl, pendingCastUrl);
+      return;
+    }
+    if (action === 'new') {
+      closeImportFlowModal();
+      loadData(pendingUserUrl, pendingCastUrl, { resetBefore: true });
+      return;
+    }
+    // action === 'loadSaved'
+    setImportFlowStep('loading');
+    (async () => {
+      try {
+        await loadData(pendingUserUrl!, pendingCastUrl!, { resetBefore: true });
+        const sheets = await sheetService.listSheets(pendingUserUrl!);
+        const filtered = sheets.filter((name) => name.startsWith(RESULT_SHEET_PREFIX));
+        if (filtered.length > 0) {
+          setResultSheets(filtered);
+          setSelectedResultSheet(filtered[0]);
+          setImportModalMatchingMode('random');
+          setImportFlowStep('result');
+        } else {
+          setResultSheets([]);
+          setImportFlowStep('noResult');
+        }
+      } catch (e) {
+        console.error('既存抽選結果シート確認エラー:', e);
+        setAlertMessage(ALERT.LOAD_FAILED);
+        closeImportFlowModal();
+      }
+    })();
+  };
 
   const handleImportExistingResult = async () => {
     if (!selectedResultSheet) {
@@ -236,25 +254,13 @@ export const AppContainer: React.FC = () => {
         return;
       }
 
-      const { TIMESTAMP, NAME, X_ID, FIRST_FLAG } = USER_SHEET;
-      const { NOTE, IS_PAIR_TICKET } = USER_SHEET_BY_MODE[businessMode];
-      const winners = rows.map((row: any[]) => {
-        const casts = parseCastsFromRow(row, businessMode);
-        return {
-          timestamp: row[TIMESTAMP] || '',
-          name: row[NAME] || '',
-          x_id: row[X_ID] || '',
-          first_flag: row[FIRST_FLAG] || '',
-          casts: casts,
-          note: row[NOTE] || '',
-          is_pair_ticket: row[IS_PAIR_TICKET] === '1',
-          raw_extra: [],
-        };
-      });
-
+      const winners = (rows as unknown[][]).map((row) => mapRowToUserBean(row, businessMode));
       setCurrentWinners(winners);
       setMatchingMode(importModalMatchingMode);
-      setShowResultImportModal(false);
+      if (businessMode === 'normal' && winners.length > 0) {
+        setTotalTables(Math.max(totalTables, winners.length));
+      }
+      closeImportFlowModal();
       setActivePage('lottery');
     } catch (e) {
       console.error('既存抽選結果取り込みエラー:', e);
@@ -277,7 +283,7 @@ export const AppContainer: React.FC = () => {
       case 'guide':
         return <GuidePage />;
       case 'import':
-        return <ImportPage onSuccess={loadData} />;
+        return <ImportPage onImportRequest={handleImportRequest} />;
       case 'db':
         return <DBViewPage />;
       case 'cast':
@@ -297,7 +303,7 @@ export const AppContainer: React.FC = () => {
           />
         );
       default:
-        return <ImportPage onSuccess={loadData} />;
+        return <ImportPage onImportRequest={handleImportRequest} />;
     }
   };
 
@@ -386,16 +392,21 @@ export const AppContainer: React.FC = () => {
           {renderPage()}
         </main>
 
-        <ResultImportModal
-          show={showResultImportModal}
-          onClose={() => { setShowResultImportModal(false); setResultSheets([]); }}
+        <ImportFlowModal
+          show={showImportFlowModal}
+          step={importFlowStep}
+          canContinue={currentWinners.length > 0}
+          onClose={closeImportFlowModal}
+          onConfirmChoice={runImportFlowAction}
           resultSheets={resultSheets}
           selectedResultSheet={selectedResultSheet}
           onSelectSheet={setSelectedResultSheet}
           matchingMode={importModalMatchingMode}
           onMatchingModeChange={setImportModalMatchingMode}
-          onConfirm={handleImportExistingResult}
-          isImporting={isImportingResult}
+          onConfirmImportResult={handleImportExistingResult}
+          onSkipImportResult={closeImportFlowModal}
+          onConfirmNoResult={closeImportFlowModal}
+          isImportingResult={isImportingResult}
         />
       </div>
     </ErrorBoundary>

@@ -531,6 +531,9 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
     }
   }, [winners.length, matchingResult.size, downloadPng]);
 
+  const casts = repository.getAllCasts();
+  const hasCasts = casts.length > 0;
+
   return (
     <div className="fade-in page-wrapper">
       <header className="page-header page-header-tight">
@@ -541,6 +544,12 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
           ）
         </p>
       </header>
+
+      {winners.length > 0 && !hasCasts && (
+        <div className="section-block-with-mb banner-muted">
+          キャストデータがありません。データ読取で同期してからマッチングを表示できます。
+        </div>
+      )}
 
       <div className="action-bar">
         <button

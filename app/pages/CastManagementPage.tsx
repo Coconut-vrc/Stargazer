@@ -20,6 +20,12 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
   const FALLBACK_CAST_SHEET_URL =
     'https://docs.google.com/spreadsheets/d/1rc_QdWi805TaZ_2e8uV_odpc4DRQNVnC5ET6W63LzPw/edit';
 
+  /** 出席・欠席のシート書き込みをまとめる遅延（ms） */
+  const PRESENCE_DEBOUNCE_MS = 600;
+  const [hasPendingSync, setHasPendingSync] = useState(false);
+  const pendingPresenceRef = useRef<Map<string, string>>(new Map());
+  const presenceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     const allCasts = repository.getAllCasts();
     setCasts(allCasts);
@@ -58,16 +64,21 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
       return;
     }
 
+    const castSheetUrl = repository.getCastSheetUrl();
+    if (!castSheetUrl) {
+      setAlertMessage('キャストリストのURLが設定されていません。データ読取ページで「キャストリスト URL」を保存してから追加してください。');
+      return;
+    }
+
     const newCast: CastBean = {
       name: newName,
       is_present: false,
       ng_users: []
     };
 
-    const castSheetUrl = repository.getCastSheetUrl() || FALLBACK_CAST_SHEET_URL;
     const nextRowIndex = casts.length + 2;
     const range = `A${nextRowIndex}:C${nextRowIndex}`;
-    
+
     try {
       await sheetService.updateSheetData(castSheetUrl, range, [[newName, '0', '']]);
       const updatedList = [...casts, newCast];
@@ -77,6 +88,7 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
       if (updatedList.length === 1) setSelectedCastName(newName);
     } catch (e) {
       console.error('キャスト追加失敗:', e);
+      setAlertMessage('スプレッドシートへの書き込みに失敗しました。URLと共有設定（編集権限）を確認してください。');
     }
   };
   const handleDeleteCast = async (castName: string) => {
@@ -132,13 +144,41 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
     }
   };
 
-  const togglePresence = async (cast: CastBean) => {
+  const flushPendingPresence = useCallback(() => {
+    if (presenceTimeoutRef.current) {
+      clearTimeout(presenceTimeoutRef.current);
+      presenceTimeoutRef.current = null;
+    }
+    const map = pendingPresenceRef.current;
+    pendingPresenceRef.current = new Map();
+    if (map.size > 0) {
+      const promises = Array.from(map.entries(), ([castName, value]) => syncToSheet(castName, 'B', value));
+      Promise.all(promises).finally(() => setHasPendingSync(false));
+    } else {
+      setHasPendingSync(false);
+    }
+  }, []);
+
+  const togglePresence = useCallback((cast: CastBean) => {
     const newStatus = !cast.is_present;
     repository.updateCastPresence(cast.name, newStatus);
     setCasts([...repository.getAllCasts()]);
     const sheetValue = newStatus ? '1' : '0';
-    await syncToSheet(cast.name, 'B', sheetValue);
-  };
+    pendingPresenceRef.current.set(cast.name, sheetValue);
+    setHasPendingSync(true);
+    if (presenceTimeoutRef.current) clearTimeout(presenceTimeoutRef.current);
+    presenceTimeoutRef.current = setTimeout(flushPendingPresence, PRESENCE_DEBOUNCE_MS);
+  }, [repository, flushPendingPresence]);
+
+  // アンマウント時に未送信があれば送信
+  useEffect(() => () => {
+    const map = pendingPresenceRef.current;
+    if (map.size > 0) {
+      map.forEach((value, castName) => {
+        syncToSheet(castName, 'B', value).catch(() => {});
+      });
+    }
+  }, []);
 
   const presentCount = casts.filter((c) => c.is_present).length;
   const totalCount = casts.length;
@@ -146,7 +186,24 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
   const absentCasts = casts.filter((c) => !c.is_present);
 
   return (
-    <div className="page-wrapper" style={{ maxWidth: '1200px' }}>
+    <div className="page-wrapper page-wrapper--cast">
+      {/* トースト通知（保存の反映待ち）。常にDOMに置き表示だけ切り替えてがたつきを防ぐ */}
+      <div
+        className="toast-notification toast-notification--warning"
+        aria-hidden={!hasPendingSync}
+        style={{
+          visibility: hasPendingSync ? 'visible' : 'hidden',
+          opacity: hasPendingSync ? 1 : 0,
+          pointerEvents: hasPendingSync ? 'auto' : 'none',
+        }}
+      >
+        <div className="toast-notification__content">
+          <span className="toast-notification__icon">★</span>
+          <span className="toast-notification__message">
+            保存の反映待ちです。このまま画面を離れるとスプレッドシートに反映されない場合があります。
+          </span>
+        </div>
+      </div>
       <header className="page-header">
         <div className="page-header-row page-header-row--flex-start">
           <h1 className="page-header-title page-header-title--lg">キャスト・NG管理</h1>
@@ -207,10 +264,10 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
         名前をタップ／クリックすると出席・欠席を切り替えられます。
       </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
+      <div className="flex-col-gap20">
         {/* キャスト新規登録フォーム */}
         <div className="form-card form-card--flex-row">
-          <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+          <div className="flex-col-flex1">
             <label className="form-label">キャストを新規登録</label>
             <input
               placeholder="キャスト名を入力..."
@@ -220,21 +277,21 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
               onKeyDown={(e) => e.key === 'Enter' && handleAddCast()}
             />
           </div>
-          <button onClick={handleAddCast} className="btn-success" style={{ height: '40px', padding: '0 24px' }}>
+          <button onClick={handleAddCast} className="btn-success btn-fixed-h">
             登録
           </button>
         </div>
 
         {/* NGユーザー登録フォーム */}
-        <div className="form-card form-card--flex-col" style={{ position: 'relative', zIndex: 100 }}>
-          <div className="dropdown" style={{ display: 'flex', flexDirection: 'column', flex: 1 }} ref={dropdownRef}>
+        <div className="form-card form-card--flex-col form-card--z">
+          <div className="dropdown dropdown-inner" ref={dropdownRef}>
             <label className="form-label">対象キャスト</label>
             <div
               className="form-input dropdown-toggle"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
               <span>{selectedCastName || '選択中...'}</span>
-              <span style={{ fontSize: '10px' }}>▼</span>
+              <span className="dropdown-arrow">▼</span>
             </div>
             {isDropdownOpen && (
               <div className="dropdown-menu">
@@ -254,7 +311,7 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
             )}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', flex: 2 }}>
+          <div className="flex-col-flex2">
             <label className="form-label">NGユーザーを追加</label>
             <input
               placeholder="ユーザー名を入力..."
@@ -265,8 +322,8 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
             />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button onClick={handleAddNg} className="btn-primary" style={{ height: '40px', minWidth: '96px' }}>
+          <div className="flex-end">
+            <button onClick={handleAddNg} className="btn-primary btn-fixed-h btn-fixed-h--sm">
               追加
             </button>
           </div>
@@ -323,15 +380,7 @@ export const CastManagementPage: React.FC<{ repository: Repository }> = ({ repos
                   </div>
                 ))
               ) : (
-                <span
-                  style={{
-                    fontSize: '12px',
-                    color: 'var(--discord-text-muted)',
-                    fontStyle: 'italic',
-                  }}
-                >
-                  なし
-                </span>
+                <span className="text-muted-italic">なし</span>
               )}
             </div>
           </div>

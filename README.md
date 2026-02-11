@@ -1,4 +1,23 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).  
+抽選・マッチング管理アプリ（chocomelapp）のリポジトリです。
+
+## プロジェクト構成（階層）
+
+```
+app/
+  api/           # 認証・Sheets API のルート
+  common/        # 設定・コピー・列定義・型（config, copy, sheetColumns, types）
+  components/    # 共通UI（ConfirmModal, ResultImportModal, DiscordTable, ErrorBoundary）
+  css/           # レイアウト用CSS
+  features/      # 機能別ロジック（matching のマッチングサービス）
+  infrastructures/ # 外部連携（Google Sheets）
+  pages/         # 画面コンポーネント（AppContainer, Import, DB, Cast, Lottery, Matching, Guide 等）
+  stores/        # グローバル状態（AppContext, Repository）
+docs/            # 設計書・開発向けドキュメント・モック（仕様書、FUNCTIONAL_SPEC, SECURITY_GUIDE, mock）
+```
+
+- **設計・開発向けのドキュメントとモック**は `docs/` にまとめています（`docs/README.md` 参照）。
+- **カスタムモーダル**: 確認用は `ConfirmModal`、既存結果取り込みは `ResultImportModal`。いずれも `app/components/` でクラスベースのスタイル（`.modal-*`）を使用しています。
 
 ## Getting Started
 

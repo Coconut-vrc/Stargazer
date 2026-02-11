@@ -260,6 +260,10 @@ tbody tr:nth-child(even) {
   margin: 0 auto;
 }
 
+.page-wrapper--cast {
+  max-width: 1200px;
+}
+
 .page-card-narrow {
   background-color: var(--discord-bg-dark);
   border-radius: 8px;
@@ -269,6 +273,29 @@ tbody tr:nth-child(even) {
   border: 1px solid var(--discord-border);
   text-align: left;
 }
+
+/* レイアウト・ユーティリティ（インライン代替） */
+.flex-col-gap20 {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+.flex-col-flex1 { display: flex; flex-direction: column; flex: 1; }
+.flex-col-flex2 { display: flex; flex-direction: column; flex: 2; }
+.flex-end { display: flex; justify-content: flex-end; }
+.form-card--z { position: relative; z-index: 100; }
+.btn-fixed-h { height: 40px; padding: 0 24px; }
+.btn-fixed-h--sm { height: 40px; min-width: 96px; }
+.dropdown-inner { display: flex; flex-direction: column; flex: 1; }
+.text-muted-italic { font-size: 12px; color: var(--discord-text-muted); font-style: italic; }
+.banner-muted {
+  padding: 12px;
+  background: var(--discord-bg-secondary);
+  border-radius: 8px;
+  color: var(--discord-text-muted);
+}
+.dropdown-arrow { font-size: 10px; }
 
 .page-header {
   margin-bottom: 24px;
@@ -433,6 +460,11 @@ select.form-input {
   font-size: 12px;
   font-weight: 500;
   transition: background-color 0.12s ease-out, color 0.12s ease-out, border-color 0.12s ease-out;
+}
+
+.btn-option--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-option.active {
@@ -1357,9 +1389,9 @@ select.form-input {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1389,7 +1421,7 @@ select.form-input {
 }
 
 .modal-content {
-  background-color: var(--discord-bg-dark);
+  background-color: rgba(30, 31, 34, 0.98);
   border-radius: 12px;
   border: 1px solid var(--discord-border);
   padding: 28px 32px;
@@ -1398,6 +1430,10 @@ select.form-input {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
   animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   transform-origin: center;
+}
+
+.modal-content.modal-content--narrow {
+  max-width: 520px;
 }
 
 .modal-message {
@@ -1522,5 +1558,173 @@ select.form-input {
 
   .modal-buttons button {
     width: 100%;
+  }
+}
+
+/* ========================================
+   インポートフロー（3択モーダル + スライド + ローディング）
+   ======================================== */
+
+/* ローディング表示（点滅アニメ） */
+.import-loading-message {
+  margin-top: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+.import-loading-message__text {
+  margin: 0 0 12px 0;
+  color: var(--discord-text-normal);
+}
+.import-loading-dots {
+  display: inline-block;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: var(--discord-text-normal);
+  opacity: 1;
+  animation: import-loading-blink 1.2s ease-in-out infinite;
+}
+@keyframes import-loading-blink {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+/* スライダー（Google認証風の横スライド） */
+.import-flow-slider {
+  overflow: hidden;
+  width: 100%;
+  min-height: 200px;
+}
+.import-flow-slider__track {
+  display: flex;
+  width: 400%;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+.import-flow-slider__panel {
+  flex: 0 0 25%;
+  min-width: 25%;
+  box-sizing: border-box;
+  padding: 0 2px;
+}
+
+/* スライダー内の視認性 */
+.import-flow-slider .modal-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--discord-text-header);
+  margin-bottom: 10px;
+  line-height: 1.35;
+}
+.import-flow-slider .modal-message.modal-message--block {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--discord-text-normal);
+  margin-bottom: 20px;
+}
+.import-flow-slider .btn-option {
+  padding: 14px 12px;
+  font-size: 14px;
+}
+.import-flow-slider .btn-option .btn-option-status {
+  font-size: 12px;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+.import-flow-slider .import-loading-message__text {
+  font-size: 15px;
+  color: var(--discord-text-normal);
+  font-weight: 500;
+}
+.import-flow-slider .import-loading-dots {
+  font-size: 15px;
+}
+.import-flow-slider .form-label {
+  color: var(--discord-text-muted);
+  font-weight: 600;
+}
+.import-flow-slider .modal-buttons {
+  margin-top: 24px;
+}
+
+/* ========================================
+   Toast通知（スナックバー）
+   ======================================== */
+
+.toast-notification {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.02)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 8px 14px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(10px);
+  max-width: calc(100vw - 40px);
+  min-width: 240px;
+  transition: opacity 0.2s ease;
+}
+
+.toast-notification--warning {
+  border-left: 4px solid var(--discord-accent-yellow);
+}
+
+.toast-notification__content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--discord-text-normal);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.toast-notification__icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.toast-notification__message {
+  flex: 1;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* スマホ用のトースト調整 */
+@media (max-width: 768px) {
+  .toast-notification {
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    transform: none;
+    max-width: none;
+    min-width: auto;
+  }
+
+  @keyframes toastSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
