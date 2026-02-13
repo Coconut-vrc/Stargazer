@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stargazer Header Logo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #0a0e27;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #1a1f3a 0%, #0a0e27 100%);
+            border-radius: 12px;
+        }
+
+        .planet-icon {
+            flex-shrink: 0;
+        }
+
+        .planet-icon svg {
+            width: 60px;
+            height: 60px;
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .brand-name {
+            font-family: 'Arial Black', 'Arial Bold', Arial, sans-serif;
+            font-size: 32px;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 2px;
+            line-height: 1;
+        }
+
+        .tagline {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        /* 星のキラキラアニメーション */
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .star {
+            animation: twinkle 2s ease-in-out infinite;
+        }
+
+        .star:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .star:nth-child(3) {
+            animation-delay: 1s;
+        }
+
+        .star:nth-child(4) {
+            animation-delay: 1.5s;
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 600px) {
+            .brand-name {
+                font-size: 24px;
+            }
+            
+            .tagline {
+                font-size: 10px;
+                letter-spacing: 2px;
+            }
+            
+            .planet-icon svg {
+                width: 45px;
+                height: 45px;
+            }
+            
+            .header-logo {
+                gap: 15px;
+                padding: 12px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-logo">
+        <div class="planet-icon">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <!-- 背景の軌道線 -->
+                <g opacity="0.4" stroke="#ffffff" fill="none" stroke-width="2">
+                    <path d="M 40 100 Q 60 70, 100 60 T 160 100" />
+                    <path d="M 160 100 Q 140 130, 100 140 T 40 100" />
+                </g>
+                
+                <!-- メインの惑星 -->
+                <circle cx="100" cy="100" r="55" fill="#f5f5f5"/>
+                
+                <!-- 惑星のリング -->
+                <ellipse cx="100" cy="100" rx="85" ry="25" 
+                         fill="none" stroke="#2a3a5a" stroke-width="12"/>
+                <ellipse cx="100" cy="100" rx="85" ry="25" 
+                         fill="none" stroke="#f5f5f5" stroke-width="8"/>
+                
+                <!-- 小さな星（キラキラ） -->
+                <circle class="star" cx="45" cy="95" r="3" fill="#ffffff"/>
+                <circle class="star" cx="155" cy="105" r="3" fill="#ffffff"/>
+                <circle class="star" cx="70" cy="55" r="2.5" fill="#ffffff"/>
+                <circle class="star" cx="130" cy="145" r="2.5" fill="#ffffff"/>
+                
+                <!-- 星型の装飾 -->
+                <g fill="#ffffff" class="star">
+                    <polygon points="50,60 52,66 58,66 53,70 55,76 50,72 45,76 47,70 42,66 48,66" opacity="0.8"/>
+                    <polygon points="150,140 152,146 158,146 153,150 155,156 150,152 145,156 147,150 142,146 148,146" opacity="0.8"/>
+                </g>
+            </svg>
+        </div>
+        
+        <div class="logo-text">
+            <div class="brand-name">STARGAZER</div>
+            <div class="tagline">MATCHING & LOTTERY</div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,114 +1,79 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { useAppContext } from '../stores/AppContext';
 import { BUSINESS_MODE_SPECIAL_LABEL, BUSINESS_MODE_NORMAL } from '../common/copy';
-import { STORAGE_KEYS, URL_HISTORY_MAX } from '../common/config';
+import { parseCSV } from '../common/csvParse';
+
+/** 応募データCSVのヘッダー行数（スキップする） */
+const USER_CSV_HEADER_ROWS = 3;
+/** キャストCSVのヘッダー行数（1行目のみスキップ） */
+const CAST_CSV_HEADER_ROWS = 1;
 
 interface ImportPageProps {
-  /**
-   * インポート要求ハンドラ
-   * - hasSession: LocalStorage に前回セッションがあるかどうか
-   */
-  onImportRequest: (userUrl: string, castUrl: string, hasSession: boolean) => void;
+  /** 応募データ行（ヘッダー除く）で取り込み */
+  onImportUserRows: (rows: string[][]) => void;
+  /** キャストデータ行（ヘッダー除く）で取り込み。省略時はキャストを更新しない */
+  onImportCastRows?: (rows: string[][]) => void;
 }
 
-export const ImportPage: React.FC<ImportPageProps> = ({ onImportRequest }) => {
-  const { businessMode, setBusinessMode, repository } = useAppContext();
-  // RepositoryからURLを読み込んで初期値として設定
-  const [userUrl, setUserUrl] = useState('');
-  const [castUrl, setCastUrl] = useState('');
-  const [userUrlHistory, setUserUrlHistory] = useState<string[]>([]);
-  const [castUrlHistory, setCastUrlHistory] = useState<string[]>([]);
+export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows, onImportCastRows }) => {
+  const { businessMode, setBusinessMode } = useAppContext();
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [userFile, setUserFile] = useState<File | null>(null);
+  const [castFile, setCastFile] = useState<File | null>(null);
 
-  // localStorageからURL履歴を読み込む
-  useEffect(() => {
-    try {
-      const savedUserHistory = localStorage.getItem(STORAGE_KEYS.USER_URL_HISTORY);
-      const savedCastHistory = localStorage.getItem(STORAGE_KEYS.CAST_URL_HISTORY);
-      if (savedUserHistory) {
-        const parsed = JSON.parse(savedUserHistory);
-        if (Array.isArray(parsed)) {
-          setUserUrlHistory(parsed.slice(0, URL_HISTORY_MAX));
-        }
-      }
-      if (savedCastHistory) {
-        const parsed = JSON.parse(savedCastHistory);
-        if (Array.isArray(parsed)) {
-          setCastUrlHistory(parsed.slice(0, URL_HISTORY_MAX));
-        }
-      }
-    } catch (e) {
-      console.error('URL履歴の読み込みに失敗:', e);
-    }
-  }, []);
-
-  // ページ表示時に Repository から URL を読み込む。無い場合は履歴の先頭で入力欄を埋める（リロード後も前回URLを表示）
-  useEffect(() => {
-    const savedUserUrl = repository.getUserSheetUrl();
-    const savedCastUrl = repository.getCastSheetUrl();
-    if (savedUserUrl) setUserUrl(savedUserUrl);
-    else if (userUrlHistory.length > 0) setUserUrl(userUrlHistory[0]);
-    if (savedCastUrl) setCastUrl(savedCastUrl);
-    else if (castUrlHistory.length > 0) setCastUrl(castUrlHistory[0]);
-  }, [repository, userUrlHistory, castUrlHistory]);
-
-  // URL履歴をlocalStorageに保存する関数
-  const saveUrlToHistory = (url: string, type: 'user' | 'cast') => {
-    if (!url || !url.trim()) return;
-    
-    try {
-      const key = type === 'user' ? STORAGE_KEYS.USER_URL_HISTORY : STORAGE_KEYS.CAST_URL_HISTORY;
-      
-      // localStorageから最新の履歴を取得（状態が古い可能性があるため）
-      const savedHistory = localStorage.getItem(key);
-      const currentHistory = savedHistory ? JSON.parse(savedHistory) : [];
-      if (!Array.isArray(currentHistory)) {
-        throw new Error('Invalid history format');
-      }
-      
-      // 既存の履歴から重複を除去し、新しいURLを先頭に追加
-      const updatedHistory = [
-        url.trim(),
-        ...currentHistory.filter((u: string) => u && u.trim() !== url.trim())
-      ].slice(0, URL_HISTORY_MAX);
-
-      localStorage.setItem(key, JSON.stringify(updatedHistory));
-      
-      if (type === 'user') {
-        setUserUrlHistory(updatedHistory);
-      } else {
-        setCastUrlHistory(updatedHistory);
-      }
-    } catch (e) {
-      console.error('URL履歴の保存に失敗:', e);
-    }
+  const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string) ?? '');
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(file, 'UTF-8');
+    });
   };
 
-  // 保存ボタンクリック時に履歴に追加 + インポートフロー起動
-  const handleSave = () => {
-    if (userUrl.trim()) {
-      saveUrlToHistory(userUrl, 'user');
+  const handleImport = async () => {
+    setError('');
+    if (!userFile) {
+      setError('応募データCSVを選択してください。');
+      return;
     }
-    if (castUrl.trim()) {
-      saveUrlToHistory(castUrl, 'cast');
-    }
-    let hasSession = false;
+    setLoading(true);
     try {
-      if (typeof window !== 'undefined') {
-        const raw = localStorage.getItem(STORAGE_KEYS.SESSION);
-        hasSession = !!raw;
+      const userText = await readFileAsText(userFile);
+      const userRows = parseCSV(userText);
+      if (userRows.length <= USER_CSV_HEADER_ROWS) {
+        setError('応募データにデータ行がありません。');
+        setLoading(false);
+        return;
       }
+      const userDataRows = userRows.slice(USER_CSV_HEADER_ROWS);
+      onImportUserRows(userDataRows);
+
+      if (onImportCastRows && castFile) {
+        const castText = await readFileAsText(castFile);
+        const castRows = parseCSV(castText);
+        const castDataRows = castRows.length > CAST_CSV_HEADER_ROWS ? castRows.slice(CAST_CSV_HEADER_ROWS) : [];
+        onImportCastRows(castDataRows);
+      }
+
+      setUserFile(null);
+      setCastFile(null);
     } catch (e) {
-      console.error('セッション情報の確認に失敗:', e);
+      const msg = e instanceof Error ? e.message : 'ファイルの読み込みに失敗しました。';
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
-    onImportRequest(userUrl, castUrl, hasSession);
   };
 
   return (
     <div className="page-wrapper">
       <div className="page-card-narrow">
-        <h2 className="page-header-title page-header-title--md">外部連携設定</h2>
+        <h2 className="page-header-title page-header-title--md">データ読取</h2>
         <p className="page-header-subtitle form-subtitle-mb">
-          スプレッドシートのURLを同期します。
+          応募データ・キャストをCSVファイルで取り込みます。URLは使いません。
         </p>
 
         <div className="form-group form-group-spacing">
@@ -136,46 +101,39 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportRequest }) => {
           </p>
         </div>
 
-        <label className="form-label">応募者名簿 URL</label>
+        <label className="form-label">応募データCSV（必須）</label>
+        <p className="form-inline-note form-note-mt" style={{ marginBottom: 8 }}>
+          フォームの回答CSVを選択してください。先頭3行はヘッダーとしてスキップされます。
+        </p>
         <input
-          type="url"
-          list="user-url-list"
-          autoComplete="url"
+          type="file"
+          accept=".csv"
           className="form-input form-input-mb"
-          value={userUrl}
-          onChange={(e) => setUserUrl(e.target.value)}
-          placeholder="https://docs.google.com/spreadsheets/d/..."
+          onChange={(e) => setUserFile(e.target.files?.[0] ?? null)}
         />
-        <datalist id="user-url-list">
-          {userUrlHistory.map((url, idx) => (
-            <option key={idx} value={url} />
-          ))}
-        </datalist>
 
-        <label className="form-label">キャストリスト URL</label>
+        <label className="form-label">キャストCSV（任意）</label>
+        <p className="form-inline-note form-note-mt" style={{ marginBottom: 8 }}>
+          キャストリストCSV（1行目ヘッダー「キャストリスト,欠勤フラグ,NGユーザー」）。省略時はキャストを更新しません。
+        </p>
         <input
-          type="url"
-          list="cast-url-list"
-          autoComplete="url"
+          type="file"
+          accept=".csv"
           className="form-input form-input-mb"
-          value={castUrl}
-          onChange={(e) => setCastUrl(e.target.value)}
-          placeholder="https://docs.google.com/spreadsheets/d/..."
+          onChange={(e) => setCastFile(e.target.files?.[0] ?? null)}
         />
-        <datalist id="cast-url-list">
-          {castUrlHistory.map((url, idx) => (
-            <option key={idx} value={url} />
-          ))}
-        </datalist>
 
         <button
           className="btn-primary btn-full-width"
-          onClick={handleSave}
+          onClick={handleImport}
+          disabled={loading}
         >
-          データを取り込む
+          {loading ? '読み込み中...' : '取り込む'}
         </button>
+        {error && (
+          <p style={{ marginTop: 12, color: 'var(--discord-accent-red)', fontSize: 14 }}>{error}</p>
+        )}
       </div>
     </div>
   );
 };
-

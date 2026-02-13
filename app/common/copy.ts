@@ -4,7 +4,7 @@
  */
 
 /** アプリ名（ヘッダー・ガイド等） */
-export const APP_NAME = 'chocomelapp';
+export const APP_NAME = 'Stargazer';
 
 /** 括弧内などで使う「完全事前抽選制」。ここを変えると関連ラベルも一括で変わる */
 export const PRIORITY_LOTTERY = '完全事前抽選制';
@@ -33,24 +33,24 @@ export const NAV = {
 /** アラート・エラーメッセージ */
 export const ALERT = {
   LOGOUT_FAILED: 'ログアウトに失敗したよ',
-  LOAD_FAILED: 'データの読み取りに失敗しました。URLを確認してください。',
+  LOAD_FAILED: 'データの読み取りに失敗しました。ファイルを確認するか、データ読取でCSVを取り込み直してください。',
   SELECT_RESULT_SHEET: '読み込む抽選結果シートを選択してください。',
   NO_USER_SHEET_URL: '応募者名簿のURLが設定されていません。',
   NO_DATA_IN_SHEET: '選択したシートにデータがありません。',
   IMPORT_RESULT_FAILED: '既存の抽選結果の取り込みに失敗しました。',
   NO_WINNERS_EXPORT: '当選者がいないため、エクスポートできません。',
-  NO_USER_SHEET_URL_EXPORT: '応募者名簿のURLが設定されていません。先に「外部連携設定」で同期してください。',
+  NO_USER_SHEET_URL_EXPORT: '応募者名簿のスプレッドシートURLが設定されていません。抽選結果をエクスポートするには、データ読取で取り込んだあと、エクスポート先のスプレッドシートURLを設定してください。',
 } as const;
 
 /** キャスト管理画面の注意書き */
 export const CAST_PAGE_NOTICE =
-  '※ 必ず先に「データ読取」でURLを取り込み、データを取り込んでからキャストの新規登録・削除を行ってください。インポート前に登録すると、あとで取り込みしたときに上書きされてデータがずれることがあります。';
+  '※ キャストは「データ読取」でキャストCSVを取り込むか、ここで新規登録・削除・出席・NG設定ができます。応募データは「データ読取」で応募CSVファイルを選択して取り込んでください。';
 
 /** ガイドページ用 */
 export const GUIDE = {
   SUBTITLE: `${APP_NAME}の基本的な使い方を説明します`,
   FLOW_DATA_READ: 'データ読取',
-  FLOW_DATA_READ_DESC: 'スプレッドシートからデータを読み込み',
+  FLOW_DATA_READ_DESC: 'CSVで応募データ・キャストを取り込み',
   FLOW_DB: 'DBデータ確認',
   FLOW_DB_DESC: '読み込んだデータを確認',
   FLOW_CAST: 'キャスト管理',

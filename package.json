@@ -9,7 +9,10 @@
     "start": "next start",
     "lint": "eslint",
     "electron-dev": "electron .",
-    "dist": "next build && node scripts/prepare-standalone.js && electron-builder"
+    "dist": "next build && node scripts/prepare-standalone.js && electron-builder",
+    "tauri": "npm run tauri --prefix desktop",
+    "tauri:dev": "npm run tauri dev --prefix desktop",
+    "tauri:build": "npm run tauri build --prefix desktop"
   },
   "dependencies": {
     "googleapis": "^171.4.0",

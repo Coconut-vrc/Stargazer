@@ -13,13 +13,10 @@ import { LoginPage } from './LoginPage';
 import { GuidePage } from './GuidePage';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { ConfirmModal } from '../components/ConfirmModal';
-import { ImportFlowModal } from '../components/ImportFlowModal';
 import { useAppContext, type PageType } from '../stores/AppContext';
-import { SheetService } from '../infrastructures/googleSheets/sheet_service';
-import { USER_SHEET_MIN_COLUMNS, SHEET_RANGES, RESULT_SHEET_PREFIX } from '../common/sheetColumns';
+import { USER_SHEET_MIN_COLUMNS } from '../common/sheetColumns';
 import { mapRowToUserBean, parseCastSheetRows } from '../common/sheetParsers';
-import { BUSINESS_MODE_SPECIAL, BUSINESS_MODE_NORMAL, NAV, ALERT, APP_NAME } from '../common/copy';
-import type { ImportFlowStep } from '../features/importFlow';
+import { BUSINESS_MODE_NORMAL, BUSINESS_MODE_SPECIAL, NAV, ALERT, APP_NAME } from '../common/copy';
 import { STORAGE_KEYS } from '../common/config';
 import '../css/layout.css';
 import '../common.css';
@@ -46,24 +43,6 @@ export const AppContainer: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false); 
   const [isChecking, setIsChecking] = useState(true); 
   
-  const sheetService = new SheetService();
-
-  // --- インポートフロー（3択 + 保存結果読み取り）---
-  const [showImportFlowModal, setShowImportFlowModal] = useState(false);
-  const [importFlowStep, setImportFlowStep] = useState<ImportFlowStep>('choice');
-  const [pendingUserUrl, setPendingUserUrl] = useState<string | null>(null);
-  const [pendingCastUrl, setPendingCastUrl] = useState<string | null>(null);
-  const [resultSheets, setResultSheets] = useState<string[]>([]);
-  const [selectedResultSheet, setSelectedResultSheet] = useState('');
-  const [importModalMatchingMode, setImportModalMatchingMode] = useState<'random' | 'rotation'>('random');
-  const [isImportingResult, setIsImportingResult] = useState(false);
-
-  const closeImportFlowModal = () => {
-    setShowImportFlowModal(false);
-    setImportFlowStep('choice');
-    setResultSheets([]);
-  };
-
   /** 取り込み時の列数チェックエラー（設定時はカスタムモーダル表示） */
   const [columnCheckError, setColumnCheckError] = useState<string | null>(null);
   /** 汎用アラート（ブラウザ alert の代わりにカスタムモーダル表示） */
@@ -117,43 +96,38 @@ export const AppContainer: React.FC = () => {
     }
   };
 
-  const loadData = async (
-    userUrl: string,
-    castUrl: string,
-    options?: { resetBefore?: boolean }
-  ) => {
-    if (options?.resetBefore) clearSessionData();
-
-    try {
-      const userValues = await sheetService.fetchSheetData(userUrl, SHEET_RANGES.USER);
-      const requiredCols = businessMode === 'normal' ? USER_SHEET_MIN_COLUMNS.normal : USER_SHEET_MIN_COLUMNS.special;
-      const shortRows = userValues
-        .map((row, i) => ({ sheetRow: i + 2, len: Array.isArray(row) ? row.length : 0 }))
-        .filter(({ len }) => len > 0 && len < requiredCols);
-      if (shortRows.length > 0) {
-        const sample = shortRows.length > 5
-          ? `行 ${shortRows.slice(0, 5).map((r) => r.sheetRow).join(', ')} 他${shortRows.length}行`
-          : `行 ${shortRows.map((r) => r.sheetRow).join(', ')}`;
-        setColumnCheckError(
-          `選択した営業モードと列数が一致しません。\n` +
-          `${businessMode === 'normal' ? BUSINESS_MODE_NORMAL : BUSINESS_MODE_SPECIAL}では${requiredCols}列以上必要です。\n不足している行: ${sample}`
-        );
-        return;
+  /** ファイル選択で取り込んだ応募データ行を保存して DB 画面へ */
+  const handleImportUserRows = (rows: string[][]) => {
+    const requiredCols = businessMode === 'normal' ? USER_SHEET_MIN_COLUMNS.normal : USER_SHEET_MIN_COLUMNS.special;
+    const normalizedRows: unknown[][] = rows.map((row) => {
+      if (businessMode === 'normal' && row.length >= 9) {
+        return [row[0], row[1], row[2], row[3], row[4], row[6], row[8]];
       }
-
-      const importedUsers = userValues.map((row: unknown[]) => mapRowToUserBean(row, businessMode));
-      const castValues = await sheetService.fetchSheetData(castUrl, SHEET_RANGES.CAST);
-      const importedCasts = parseCastSheetRows(castValues as unknown[][]);
-
-      repository.setUserSheetUrl(userUrl);
-      repository.setCastSheetUrl(castUrl);
-      repository.saveApplyUsers(importedUsers);
-      repository.saveCasts(importedCasts);
-      setActivePage('db');
-    } catch (error) {
-      console.error('Data Load Error:', error);
-      setAlertMessage(ALERT.LOAD_FAILED);
+      return row;
+    });
+    const shortRows = normalizedRows
+      .map((row, i) => ({ sheetRow: i + 1, len: Array.isArray(row) ? row.length : 0 }))
+      .filter(({ len }) => len > 0 && len < requiredCols);
+    if (shortRows.length > 0) {
+      const sample = shortRows.length > 5
+        ? `行 ${shortRows.slice(0, 5).map((r) => r.sheetRow).join(', ')} 他${shortRows.length}行`
+        : `行 ${shortRows.map((r) => r.sheetRow).join(', ')}`;
+      setColumnCheckError(
+        `選択した営業モードと列数が一致しません。\n` +
+        `${businessMode === 'normal' ? BUSINESS_MODE_NORMAL : BUSINESS_MODE_SPECIAL}では${requiredCols}列以上必要です。\n不足している行: ${sample}`
+      );
+      return;
     }
+    const users = normalizedRows.map((row) => mapRowToUserBean(row as unknown[], businessMode));
+    repository.saveApplyUsers(users);
+    setActivePage('db');
+  };
+
+  /** キャストCSVのデータ行をパースして保存し、DB 画面へ */
+  const handleImportCastRows = (rows: string[][]) => {
+    const casts = parseCastSheetRows(rows as unknown[][]);
+    repository.saveCasts(casts);
+    setActivePage('db');
   };
 
   const sidebarButtons: { text: string; page: PageType }[] = [
@@ -165,110 +139,6 @@ export const AppContainer: React.FC = () => {
     { text: NAV.MATCHING, page: 'matching' },
     { text: NAV.CAST, page: 'cast' },
   ];
-
-  /** キャストシートのみ再読み込み（続きから） */
-  const reloadCastOnly = async (userUrl: string, castUrl: string) => {
-    try {
-      const castValues = await sheetService.fetchSheetData(castUrl, SHEET_RANGES.CAST);
-      const importedCasts = parseCastSheetRows(castValues as unknown[][]);
-      repository.setUserSheetUrl(userUrl);
-      repository.setCastSheetUrl(castUrl);
-      repository.saveCasts(importedCasts);
-      setActivePage('db');
-    } catch (error) {
-      console.error('Cast-only Load Error:', error);
-      setAlertMessage(ALERT.LOAD_FAILED);
-    }
-  };
-
-  /** インポート画面「データを取り込む」: セッションなしなら即フル読込、ありなら3択モーダル表示 */
-  const handleImportRequest = (userUrl: string, castUrl: string, hasSession: boolean) => {
-    if (!hasSession) {
-      loadData(userUrl, castUrl, { resetBefore: true });
-      return;
-    }
-    setPendingUserUrl(userUrl);
-    setPendingCastUrl(castUrl);
-    setImportFlowStep('choice');
-    setShowImportFlowModal(true);
-  };
-
-  /** 3択OK時: pending URL を検証してから action を実行 */
-  const runImportFlowAction = (action: 'continue' | 'new' | 'loadSaved') => {
-    if (!pendingUserUrl || !pendingCastUrl) {
-      closeImportFlowModal();
-      setAlertMessage(ALERT.LOAD_FAILED);
-      return;
-    }
-    if (action === 'continue') {
-      closeImportFlowModal();
-      reloadCastOnly(pendingUserUrl, pendingCastUrl);
-      return;
-    }
-    if (action === 'new') {
-      closeImportFlowModal();
-      loadData(pendingUserUrl, pendingCastUrl, { resetBefore: true });
-      return;
-    }
-    // action === 'loadSaved'
-    setImportFlowStep('loading');
-    (async () => {
-      try {
-        await loadData(pendingUserUrl!, pendingCastUrl!, { resetBefore: true });
-        const sheets = await sheetService.listSheets(pendingUserUrl!);
-        const filtered = sheets.filter((name) => name.startsWith(RESULT_SHEET_PREFIX));
-        if (filtered.length > 0) {
-          setResultSheets(filtered);
-          setSelectedResultSheet(filtered[0]);
-          setImportModalMatchingMode('random');
-          setImportFlowStep('result');
-        } else {
-          setResultSheets([]);
-          setImportFlowStep('noResult');
-        }
-      } catch (e) {
-        console.error('既存抽選結果シート確認エラー:', e);
-        setAlertMessage(ALERT.LOAD_FAILED);
-        closeImportFlowModal();
-      }
-    })();
-  };
-
-  const handleImportExistingResult = async () => {
-    if (!selectedResultSheet) {
-      setAlertMessage(ALERT.SELECT_RESULT_SHEET);
-      return;
-    }
-    const userSheetUrl = repository.getUserSheetUrl();
-    if (!userSheetUrl) {
-      setAlertMessage(ALERT.NO_USER_SHEET_URL);
-      return;
-    }
-
-    setIsImportingResult(true);
-    try {
-      const range = `${selectedResultSheet}!${SHEET_RANGES.USER}`;
-      const rows = await sheetService.fetchSheetData(userSheetUrl, range);
-      if (!rows || rows.length === 0) {
-        setAlertMessage(ALERT.NO_DATA_IN_SHEET);
-        return;
-      }
-
-      const winners = (rows as unknown[][]).map((row) => mapRowToUserBean(row, businessMode));
-      setCurrentWinners(winners);
-      setMatchingMode(importModalMatchingMode);
-      if (businessMode === 'normal' && winners.length > 0) {
-        setTotalTables(Math.max(totalTables, winners.length));
-      }
-      closeImportFlowModal();
-      setActivePage('lottery');
-    } catch (e) {
-      console.error('既存抽選結果取り込みエラー:', e);
-      setAlertMessage(ALERT.IMPORT_RESULT_FAILED);
-    } finally {
-      setIsImportingResult(false);
-    }
-  };
 
   const renderPage = () => {
     // 認証チェック中は何も表示しない（ログイン画面が一瞬出るのを防ぐ）
@@ -283,7 +153,12 @@ export const AppContainer: React.FC = () => {
       case 'guide':
         return <GuidePage />;
       case 'import':
-        return <ImportPage onImportRequest={handleImportRequest} />;
+        return (
+          <ImportPage
+            onImportUserRows={handleImportUserRows}
+            onImportCastRows={handleImportCastRows}
+          />
+        );
       case 'db':
         return <DBViewPage />;
       case 'cast':
@@ -303,7 +178,12 @@ export const AppContainer: React.FC = () => {
           />
         );
       default:
-        return <ImportPage onImportRequest={handleImportRequest} />;
+        return (
+          <ImportPage
+            onImportUserRows={handleImportUserRows}
+            onImportCastRows={handleImportCastRows}
+          />
+        );
     }
   };
 
@@ -392,22 +272,6 @@ export const AppContainer: React.FC = () => {
           {renderPage()}
         </main>
 
-        <ImportFlowModal
-          show={showImportFlowModal}
-          step={importFlowStep}
-          canContinue={currentWinners.length > 0}
-          onClose={closeImportFlowModal}
-          onConfirmChoice={runImportFlowAction}
-          resultSheets={resultSheets}
-          selectedResultSheet={selectedResultSheet}
-          onSelectSheet={setSelectedResultSheet}
-          matchingMode={importModalMatchingMode}
-          onMatchingModeChange={setImportModalMatchingMode}
-          onConfirmImportResult={handleImportExistingResult}
-          onSkipImportResult={closeImportFlowModal}
-          onConfirmNoResult={closeImportFlowModal}
-          isImportingResult={isImportingResult}
-        />
       </div>
     </ErrorBoundary>
   );
