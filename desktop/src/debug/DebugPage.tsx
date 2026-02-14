@@ -7,6 +7,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@/tauri';
 import { isTauri } from '@/tauri';
+import { useAppContext } from '@/stores/AppContext';
+import { downloadCsv } from '@/common/downloadCsv';
+import {
+  STUB_IMPORT_BASIC_PATH,
+  STUB_IMPORT_CHECKBOX_PATH,
+  TEST_CSV_PATHS,
+} from '@/common/copy';
 import {
   REQUIRED_ITEMS_ANALYSIS,
   COMMON_ITEMS_ANALYSIS,
@@ -23,6 +30,7 @@ interface DirEntry {
 }
 
 export const DebugPage: React.FC = () => {
+  const { repository, matchingSettings } = useAppContext();
   const [folderTree, setFolderTree] = useState<DirEntry | null>(null);
   const [folderError, setFolderError] = useState<string | null>(null);
   const [dbJson, setDbJson] = useState<{ casts: Record<string, unknown>[] } | null>(null);
@@ -104,6 +112,28 @@ export const DebugPage: React.FC = () => {
     setQueryError('対応例: SELECT * FROM casts または SELECT * FROM casts WHERE name = \'名前\'');
   }, [queryText, dbJson]);
 
+  const downloadJson = useCallback((data: object, filename: string) => {
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const handleExportCastsJson = useCallback(() => {
+    const casts = repository.getAllCasts();
+    downloadJson({ casts }, 'stargazer-casts.json');
+  }, [repository, downloadJson]);
+
+  const handleExportMatchingSettingsJson = useCallback(() => {
+    downloadJson(matchingSettings, 'stargazer-matching-settings.json');
+  }, [matchingSettings, downloadJson]);
+
   const renderDirEntry = (entry: DirEntry, depth: number) => {
     const marginLeft = depth * 16;
     return (
@@ -128,6 +158,52 @@ export const DebugPage: React.FC = () => {
         <p className="page-header-subtitle form-subtitle-mb">
           LocalAppData 内の Stargazer 用フォルダ構造と JSON ローカル DB の確認用です。
         </p>
+
+        <section className="debug-section">
+          <h2 className="debug-section__title">データエクスポート・インポートスタブ</h2>
+          <p className="form-inline-note" style={{ marginBottom: 12 }}>
+            各種データをJSONでエクスポート、またはインポート用のスタブCSVをダウンロードします。
+          </p>
+          <div className="debug-section__buttons-group">
+            <button type="button" className="btn-secondary" onClick={handleExportCastsJson}>
+              キャストデータ（JSON）をエクスポート
+            </button>
+            <button type="button" className="btn-secondary" onClick={handleExportMatchingSettingsJson}>
+              マッチング設定（JSON）をエクスポート
+            </button>
+          </div>
+          <p className="form-inline-note" style={{ marginTop: 24, marginBottom: 8 }}>
+            インポート用スタブCSV:
+          </p>
+          <div className="debug-section__buttons-group">
+            <a href={STUB_IMPORT_BASIC_PATH} download="stub-import-basic.csv" className="btn-link-sm">
+              基本（200名）
+            </a>
+            <a href={STUB_IMPORT_CHECKBOX_PATH} download="stub-import-checkbox.csv" className="btn-link-sm">
+              カンマ区切り（200名）
+            </a>
+          </div>
+          <p className="form-inline-note" style={{ marginTop: 12, marginBottom: 8 }}>
+            テスト用CSV:
+          </p>
+          <div className="debug-section__buttons-group">
+            <a href={TEST_CSV_PATHS.ng} download="test-200-ng.csv" className="btn-link-sm">
+              NG検証（200名）
+            </a>
+            <a href={TEST_CSV_PATHS.group10x20} download="test-200-group-10x20.csv" className="btn-link-sm">
+              M005-10×20
+            </a>
+            <a href={TEST_CSV_PATHS.group6x20} download="test-120-group-6x20.csv" className="btn-link-sm">
+              M005-6×20
+            </a>
+            <a href={TEST_CSV_PATHS.multiple5x3} download="test-200-multiple-5x3.csv" className="btn-link-sm">
+              M006-5×3
+            </a>
+            <a href={TEST_CSV_PATHS.multiple4x3} download="test-60-multiple-4x3.csv" className="btn-link-sm">
+              M006-4×3
+            </a>
+          </div>
+        </section>
 
         <section className="debug-section">
           <h2 className="debug-section__title">フォルダ構造（LocalAppData / CosmoArtsStore 配下）</h2>

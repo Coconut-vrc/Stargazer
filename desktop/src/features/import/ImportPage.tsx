@@ -11,9 +11,6 @@ import { parseCSV } from '@/common/csvParse';
 import {
   type ColumnMapping,
   type ImportStyle,
-  type ImportTemplate,
-  IMPORT_TEMPLATES,
-  TEMPLATE_BASIC,
   createEmptyColumnMapping,
   getMinColumnsFromMapping,
   hasRequiredIdentityColumn,
@@ -30,19 +27,18 @@ interface ImportPageProps {
 }
 
 export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
-  const [importStyle, setImportStyle] = useState<ImportStyle>('template');
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('basic');
+  const [importStyle, setImportStyle] = useState<ImportStyle>('custom');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [customRows, setCustomRows] = useState<string[][] | null>(null);
+  /** カスタム時: CSVの1行目（ヘッダー）。列の選択肢に実際の値として表示する */
+  const [customHeaderRow, setCustomHeaderRow] = useState<string[] | null>(null);
   const [customMapping, setCustomMapping] = useState<ColumnMapping>(() =>
     createEmptyColumnMapping()
   );
   /** カスタム時: この列をカンマ区切りで希望1・2・3に分割して使う（-1=使わない） */
   const [splitCommaColumnIndex, setSplitCommaColumnIndex] = useState<number>(-1);
 
-  const currentTemplate: ImportTemplate =
-    IMPORT_TEMPLATES.find((t) => t.id === selectedTemplateId) ?? TEMPLATE_BASIC;
 
   /** カスタムで読み込んだデータのうち、3つ以上カンマを含むセルがある列のインデックス */
   const columnsWithMultipleCommas = useMemo(() => {
@@ -70,6 +66,7 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
     }
     setLoading(true);
     setCustomRows(null);
+    setCustomHeaderRow(null);
     setSplitCommaColumnIndex(-1);
     try {
       const { open } = await import('@tauri-apps/plugin-dialog');
@@ -84,7 +81,7 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
       const { readTextFile } = await import('@tauri-apps/plugin-fs');
       const content = await readTextFile(selectedPath);
       const rows = parseCSV(content);
-      const headerRows = importStyle === 'template' ? currentTemplate.headerRows : 1;
+      const headerRows = 1;
       if (rows.length <= headerRows) {
         setError('データ行がありません。');
         setLoading(false);
@@ -92,42 +89,25 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
       }
       const dataRows = rows.slice(headerRows) as string[][];
 
-      if (importStyle === 'template') {
-        const minCols = currentTemplate.minColumns;
-        const shortRows = dataRows
-          .map((row, i) => ({ rowIndex: i + 1, len: row.length }))
-          .filter(({ len }) => len > 0 && len < minCols);
-        if (shortRows.length > 0) {
-          const sample =
-            shortRows.length > 5
-              ? `行 ${shortRows.slice(0, 5).map((r) => r.rowIndex).join(', ')} 他${shortRows.length}行`
-              : `行 ${shortRows.map((r) => r.rowIndex).join(', ')}`;
-          setError(
-            `列数が足りません。${currentTemplate.name}では${minCols}列以上必要です。不足している行: ${sample}`
-          );
-          setLoading(false);
-          return;
-        }
-        onImportUserRows(dataRows, currentTemplate.mapping);
-      } else {
-        setCustomRows(dataRows);
-        const maxCol = Math.max(0, ...dataRows.map((r) => r.length)) - 1;
-        setCustomMapping((prev) => {
-          const next = { ...prev };
-          const clamp = (v: number) => (v <= maxCol ? v : 0);
-          const clampOrMinus = (v: number) => (v <= maxCol ? v : -1);
-          next.name = next.name >= 0 ? clamp(next.name) : -1;
-          next.x_id = next.x_id >= 0 ? clamp(next.x_id) : -1;
-          next.cast1 = next.cast1 >= 0 ? clamp(next.cast1) : -1;
-          next.cast2 = clampOrMinus(next.cast2 ?? -1);
-          next.cast3 = clampOrMinus(next.cast3 ?? -1);
-          next.note = next.note >= 0 ? clamp(next.note) : -1;
-          next.timestamp = next.timestamp >= 0 ? clamp(next.timestamp) : -1;
-          next.first_flag = next.first_flag >= 0 ? clamp(next.first_flag) : -1;
-          next.is_pair_ticket = next.is_pair_ticket >= 0 ? clamp(next.is_pair_ticket) : -1;
-          return next;
-        });
-      }
+      const headerRow = (rows[0] ?? []) as string[];
+      setCustomHeaderRow(headerRow);
+      setCustomRows(dataRows);
+      const maxCol = Math.max(0, ...dataRows.map((r) => r.length), headerRow.length) - 1;
+      setCustomMapping((prev) => {
+        const next = { ...prev };
+        const clamp = (v: number) => (v <= maxCol ? v : 0);
+        const clampOrMinus = (v: number) => (v <= maxCol ? v : -1);
+        next.name = next.name >= 0 ? clamp(next.name) : -1;
+        next.x_id = next.x_id >= 0 ? clamp(next.x_id) : -1;
+        next.cast1 = next.cast1 >= 0 ? clamp(next.cast1) : -1;
+        next.cast2 = clampOrMinus(next.cast2 ?? -1);
+        next.cast3 = clampOrMinus(next.cast3 ?? -1);
+        next.note = next.note >= 0 ? clamp(next.note) : -1;
+        next.timestamp = next.timestamp >= 0 ? clamp(next.timestamp) : -1;
+        next.first_flag = next.first_flag >= 0 ? clamp(next.first_flag) : -1;
+        next.is_pair_ticket = next.is_pair_ticket >= 0 ? clamp(next.is_pair_ticket) : -1;
+        return next;
+      });
     } catch (e) {
       const msg =
         e instanceof Error ? e.message : 'ファイルの読み込みに失敗しました。';
@@ -147,92 +127,84 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
     if (!customRows || customRows.length === 0) return;
     setError('');
     if (!hasRequiredIdentityColumn(customMapping)) {
-      setError('ユーザー名・アカウントIDのどちらかは必ず列を指定してください。');
+      setError('ユーザー名・VRCアカウントID・アカウントID(X)のいずれかは必ず列を指定してください。');
       return;
     }
+    // 実際にマップされた列（-1 以外）の最大インデックスのみをチェック
     const minCols = getMinColumnsFromMapping(customMapping);
-    const maxIndex = minCols - 1;
-    const shortRows = customRows
-      .map((row, i) => ({ rowIndex: i + 1, len: row.length }))
-      .filter(({ len }) => len <= maxIndex && maxIndex >= 0);
-    if (shortRows.length > 0) {
-      const sample =
-        shortRows.length > 5
-          ? `行 ${shortRows.slice(0, 5).map((r) => r.rowIndex).join(', ')} 他${shortRows.length}行`
-          : `行 ${shortRows.map((r) => r.rowIndex).join(', ')}`;
-      setError(`列数が足りない行があります: ${sample}`);
-      return;
+    if (minCols > 0) {
+      const maxIndex = minCols - 1;
+      const shortRows = customRows
+        .map((row, i) => ({ rowIndex: i + 1, len: row.length }))
+        .filter(({ len }) => len <= maxIndex);
+      if (shortRows.length > 0) {
+        const sample =
+          shortRows.length > 5
+            ? `行 ${shortRows.slice(0, 5).map((r) => r.rowIndex).join(', ')} 他${shortRows.length}行`
+            : `行 ${shortRows.map((r) => r.rowIndex).join(', ')}`;
+        setError(`列数が足りない行があります: ${sample}`);
+        return;
+      }
     }
     const options: MapRowOptions | undefined =
       splitCommaColumnIndex >= 0
         ? { splitCommaColumnIndex }
         : undefined;
-    onImportUserRows(customRows, customMapping, options);
+
+    // 確定項目(name, x_id, cast1～3)以外をカスタム列として raw_extra に渡す
+    const fixedIndices = new Set(
+      [customMapping.name, customMapping.x_id, customMapping.cast1, customMapping.cast2, customMapping.cast3].filter(
+        (i) => i >= 0
+      )
+    );
+    const extraColumns: { columnIndex: number; label: string }[] = [];
+    const maxCol = Math.max(maxColIndex + 1, 0);
+    for (let i = 0; i < maxCol; i++) {
+      const headerLabel = (customHeaderRow?.[i] ?? '').trim() || `列${i + 1}`;
+      if (customMapping.timestamp === i) {
+        extraColumns.push({ columnIndex: i, label: headerLabel || IMPORT_COLUMN_LABELS.timestamp });
+      } else if (customMapping.first_flag === i) {
+        extraColumns.push({ columnIndex: i, label: headerLabel || IMPORT_COLUMN_LABELS.first_flag });
+      } else if (customMapping.note === i) {
+        extraColumns.push({ columnIndex: i, label: headerLabel || IMPORT_COLUMN_LABELS.note });
+      } else if (customMapping.is_pair_ticket === i) {
+        extraColumns.push({ columnIndex: i, label: headerLabel || IMPORT_COLUMN_LABELS.is_pair_ticket });
+      } else if (!fixedIndices.has(i)) {
+        extraColumns.push({ columnIndex: i, label: headerLabel });
+      }
+    }
+    const mappingWithExtra = { ...customMapping, extraColumns };
+
+    onImportUserRows(customRows, mappingWithExtra, options);
   };
 
-  const maxColIndex = customRows
-    ? Math.max(0, ...customRows.map((r) => r.length)) - 1
+  const maxColIndex = customRows || customHeaderRow
+    ? Math.max(
+        0,
+        ...(customRows?.map((r) => r.length) ?? []),
+        customHeaderRow?.length ?? 0
+      ) - 1
     : 0;
-  const columnOptions = Array.from({ length: maxColIndex + 1 }, (_, i) => ({
-    value: i,
-    label: `列${i + 1}`,
-  }));
+  /** 各列の表示ラベル: ヘッダーの値、なければ1行目の値。括弧で列番号を表示。 */
+  const columnOptions = Array.from({ length: maxColIndex + 1 }, (_, i) => {
+    const headerVal = (customHeaderRow?.[i] ?? '').trim();
+    const sampleVal = (customRows?.[0]?.[i] ?? '').trim();
+    const content = headerVal || sampleVal || '';
+    const short = content.length > 20 ? `${content.slice(0, 18)}…` : content;
+    const label = short ? `列${i + 1}: ${short}` : `列${i + 1}`;
+    return { value: i, label };
+  });
 
   return (
     <div className="page-wrapper">
       <div className="page-card-narrow">
         <h2 className="page-header-title page-header-title--md">データ読取</h2>
         <p className="page-header-subtitle form-subtitle-mb">
-          応募データ（CSV）をファイルで取り込みます。基本テンプレートか、ファイルに合わせたカスタム形式を選べます。
+          応募データ（CSV）をファイルで取り込みます。CSVを選択後、列の割り当てとカンマ区切り分割の有無を指定できます。ユーザー名・VRCアカウントID・アカウントID(X)のいずれかは必須です。
         </p>
 
-        <div className="form-group form-group-spacing">
-          <label className="form-label">インポート形式</label>
-          <div className="btn-toggle-group">
-            <button
-              type="button"
-              onClick={() => setImportStyle('template')}
-              className={`btn-toggle ${importStyle === 'template' ? 'active' : ''}`}
-            >
-              {IMPORT_STYLE.TEMPLATE}
-            </button>
-            <button
-              type="button"
-              onClick={() => setImportStyle('custom')}
-              className={`btn-toggle ${importStyle === 'custom' ? 'active' : ''}`}
-            >
-              {IMPORT_STYLE.CUSTOM}
-            </button>
-          </div>
-        </div>
+        {/* インポート形式の選択は不要になったため削除 */}
 
-        {importStyle === 'template' && (
-          <div className="form-group form-group-spacing">
-            <label className="form-label">テンプレート</label>
-            <div className="btn-toggle-group" style={{ flexWrap: 'wrap' }}>
-              {IMPORT_TEMPLATES.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setSelectedTemplateId(t.id)}
-                  className={`btn-toggle ${selectedTemplateId === t.id ? 'active' : ''}`}
-                >
-                  {t.name}
-                </button>
-              ))}
-            </div>
-            <p className="form-inline-note form-note-mt">
-              ※ ユーザー名・アカウントIDのどちらかは必須。希望キャストはオプションです。
-            </p>
-          </div>
-        )}
-
-        <label className="form-label">応募データCSV</label>
-        <p className="form-inline-note form-note-mt" style={{ marginBottom: 8 }}>
-          {importStyle === 'template'
-            ? 'テンプレートに沿ったCSVを選択してください。'
-            : 'CSVを選択後、列の割り当てとカンマ区切り分割の有無を指定できます。'}
-        </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <button
             type="button"
@@ -242,45 +214,14 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
           >
             {loading ? '読み込み中...' : 'CSVファイルを選択'}
           </button>
-          <p className="form-inline-note" style={{ margin: 0 }}>
-            スタブ:{' '}
-            <a href={STUB_IMPORT_BASIC_PATH} download="stub-import-basic.csv">
-              基本（200名）
-            </a>
-            {' / '}
-            <a href={STUB_IMPORT_CHECKBOX_PATH} download="stub-import-checkbox.csv">
-              カンマ区切り（200名）
-            </a>
-          </p>
-          <p className="form-inline-note" style={{ margin: 0, fontSize: 11, opacity: 0.7 }}>
-            テスト:{' '}
-            <a href={TEST_CSV_PATHS.ng} download="test-200-ng.csv">
-              NG検証（200名）
-            </a>
-            {' / '}
-            <a href={TEST_CSV_PATHS.group10x20} download="test-200-group-10x20.csv">
-              M005-10×20
-            </a>
-            {' / '}
-            <a href={TEST_CSV_PATHS.group6x20} download="test-120-group-6x20.csv">
-              M005-6×20
-            </a>
-            {' / '}
-            <a href={TEST_CSV_PATHS.multiple5x3} download="test-200-multiple-5x3.csv">
-              M006-5×3
-            </a>
-            {' / '}
-            <a href={TEST_CSV_PATHS.multiple4x3} download="test-60-multiple-4x3.csv">
-              M006-4×3
-            </a>
-          </p>
+          {/* ここにCSVダウンロードリンクがあったがデバッグタブに移動 */}
         </div>
 
-        {importStyle === 'custom' && customRows !== null && customRows.length > 0 && (
+        {customRows !== null && customRows.length > 0 && (
           <div className="form-group form-group-spacing" style={{ marginTop: 24 }}>
             <label className="form-label">列の割り当て</label>
             <p className="form-inline-note form-note-mt" style={{ marginBottom: 8 }}>
-              {customRows.length} 行読み込みました。ユーザー名・アカウントIDのどちらかは必須です。
+              {customRows.length} 行読み込みました。各項目に、CSVのどの列（1行目の値で表示）を差し込むか選んでください。ユーザー名・VRCアカウントID・アカウントID(X)のいずれかは必須です。
             </p>
             <button
               type="button"

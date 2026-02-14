@@ -1,13 +1,8 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Menu, X, LogOut, Settings, UserX, Bug, HelpCircle, FileText, Database, Sliders, Ticket, LayoutGrid, Users, Home, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { invoke } from '@/tauri';
-import { ImportPage } from '@/features/import/ImportPage';
-import { DBViewPage } from '@/features/db/DBViewPage';
-import { CastManagementPage } from '@/features/cast/CastManagementPage';
-import { NGUserManagementPage } from '@/features/ng-user/NGUserManagementPage';
-import { LotteryPage } from '@/features/lottery/LotteryPage';
-import { LotteryResultPage } from '@/features/lottery/LotteryResultPage';
-import { MatchingPage } from '@/features/matching/MatchingPage';
+import { DataManagementPage } from '@/features/data-management/DataManagementPage';
+import { CastNgManagementPage } from '@/features/cast-ng-management/CastNgManagementPage';
 import { GuidePage } from '@/features/guide/GuidePage';
 import { TopPage } from '@/features/home/TopPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
@@ -17,7 +12,7 @@ import { HeaderLogo } from '@/components/HeaderLogo';
 import { useAppContext, type PageType } from '@/stores/AppContext';
 import { mapRowToUserBeanWithMapping } from '@/common/sheetParsers';
 import { isTauri } from '@/tauri';
-import { NAV, DEFAULT_ROTATION_COUNT, RESET_APPLICATION } from '@/common/copy';
+import { NAV, DEFAULT_ROTATION_COUNT, RESET_APPLICATION, IMPORT_OVERWRITE } from '@/common/copy';
 import { STORAGE_KEYS } from '@/common/config';
 import '@/common.css';
 import '@/css/layout.css';
@@ -58,6 +53,12 @@ export const AppContainer: React.FC = () => {
   const [columnCheckError, setColumnCheckError] = useState<string | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  /** CSV取り込みで既存応募データがあるときに確認用に保持する取り込み予定データ */
+  const [pendingImport, setPendingImport] = useState<{
+    rows: string[][];
+    mapping: import('@/common/importFormat').ColumnMapping;
+    options?: import('@/common/sheetParsers').MapRowOptions;
+  } | null>(null);
 
   /** キャスト一覧を LocalAppData/CosmoArtsStore/cast/db.json（JSON ローカルDB）に保存する（Tauri 内のみ） */
   const persistCastData = async (casts: import('@/common/types/entities').CastBean[]) => {
@@ -122,8 +123,23 @@ export const AppContainer: React.FC = () => {
     setShowResetConfirm(false);
   };
 
-  /** ファイル選択で取り込んだ応募データ行とカラムマッピングで保存して DB 画面へ */
+  /** ファイル選択で取り込んだ応募データ行とカラムマッピングで保存して DB 画面へ。既存の応募データ or 当選結果がある場合は上書き確認モーダルを表示。 */
   const handleImportUserRows = (
+    rows: string[][],
+    mapping: import('@/common/importFormat').ColumnMapping,
+    options?: import('@/common/sheetParsers').MapRowOptions
+  ) => {
+    const hasApplyUsers = repository.getAllApplyUsers().length > 0;
+    const hasWinners = currentWinners.length > 0;
+    if (hasApplyUsers || hasWinners) {
+      setPendingImport({ rows, mapping, options });
+      return;
+    }
+    applyImport(rows, mapping, options);
+  };
+
+  /** 実際に応募データを保存し DB 画面へ遷移（リセット＋取り込みまたはそのまま取り込み） */
+  const applyImport = (
     rows: string[][],
     mapping: import('@/common/importFormat').ColumnMapping,
     options?: import('@/common/sheetParsers').MapRowOptions
@@ -136,19 +152,23 @@ export const AppContainer: React.FC = () => {
         (u) => u.name.trim() !== '' || u.x_id.trim() !== ''
       );
     repository.saveApplyUsers(users);
+    setCurrentWinners([]);
+    if (typeof window !== 'undefined') window.localStorage.removeItem(STORAGE_KEYS.SESSION);
     setActivePage('db');
+  };
+
+  const handleConfirmImportOverwrite = () => {
+    if (!pendingImport) return;
+    clearSessionData();
+    applyImport(pendingImport.rows, pendingImport.mapping, pendingImport.options);
+    setPendingImport(null);
   };
 
   const sidebarButtons: { text: string; page: PageType; icon?: React.ReactNode }[] = [
     { text: NAV.HOME, page: 'home', icon: <Home size={18} /> },
     { text: NAV.GUIDE, page: 'guide', icon: <HelpCircle size={18} /> },
-    { text: NAV.IMPORT, page: 'import', icon: <FileText size={18} /> },
-    { text: NAV.DB, page: 'db', icon: <Database size={18} /> },
-    { text: NAV.LOTTERY_CONDITION, page: 'lotteryCondition', icon: <Sliders size={18} /> },
-    { text: NAV.LOTTERY, page: 'lottery', icon: <Ticket size={18} /> },
-    { text: NAV.MATCHING, page: 'matching', icon: <LayoutGrid size={18} /> },
-    { text: NAV.CAST, page: 'cast', icon: <Users size={18} /> },
-    { text: NAV.NG_MANAGEMENT, page: 'ngManagement', icon: <UserX size={18} /> },
+    { text: NAV.DATA_MANAGEMENT, page: 'dataManagement', icon: <Database size={18} /> },
+    { text: NAV.CAST_NG_MANAGEMENT, page: 'castNgManagement', icon: <Users size={18} /> },
     ...(isDev ? [{ text: NAV.DEBUG, page: 'debug' as PageType, icon: <Bug size={18} /> }] : []),
     { text: NAV.SETTINGS, page: 'settings', icon: <Settings size={18} /> },
   ];
@@ -159,33 +179,10 @@ export const AppContainer: React.FC = () => {
         return <TopPage />;
       case 'guide':
         return <GuidePage />;
-      case 'import':
-        return <ImportPage onImportUserRows={handleImportUserRows} />;
-      case 'db':
-        return <DBViewPage />;
-      case 'cast':
-        return <CastManagementPage repository={repository} onPersistCasts={persistCastData} />;
-      case 'ngManagement':
-        return <NGUserManagementPage repository={repository} onPersistCasts={persistCastData} />;
-      case 'lotteryCondition':
-        return <LotteryPage />;
-      case 'lottery':
-        return <LotteryResultPage />;
-      case 'matching':
-        return (
-          <MatchingPage
-            winners={currentWinners}
-            repository={repository}
-            matchingTypeCode={matchingTypeCode}
-            rotationCount={rotationCount}
-            totalTables={totalTables}
-            groupCount={groupCount}
-            usersPerGroup={usersPerGroup}
-            usersPerTable={usersPerTable}
-            castsPerRotation={castsPerRotation}
-            matchingSettings={matchingSettings}
-          />
-        );
+      case 'dataManagement':
+        return <DataManagementPage onImportUserRows={handleImportUserRows} />;
+      case 'castNgManagement':
+        return <CastNgManagementPage onPersistCasts={persistCastData} />;
       case 'settings':
         return <SettingsPage />;
       case 'debug':
@@ -266,6 +263,17 @@ export const AppContainer: React.FC = () => {
             cancelLabel={RESET_APPLICATION.CANCEL_LABEL}
             onConfirm={handleResetApplication}
             onCancel={() => setShowResetConfirm(false)}
+          />
+        )}
+        {pendingImport !== null && (
+          <ConfirmModal
+            type="confirm"
+            title={IMPORT_OVERWRITE.MODAL_TITLE}
+            message={IMPORT_OVERWRITE.MODAL_MESSAGE}
+            confirmLabel={IMPORT_OVERWRITE.CONFIRM_LABEL}
+            cancelLabel={IMPORT_OVERWRITE.CANCEL_LABEL}
+            onConfirm={handleConfirmImportOverwrite}
+            onCancel={() => setPendingImport(null)}
           />
         )}
         <main className="main-content">{renderPage()}</main>

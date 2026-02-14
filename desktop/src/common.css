@@ -3220,3 +3220,39 @@ select.form-input {
 .app-container[data-theme="skyblue"] .litlink__add {
   border-color: rgba(0, 0, 0, 0.15);
 }
+
+/* ===== ページタブスタイル ===== */
+.page-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--discord-background-modifier-accent);
+  margin-bottom: 24px;
+}
+
+.page-tab {
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  color: var(--discord-text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.page-tab:hover {
+  color: var(--discord-text-normal);
+  background: var(--discord-background-modifier-hover);
+}
+
+.page-tab--active {
+  color: var(--discord-accent-primary);
+  border-bottom-color: var(--discord-accent-primary);
+}
+
+.page-tab-content {
+  /* タブコンテンツは通常のページラッパー内にレンダリングされる */
+}
+

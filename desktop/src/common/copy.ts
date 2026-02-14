@@ -10,6 +10,11 @@ export const DEFAULT_ROTATION_COUNT = 2;
 export const NAV = {
   HOME: 'ホーム',
   GUIDE: 'ガイド',
+  DATA_MANAGEMENT: 'データ管理',
+  CAST_NG_MANAGEMENT: 'キャスト・NGユーザー管理',
+  SETTINGS: '設定',
+  DEBUG: 'デバッグ',
+  // 旧ナビゲーション（後方互換性のため残す）
   IMPORT: 'データ読取',
   DB: 'DBデータ確認',
   LOTTERY_CONDITION: '抽選条件',
@@ -17,8 +22,6 @@ export const NAV = {
   MATCHING: 'マッチング',
   CAST: 'キャスト管理',
   NG_MANAGEMENT: 'NGユーザー管理',
-  SETTINGS: '設定',
-  DEBUG: 'デバッグ',
 } as const;
 
 export const EXTERNAL_LINK = {
@@ -36,6 +39,14 @@ export const RESET_APPLICATION = {
   CANCEL_LABEL: 'キャンセル',
 } as const;
 
+/** CSV取り込み時に既存の応募データがある場合の確認 */
+export const IMPORT_OVERWRITE = {
+  MODAL_TITLE: '応募データの上書き',
+  MODAL_MESSAGE: '応募データが既にあります。\n上書きして取り込みますか？（現在の応募者・当選結果・マッチング結果はクリアされます）',
+  CONFIRM_LABEL: '取り込む',
+  CANCEL_LABEL: 'キャンセル',
+} as const;
+
 export const ALERT = {
   LOAD_FAILED: 'データの読み取りに失敗しました。ファイルを確認するか、データ読取でCSVを取り込み直してください。',
   NO_WINNERS_EXPORT: '当選者がいないため、エクスポートできません。',
@@ -43,11 +54,6 @@ export const ALERT = {
 
 export const CAST_PAGE_NOTICE =
   '※ キャストは起動時にローカルから読み込まれます。ここでキャストの新規登録・削除・出席・NG設定ができます。応募データは「データ読取」でCSVファイルを選択して取り込んでください。';
-
-export const IMPORT_STYLE = {
-  TEMPLATE: '基本テンプレート',
-  CUSTOM: 'カスタム（ファイル読み取り）',
-} as const;
 
 /** 基本テンプレート用スタブCSVのパス（public 配下） */
 export const STUB_IMPORT_BASIC_PATH = '/stub-import-basic.csv';

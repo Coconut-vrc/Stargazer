@@ -43,6 +43,7 @@ const DBViewPageComponent: React.FC = () => {
   const userData = repository.getAllApplyUsers();
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
   const [confirmRemoveUser, setConfirmRemoveUser] = useState<UserBean | null>(null);
+  const [showOtherData, setShowOtherData] = useState(false);
 
   const casts = repository.getAllCasts();
   const cautionList = useMemo(() => {
@@ -95,15 +96,34 @@ const DBViewPageComponent: React.FC = () => {
     setPendingUrl(null);
   }, []);
 
+  /** カスタム列のキー一覧（全ユーザーの raw_extra から出現順でユニーク化） */
+  const customColumnKeys = useMemo(() => {
+    const keys: string[] = [];
+    const seen = new Set<string>();
+    for (const user of userData) {
+      const extras = (user.raw_extra ?? []) as { key?: string; value?: string }[];
+      for (const e of extras) {
+        const k = e?.key != null ? String(e.key).trim() : '';
+        if (k && !seen.has(k)) {
+          seen.add(k);
+          keys.push(k);
+        }
+      }
+    }
+    return keys;
+  }, [userData]);
+
+  const totalFixedColumns = 6; // 応募者名, アカウントID, 希望1-3, 操作
+  const totalColumns = totalFixedColumns + (showOtherData ? customColumnKeys.length : 0);
   const emptyRow = useMemo(
     () => (
       <tr>
-        <td colSpan={7} className="db-table__cell db-table__cell--empty">
+        <td colSpan={totalColumns} className="db-table__cell db-table__cell--empty">
           データがありません。左メニューの「データ読取」からCSVファイルを取り込んでください。
         </td>
       </tr>
     ),
-    [],
+    [totalColumns],
   );
 
   const isCautionRow = useCallback(
@@ -112,17 +132,17 @@ const DBViewPageComponent: React.FC = () => {
     [cautionList, matchingSettings.ngExceptions.exceptions],
   );
 
-  const columns: DiscordTableColumn<(typeof userData)[number]>[] = useMemo(
-    () => [
+  const columns: DiscordTableColumn<(typeof userData)[number]>[] = useMemo(() => {
+    const base: DiscordTableColumn<(typeof userData)[number]>[] = [
       {
-        header: '名前',
+        header: 'アカウント名',
         headerClassName: 'db-table__th',
         renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.name}</td>,
       },
       {
         header: (
           <>
-            X ID
+            アカウントID(X)
             <span className="db-table__th-hint">（クリックでユーザーページに遷移）</span>
           </>
         ),
@@ -132,56 +152,64 @@ const DBViewPageComponent: React.FC = () => {
         ),
       },
       {
-        header: '希望1',
+        header: '希望キャスト1',
         headerClassName: 'db-table__th',
         renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.casts[0] || '—'}</td>,
       },
       {
-        header: '希望2',
+        header: '希望キャスト2',
         headerClassName: 'db-table__th',
         renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.casts[1] || '—'}</td>,
       },
       {
-        header: '希望3',
+        header: '希望キャスト3',
         headerClassName: 'db-table__th',
         renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.casts[2] || '—'}</td>,
       },
-      {
-        header: '意気込み',
-        headerClassName: 'db-table__th',
-        renderCell: (user) => (
-          <td className={`db-table__cell db-table__cell--note${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>
-            {user.note}
-          </td>
-        ),
-      },
-      {
-        header: '',
-        headerClassName: 'db-table__th',
-        renderCell: (user) => {
-          const caution = isCautionRow(user);
+    ];
+    const extra = showOtherData ? customColumnKeys.map((key) => {
+      const k = key;
+      return {
+        header: k,
+        headerClassName: 'db-table__th db-table__th--custom',
+        renderCell: (user: UserBean) => {
+          const extras = (user.raw_extra ?? []) as { key?: string; value?: string }[];
+          const entry = extras.find((e) => (e?.key ?? '').trim() === k);
+          const val = entry?.value ?? '—';
           return (
-            <td className={`db-table__cell${caution ? ' db-table__cell--caution' : ''}`}>
-              {caution ? (
-                <button
-                  type="button"
-                  onClick={() => setConfirmRemoveUser(user)}
-                  className="db-view-remove-caution-btn"
-                  title="このユーザーをリストから削除"
-                  aria-label="リストから削除"
-                >
-                  ❌
-                </button>
-              ) : (
-                '—'
-              )}
+            <td className={`db-table__cell db-table__cell--note${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>
+              {val}
             </td>
           );
         },
+      };
+    }) : [];
+    const operationCol: DiscordTableColumn<(typeof userData)[number]> = {
+      header: '',
+      headerClassName: 'db-table__th',
+      renderCell: (user) => {
+        const caution = isCautionRow(user);
+        return (
+          <td className={`db-table__cell${caution ? ' db-table__cell--caution' : ''}`}>
+            {caution ? (
+              <button
+                type="button"
+                onClick={() => setConfirmRemoveUser(user)}
+                className="db-view-remove-caution-btn"
+                title="このユーザーをリストから削除"
+                aria-label="リストから削除"
+              >
+                ❌
+              </button>
+            ) : (
+              '—'
+            )}
+          </td>
+        );
       },
-    ],
-    [isCautionRow, handleConfirmOpen],
-  );
+    };
+    return [...base, ...extra, operationCol];
+  }, [isCautionRow, handleConfirmOpen, customColumnKeys, showOtherData]);
 
   return (
     <div className="page-wrapper">
@@ -202,6 +230,17 @@ const DBViewPageComponent: React.FC = () => {
         >
           要注意人物が含まれています。該当行は赤でマークされ、右端の❌からリストから削除できます。NG例外に登録したユーザーは警告されません。
         </div>
+      )}
+
+      {customColumnKeys.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowOtherData((prev) => !prev)}
+          className="btn-secondary btn-full-width"
+          style={{ marginTop: 20, marginBottom: 20 }}
+        >
+          {showOtherData ? '他データ列を隠す' : '他データ列を見る'}
+        </button>
       )}
 
       <div className="table-container">
