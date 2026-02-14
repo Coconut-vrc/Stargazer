@@ -2,46 +2,13 @@
 
 "Respond concisely. Do not provide explanations unless requested. Focus only on the requested changes."
 
-## ⚛️ React (2024-2026)
-
 ### 基本ルール
 - **デフォルトはServer Components**。ブラウザAPIが必要なときだけ `"use client"`。
 - `useState`, `useEffect` は最小限に。状態管理が複雑になったら設計を見直す。
 - `useMemo`, `useCallback` は**パフォーマンス問題が実測されてから**使う。憶測での最適化は時間の無駄。
----
-### 主要カラートークン
-```css
-/* 背景 */
---background-primary: #313338;   /* メインチャット */
---background-secondary: #2B2D31; /* サイドバー */
---background-tertiary: #1E1F22;  /* モーダル背景 */
+- svgでの形成はトークンを消費するためNG。アイコンを使うのであればライセンスを確認したうえでダウンロードすること。
+- 商用利用可であるかライセンスを確認することを前提として、外部コンポーネントやAPI、公式から提供される画像などはフル活用すること。全てを自作しようとすることは避け、トークンの消費削減に努めること。
 
-/* テキスト */
---text-normal: #DBDEE1;
---text-muted: #B5BAC1;
-
-/* アクション */
---brand: #5865F2;        /* Blurple */
---danger: #ED4245;       /* 削除・警告 */
---success: #3BA55D;      /* 成功 */
-```
-
-### 使用例
-```tsx
-// ❌
-<div style={{ backgroundColor: '#2B2D31' }}>
-
-// ✅
-<div className="bg-discord-secondary">
-```
-
----
-
-## 🐛 デバッグ・エラー対応
-
-### 鉄則
-1. **エラーメッセージ全文を読む**。スタックトレースを見ずに推測するな。
-2. 再現手順を明確化すること。
 
 ### エラーハンドリング
 ```typescript

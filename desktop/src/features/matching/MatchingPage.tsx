@@ -64,9 +64,9 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
 
   const runOptions = useMemo(() => ({
     rotationCount,
-    totalTables: (matchingTypeCode === 'M003' || matchingTypeCode === 'M004') && totalTables > 0 ? totalTables : undefined,
-    groupCount: matchingTypeCode === 'M005' ? groupCount : undefined,
-    usersPerGroup: matchingTypeCode === 'M005' ? usersPerGroup : undefined,
+    totalTables:  undefined,
+    groupCount: undefined,
+    usersPerGroup:  undefined,
     usersPerTable: matchingTypeCode === 'M006' ? usersPerTable : undefined,
     castsPerRotation: matchingTypeCode === 'M006' ? castsPerRotation : undefined,
   }), [matchingTypeCode, rotationCount, totalTables, groupCount, usersPerGroup, usersPerTable, castsPerRotation]);

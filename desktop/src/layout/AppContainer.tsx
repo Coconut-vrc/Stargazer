@@ -1,10 +1,9 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { Menu, X, LogOut, Settings, Bug, HelpCircle, Database, Users } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Menu, X, Bug, HelpCircle, Database, Users } from 'lucide-react';
 import { invoke } from '@/tauri';
 import { DataManagementPage } from '@/features/data-management/DataManagementPage';
 import { CastNgManagementPage } from '@/features/cast-ng-management/CastNgManagementPage';
 import { GuidePage } from '@/features/guide/GuidePage';
-import { SettingsPage } from '@/features/settings/SettingsPage';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { HeaderLogo } from '@/components/HeaderLogo';
@@ -15,9 +14,9 @@ import { NAV, DEFAULT_ROTATION_COUNT, RESET_APPLICATION, IMPORT_OVERWRITE } from
 import { STORAGE_KEYS } from '@/common/config';
 import '@/common.css';
 import '@/css/layout.css';
+import { ThemeSelector } from '@/components/ThemeSelector';
 
 const isDev = import.meta.env.DEV;
-const LazyDebugPage = isDev ? lazy(() => import('@/debug').then((m) => ({ default: m.DebugPage }))) : null;
 
 export const AppContainer: React.FC = () => {
   const {
@@ -29,6 +28,7 @@ export const AppContainer: React.FC = () => {
     setRotationCount,
     setCurrentWinners,
     themeId,
+    setThemeId,
   } = useAppContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -176,7 +176,6 @@ export const AppContainer: React.FC = () => {
     { text: NAV.DATA_MANAGEMENT, page: 'dataManagement', icon: <Database size={18} /> },
     { text: NAV.CAST_NG_MANAGEMENT, page: 'castNgManagement', icon: <Users size={18} /> },
     ...(isDev ? [{ text: NAV.DEBUG, page: 'debug' as PageType, icon: <Bug size={18} /> }] : []),
-    { text: NAV.SETTINGS, page: 'settings', icon: <Settings size={18} /> },
     { text: NAV.GUIDE, page: 'guide', icon: <HelpCircle size={18} /> },
   ];
 
@@ -188,14 +187,6 @@ export const AppContainer: React.FC = () => {
         return <DataManagementPage onImportUserRows={handleImportUserRows} />;
       case 'castNgManagement':
         return <CastNgManagementPage onPersistCasts={persistCastData} />;
-      case 'settings':
-        return <SettingsPage />;
-      case 'debug':
-        return isDev && LazyDebugPage ? (
-          <Suspense fallback={<div className="page-wrapper">Loading...</div>}>
-            <LazyDebugPage />
-          </Suspense>
-        ) : null;
       default:
         return <DataManagementPage onImportUserRows={handleImportUserRows} />;
     }
@@ -236,10 +227,7 @@ export const AppContainer: React.FC = () => {
               </button>
             ))}
             <div className="sidebar-block sidebar-block--push">
-              <button onClick={() => setShowResetConfirm(true)} className="sidebar-button logout" title={RESET_APPLICATION.BUTTON_LABEL}>
-                <LogOut size={18} />
-                <span className="sidebar-button-label">{RESET_APPLICATION.BUTTON_LABEL}</span>
-              </button>
+              <ThemeSelector themeId={themeId} setThemeId={setThemeId!} />
             </div>
           </div>
         </aside>

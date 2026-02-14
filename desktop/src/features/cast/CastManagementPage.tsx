@@ -34,7 +34,7 @@ export const CastManagementPage: React.FC<{
     const newName = inputCastName.trim();
     if (!newName) return;
     if (casts.some(c => c.name === newName)) {
-      setAlertMessage('そのキャストは既に登録されてるよ');
+      setAlertMessage('そのキャストは既に登録されています');
       return;
     }
 
@@ -284,28 +284,6 @@ export const CastManagementPage: React.FC<{
           </button>
         </div>
 
-        {/* 外部データから読み込み（public/sample-casts.json） */}
-        <div className="form-card form-card--flex-col">
-          <label className="form-label">外部データから読み込む</label>
-          <p className="text-muted text-sm mb-12">
-            public/sample-casts.json の内容を読み込み、既存のキャストにマージします。同名は追加されません。
-          </p>
-          <div className="flex-end flex-wrap-gap8">
-            <button
-              type="button"
-              onClick={handleLoadSampleCasts}
-              disabled={loadExternalLoading}
-              className="btn-primary btn-fixed-h"
-            >
-              {loadExternalLoading ? '読み込み中...' : 'サンプルキャスト（24名）を読み込む'}
-            </button>
-          </div>
-          {loadExternalError && (
-            <p role="alert" className="text-danger text-sm mt-8">
-              {loadExternalError}
-            </p>
-          )}
-        </div>
 
         <p className="form-inline-note text-muted-color mt-4">
           NGユーザーの登録・解除は「NGユーザー管理」で行います。
@@ -340,76 +318,6 @@ export const CastManagementPage: React.FC<{
 
             {/* Lit.Link 風リンク設定 */}
             <div className="litlink">
-              {/* X (Twitter) */}
-              <div className="litlink__item">
-                <div className="litlink__icon litlink__icon--x" aria-label="X (Twitter)">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                  </svg>
-                </div>
-                <div className="litlink__body">
-                  <input
-                    type="text"
-                    placeholder="@username or https://x.com/..."
-                    className="litlink__input"
-                    value={cast.x_id ?? ''}
-                    onChange={(e) => handleUpdateCastField(cast.name, 'x_id', e.target.value)}
-                  />
-                </div>
-                {(() => {
-                  const username = cast.x_id ? parseXUsername(cast.x_id) : null;
-                  if (username) {
-                    const xUrl = getXProfileUrl(username);
-                    return (
-                      <button
-                        type="button"
-                        className="litlink__open"
-                        onClick={() => handleRequestOpenExternal(xUrl)}
-                        title={`@${username} を開く`}
-                      >
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                          <polyline points="15 3 21 3 21 9"/>
-                          <line x1="10" y1="14" x2="21" y2="3"/>
-                        </svg>
-                      </button>
-                    );
-                  }
-                  return null;
-                })()}
-              </div>
-
-              {/* VRChat */}
-              <div className="litlink__item">
-                <div className="litlink__icon litlink__icon--vrc" aria-label="VRChat">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                    <path d="M1.5 5.5L8.8 18h6.4L22.5 5.5h-4.8l-5.7 10-5.7-10z"/>
-                  </svg>
-                </div>
-                <div className="litlink__body">
-                  <input
-                    type="text"
-                    placeholder="https://vrchat.com/home/user/usr_..."
-                    className="litlink__input"
-                    value={cast.vrc_profile_url ?? ''}
-                    onChange={(e) => handleUpdateCastField(cast.name, 'vrc_profile_url', e.target.value)}
-                  />
-                </div>
-                {cast.vrc_profile_url ? (
-                  <button
-                    type="button"
-                    className="litlink__open"
-                    onClick={() => handleRequestOpenExternal(cast.vrc_profile_url!)}
-                    title="VRCプロフィールを開く"
-                  >
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                      <polyline points="15 3 21 3 21 9"/>
-                      <line x1="10" y1="14" x2="21" y2="3"/>
-                    </svg>
-                  </button>
-                ) : null}
-              </div>
 
               {/* 自由形式の連絡先 */}
               {(cast.contacts ?? []).map((contact, ci) => {
@@ -419,34 +327,7 @@ export const CastManagementPage: React.FC<{
                 
                 return (
                   <div className="litlink__item" key={ci}>
-                    {showXIcon ? (
-                      <div className="litlink__icon litlink__icon--x" aria-label="X (Twitter)">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                        </svg>
-                      </div>
-                    ) : showVrcIcon ? (
-                      <div className="litlink__icon litlink__icon--vrc" aria-label="VRChat">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                          <path d="M1.5 5.5L8.8 18h6.4L22.5 5.5h-4.8l-5.7 10-5.7-10z"/>
-                        </svg>
-                      </div>
-                    ) : (
-                      <div className="litlink__icon litlink__icon--custom" aria-label="連絡先">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                          <polyline points="22,6 12,13 2,6"/>
-                        </svg>
-                      </div>
-                    )}
                     <div className="litlink__body litlink__body--dual">
-                      <input
-                        type="text"
-                        placeholder="ラベル (例: Discord, LINE...)"
-                        className="litlink__input litlink__input--label"
-                        value={contact.label}
-                        onChange={(e) => handleUpdateContact(cast.name, ci, 'label', e.target.value)}
-                      />
                       <input
                         type="text"
                         placeholder="ID / URL / 連絡先..."

@@ -380,42 +380,8 @@ export const NGUserManagementPage: React.FC<{
       )}
 
       {/* ── 判定設定セクション ── */}
-      <div className="ng-page__section">
-        <div className="ng-page__section-header">
-          <h2 className="ng-page__section-title">判定設定</h2>
-          <p className="ng-page__section-desc">
-            キャストごとのNGリストの判定方法と、マッチング時の挙動を選択します。
-          </p>
-        </div>
-        <div className="ng-page__settings-grid">
-          <div className="form-group">
-            <label className="form-label">判定基準</label>
-            <AppSelect
-              value={matchingSettings.ngJudgmentType}
-              onValueChange={(v) => {
-                if (v === 'username' || v === 'accountId' || v === 'either') setMatchingSettings((prev) => ({ ...prev, ngJudgmentType: v }));
-              }}
-              options={(Object.keys(NG_JUDGMENT_LABELS) as NGJudgmentType[]).map((k) => ({
-                value: k,
-                label: NG_JUDGMENT_LABELS[k],
-              }))}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">マッチング時の挙動</label>
-            <AppSelect
-              value={matchingSettings.ngMatchingBehavior}
-              onValueChange={(v) => {
-                if (v === 'warn' || v === 'exclude') setMatchingSettings((prev) => ({ ...prev, ngMatchingBehavior: v }));
-              }}
-              options={(Object.keys(NG_BEHAVIOR_LABELS) as NGMatchingBehavior[]).map((k) => ({
-                value: k,
-                label: NG_BEHAVIOR_LABELS[k],
-              }))}
-            />
-          </div>
-        </div>
-      </div>
+      {/* 今後判定はアカウントIDのみで行うようにする。マッチング時の挙動も除外で対応する。*/}
+
 
       {/* ── 要注意人物セクション ── */}
       <div className="ng-page__section">
@@ -426,18 +392,7 @@ export const NGUserManagementPage: React.FC<{
           </p>
         </div>
         <div className="ng-page__caution-controls">
-          <div className="form-group ng-page__threshold-group">
-            <label className="form-label">自動登録の閾値</label>
-            <p className="form-inline-note ng-page__field-hint">何人以上のキャストがNGにしたら要注意とするか</p>
-            <input
-              type="number"
-              min={1}
-              value={cautionThreshold}
-              onChange={(e) => setCautionThreshold(Number(e.target.value) || 1)}
-              onBlur={handleThresholdBlur}
-              className="form-input ng-page__threshold-input"
-            />
-          </div>
+
           <button
             type="button"
             className="btn-primary btn-fixed-h"
@@ -454,7 +409,6 @@ export const NGUserManagementPage: React.FC<{
                 <tr>
                   <th>ユーザー名</th>
                   <th>アカウントID(X)</th>
-                  <th>種別</th>
                   <th>NG登録しているキャスト</th>
                   <th></th>
                 </tr>
@@ -464,11 +418,6 @@ export const NGUserManagementPage: React.FC<{
                   <tr key={`${c.username}-${c.accountId}-${i}`}>
                     <td>{c.username}</td>
                     <td>@{c.accountId}</td>
-                    <td>
-                      <span className={`ng-page__badge ${c.registrationType === 'manual' ? 'ng-page__badge--manual' : 'ng-page__badge--auto'}`}>
-                        {c.registrationType === 'manual' ? '手動' : '自動'}
-                      </span>
-                    </td>
                     <td>{c.ngCastNames.length > 0 ? c.ngCastNames.join('、') : (c.ngCastCount != null ? `${c.ngCastCount}名` : '—')}</td>
                     <td>
                       {c.registrationType === 'manual' && (
