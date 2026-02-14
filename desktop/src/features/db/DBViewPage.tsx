@@ -3,7 +3,7 @@ import { useAppContext } from '@/stores/AppContext';
 import type { UserBean } from '@/stores/AppContext';
 import { DiscordTable, DiscordTableColumn } from '@/components/DiscordTable';
 import { ConfirmModal } from '@/components/ConfirmModal';
-import { isCautionUser, isNGException, computeAutoCautionUsers } from '@/features/matching/logics/caution-user';
+import { isCautionUser, computeAutoCautionUsers } from '@/features/matching/logics/caution-user';
 import { openInDefaultBrowser } from '@/common/openExternal';
 import { EXTERNAL_LINK } from '@/common/copy';
 
@@ -44,6 +44,15 @@ const DBViewPageComponent: React.FC = () => {
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
   const [confirmRemoveUser, setConfirmRemoveUser] = useState<UserBean | null>(null);
   const [showOtherData, setShowOtherData] = useState(false);
+  // 各列の表示/非表示設定
+  const [columnVisibility, setColumnVisibility] = useState({
+    name: true,
+    vrcUrl: true,
+    xId: true,
+    cast1: true,
+    cast2: true,
+    cast3: true,
+  });
 
   const casts = repository.getAllCasts();
   const cautionList = useMemo(() => {
@@ -69,7 +78,7 @@ const DBViewPageComponent: React.FC = () => {
   }, [casts, userData, matchingSettings.caution.cautionUsers, matchingSettings.caution.autoRegisterThreshold, matchingSettings.ngJudgmentType]);
 
   const showCautionWarning = cautionList.length > 0 && userData.some(
-    (u) => isCautionUser(u, cautionList) && !isNGException(u, matchingSettings.ngExceptions.exceptions),
+    (u) => isCautionUser(u, cautionList),
   );
 
   const handleRemoveFromList = useCallback(() => {
@@ -113,8 +122,8 @@ const DBViewPageComponent: React.FC = () => {
     return keys;
   }, [userData]);
 
-  const totalFixedColumns = 6; // 応募者名, アカウントID, 希望1-3, 操作
-  const totalColumns = totalFixedColumns + (showOtherData ? customColumnKeys.length : 0);
+  const visibleFixedColumnsCount = Object.values(columnVisibility).filter(Boolean).length + 1; // +1 は操作列
+  const totalColumns = visibleFixedColumnsCount + (showOtherData ? customColumnKeys.length : 0);
   const emptyRow = useMemo(
     () => (
       <tr>
@@ -128,18 +137,55 @@ const DBViewPageComponent: React.FC = () => {
 
   const isCautionRow = useCallback(
     (user: UserBean) =>
-      isCautionUser(user, cautionList) && !isNGException(user, matchingSettings.ngExceptions.exceptions),
-    [cautionList, matchingSettings.ngExceptions.exceptions],
+      isCautionUser(user, cautionList),
+    [cautionList],
   );
 
   const columns: DiscordTableColumn<(typeof userData)[number]>[] = useMemo(() => {
-    const base: DiscordTableColumn<(typeof userData)[number]>[] = [
-      {
+    const base: DiscordTableColumn<(typeof userData)[number]>[] = [];
+    
+    if (columnVisibility.name) {
+      base.push({
         header: 'アカウント名',
         headerClassName: 'db-table__th',
         renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.name}</td>,
-      },
-      {
+      });
+    }
+    
+    if (columnVisibility.vrcUrl) {
+      base.push({
+        header: (
+          <>
+            VRCアカウントURL
+            <span className="db-table__th-hint">（クリックでVRCプロフィールに遷移）</span>
+          </>
+        ),
+        headerClassName: 'db-table__th',
+        renderCell: (user) => {
+          const vrcUrl = user.vrc_url?.trim();
+          const handleClick = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (!vrcUrl) return;
+            handleConfirmOpen(vrcUrl);
+          };
+          const cls = [
+            'db-table__cell',
+            isCautionRow(user) ? 'db-table__cell--caution' : '',
+            vrcUrl ? 'db-table__cell--link' : '',
+          ]
+            .filter(Boolean)
+            .join(' ');
+          return (
+            <td className={cls} onClick={handleClick}>
+              {vrcUrl ? 'VRCプロフィール' : '—'}
+            </td>
+          );
+        },
+      });
+    }
+    
+    if (columnVisibility.xId) {
+      base.push({
         header: (
           <>
             アカウントID(X)
@@ -150,23 +196,32 @@ const DBViewPageComponent: React.FC = () => {
         renderCell: (user) => (
           <XLinkCell xId={user.x_id} isCaution={isCautionRow(user)} onConfirmOpen={handleConfirmOpen} />
         ),
-      },
-      {
+      });
+    }
+    
+    if (columnVisibility.cast1) {
+      base.push({
         header: '希望キャスト1',
         headerClassName: 'db-table__th',
         renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.casts[0] || '—'}</td>,
-      },
-      {
+      });
+    }
+    
+    if (columnVisibility.cast2) {
+      base.push({
         header: '希望キャスト2',
         headerClassName: 'db-table__th',
         renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.casts[1] || '—'}</td>,
-      },
-      {
+      });
+    }
+    
+    if (columnVisibility.cast3) {
+      base.push({
         header: '希望キャスト3',
         headerClassName: 'db-table__th',
         renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.casts[2] || '—'}</td>,
-      },
-    ];
+      });
+    }
     const extra = showOtherData ? customColumnKeys.map((key) => {
       const k = key;
       return {
@@ -209,7 +264,7 @@ const DBViewPageComponent: React.FC = () => {
       },
     };
     return [...base, ...extra, operationCol];
-  }, [isCautionRow, handleConfirmOpen, customColumnKeys, showOtherData]);
+  }, [isCautionRow, handleConfirmOpen, customColumnKeys, showOtherData, columnVisibility]);
 
   return (
     <div className="page-wrapper">
@@ -228,7 +283,7 @@ const DBViewPageComponent: React.FC = () => {
           className="banner-muted banner-muted--danger"
           role="alert"
         >
-          要注意人物が含まれています。該当行は赤でマークされ、右端の❌からリストから削除できます。NG例外に登録したユーザーは警告されません。
+          要注意人物が含まれています。該当行は赤でマークされ、右端の❌からリストから削除できます。
         </div>
       )}
 
@@ -242,6 +297,60 @@ const DBViewPageComponent: React.FC = () => {
           {showOtherData ? '他データ列を隠す' : '他データ列を見る'}
         </button>
       )}
+
+      <div style={{ marginTop: 20, marginBottom: 20 }}>
+        <label className="form-label" style={{ marginBottom: 8 }}>表示する列を選択</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <input
+              type="checkbox"
+              checked={columnVisibility.name}
+              onChange={(e) => setColumnVisibility((prev) => ({ ...prev, name: e.target.checked }))}
+            />
+            <span style={{ fontSize: 14 }}>アカウント名</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <input
+              type="checkbox"
+              checked={columnVisibility.vrcUrl}
+              onChange={(e) => setColumnVisibility((prev) => ({ ...prev, vrcUrl: e.target.checked }))}
+            />
+            <span style={{ fontSize: 14 }}>VRCアカウントURL</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <input
+              type="checkbox"
+              checked={columnVisibility.xId}
+              onChange={(e) => setColumnVisibility((prev) => ({ ...prev, xId: e.target.checked }))}
+            />
+            <span style={{ fontSize: 14 }}>アカウントID(X)</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <input
+              type="checkbox"
+              checked={columnVisibility.cast1}
+              onChange={(e) => setColumnVisibility((prev) => ({ ...prev, cast1: e.target.checked }))}
+            />
+            <span style={{ fontSize: 14 }}>希望キャスト1</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <input
+              type="checkbox"
+              checked={columnVisibility.cast2}
+              onChange={(e) => setColumnVisibility((prev) => ({ ...prev, cast2: e.target.checked }))}
+            />
+            <span style={{ fontSize: 14 }}>希望キャスト2</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <input
+              type="checkbox"
+              checked={columnVisibility.cast3}
+              onChange={(e) => setColumnVisibility((prev) => ({ ...prev, cast3: e.target.checked }))}
+            />
+            <span style={{ fontSize: 14 }}>希望キャスト3</span>
+          </label>
+        </div>
+      </div>
 
       <div className="table-container">
         <DiscordTable

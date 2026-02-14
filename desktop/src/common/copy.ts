@@ -78,6 +78,7 @@ export const IMPORT_COLUMN_LABELS = {
   timestamp: 'タイムスタンプ',
   name: 'ユーザー名',
   x_id: 'XID',
+  vrc_url: 'VRCアカウントURL',
   first_flag: '初回フラグ',
   cast1: '希望キャスト1',
   cast2: '希望キャスト2',

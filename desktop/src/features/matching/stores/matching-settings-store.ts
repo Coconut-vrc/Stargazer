@@ -13,7 +13,7 @@ import type {
   NGExceptionSettings,
 } from '@/features/matching/types/matching-system-types';
 
-const DEFAULT_JUDGMENT: NGJudgmentType = 'either';
+const DEFAULT_JUDGMENT: NGJudgmentType = 'accountId';
 const DEFAULT_BEHAVIOR: NGMatchingBehavior = 'exclude';
 const DEFAULT_CAUTION_THRESHOLD = 2;
 

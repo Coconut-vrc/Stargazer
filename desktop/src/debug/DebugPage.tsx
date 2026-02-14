@@ -8,7 +8,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@/tauri';
 import { isTauri } from '@/tauri';
 import { useAppContext } from '@/stores/AppContext';
-import { downloadCsv } from '@/common/downloadCsv';
 import {
   STUB_IMPORT_BASIC_PATH,
   STUB_IMPORT_CHECKBOX_PATH,

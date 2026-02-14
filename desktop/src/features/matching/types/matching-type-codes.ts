@@ -1,9 +1,10 @@
 /**
  * マッチング形式の区分コード（仕様 4-1）。
- * 抽選条件で選択する6種類。ロジックは M001～M006 で完全分離。
+ * 抽選条件で選択する7種類。ロジックは M001～M006 で完全分離。
  */
 
 export const MATCHING_TYPE_CODES = [
+  'NONE',
   'M001',
   'M002',
   'M003',
@@ -16,6 +17,7 @@ export type MatchingTypeCode = (typeof MATCHING_TYPE_CODES)[number];
 
 /** プルダウン用ラベル（仕様 4-1 の1～6に対応） */
 export const MATCHING_TYPE_LABELS: Record<MatchingTypeCode, string> = {
+  NONE: 'マッチングは使用しない',
   M001: '完全ランダムマッチング',
   M002: '完全ローテーションマッチング',
   M003: '空席込みランダムマッチング',

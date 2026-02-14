@@ -1,6 +1,7 @@
 import type { UserBean, CastBean } from './types/entities';
 import { CAST_SHEET } from './sheetColumns';
 import type { ColumnMapping } from './importFormat';
+import { parseXUsername } from './xIdUtils';
 
 function getCell(row: unknown[], colIndex: number): string {
   if (colIndex < 0 || colIndex >= row.length) return '';
@@ -64,6 +65,17 @@ export function mapRowToUserBeanWithMapping(
   const nameFallback = mapping.nameColumn2 != null && mapping.nameColumn2 >= 0 ? getCell(row, mapping.nameColumn2) : '';
   const name = namePrimary || nameFallback;
 
+  // Xアカウントの正規化処理: 4パターン対応
+  // (1) https://x.com/username
+  // (2) https://twitter.com/username
+  // (3) @username
+  // (4) username
+  // → すべてusernameに正規化する
+  const rawXId = mapping.x_id >= 0 ? getCell(row, mapping.x_id) : '';
+  const normalizedXId = rawXId ? (parseXUsername(rawXId) ?? rawXId) : '';
+
+  const vrcUrl = mapping.vrc_url >= 0 ? getCell(row, mapping.vrc_url) : '';
+
   const rawExtra: { key: string; value: string }[] = [];
   if (mapping.extraColumns?.length) {
     for (const e of mapping.extraColumns) {
@@ -74,7 +86,8 @@ export function mapRowToUserBeanWithMapping(
   return {
     timestamp: mapping.timestamp >= 0 ? getCell(row, mapping.timestamp) : '',
     name,
-    x_id: mapping.x_id >= 0 ? getCell(row, mapping.x_id) : '',
+    x_id: normalizedXId,
+    vrc_url: vrcUrl,
     first_flag: mapping.first_flag >= 0 ? getCell(row, mapping.first_flag) : '',
     casts: casts.slice(0, 3),
     note: mapping.note >= 0 ? getCell(row, mapping.note) : '',

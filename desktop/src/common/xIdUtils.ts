@@ -51,3 +51,17 @@ export function extractVrcUserIdFromUrl(input: string): string | null {
   const altMatch = trimmed.match(/\/(usr_[a-f0-9-]+)/i);
   return altMatch ? altMatch[1] : null;
 }
+
+/**
+ * URLがXのURLかどうかを判定する
+ */
+export function isXUrl(url: string): boolean {
+  return /^https?:\/\/(?:www\.)?(?:x\.com|twitter\.com)\//i.test(url.trim());
+}
+
+/**
+ * URLがVRChatのURLかどうかを判定する
+ */
+export function isVrcUrl(url: string): boolean {
+  return /^https?:\/\/(?:www\.)?vrchat\.com\/home\/user\/usr_/i.test(url.trim());
+}

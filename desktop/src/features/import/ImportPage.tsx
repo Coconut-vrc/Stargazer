@@ -1,16 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import {
-  IMPORT_STYLE,
   IMPORT_COLUMN_LABELS,
-  STUB_IMPORT_BASIC_PATH,
-  STUB_IMPORT_CHECKBOX_PATH,
-  TEST_CSV_PATHS,
 } from '@/common/copy';
 import { isTauri } from '@/tauri';
 import { parseCSV } from '@/common/csvParse';
 import {
   type ColumnMapping,
-  type ImportStyle,
   createEmptyColumnMapping,
   getMinColumnsFromMapping,
   hasRequiredIdentityColumn,
@@ -27,7 +22,6 @@ interface ImportPageProps {
 }
 
 export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
-  const [importStyle, setImportStyle] = useState<ImportStyle>('custom');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [customRows, setCustomRows] = useState<string[][] | null>(null);
@@ -38,6 +32,10 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
   );
   /** カスタム時: この列をカンマ区切りで希望1・2・3に分割して使う（-1=使わない） */
   const [splitCommaColumnIndex, setSplitCommaColumnIndex] = useState<number>(-1);
+  /** 希望キャストの入力形式: 'multiple' = 複数指定可, 'single' = 単一項目 */
+  const [castInputType, setCastInputType] = useState<'multiple' | 'single'>('multiple');
+  /** 希望の重みをつけるか(単一の場合のみ) */
+  const [castUseWeight, setCastUseWeight] = useState<boolean>(false);
 
 
   /** カスタムで読み込んだデータのうち、3つ以上カンマを含むセルがある列のインデックス */
@@ -68,6 +66,8 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
     setCustomRows(null);
     setCustomHeaderRow(null);
     setSplitCommaColumnIndex(-1);
+    setCastInputType('multiple');
+    setCastUseWeight(false);
     try {
       const { open } = await import('@tauri-apps/plugin-dialog');
       const selectedPath = await open({
@@ -99,6 +99,7 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
         const clampOrMinus = (v: number) => (v <= maxCol ? v : -1);
         next.name = next.name >= 0 ? clamp(next.name) : -1;
         next.x_id = next.x_id >= 0 ? clamp(next.x_id) : -1;
+        next.vrc_url = next.vrc_url >= 0 ? clamp(next.vrc_url) : -1;
         next.cast1 = next.cast1 >= 0 ? clamp(next.cast1) : -1;
         next.cast2 = clampOrMinus(next.cast2 ?? -1);
         next.cast3 = clampOrMinus(next.cast3 ?? -1);
@@ -151,9 +152,9 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
         ? { splitCommaColumnIndex }
         : undefined;
 
-    // 確定項目(name, x_id, cast1～3)以外をカスタム列として raw_extra に渡す
+    // 確定項目(name, x_id, vrc_url, cast1～3)以外をカスタム列として raw_extra に渡す
     const fixedIndices = new Set(
-      [customMapping.name, customMapping.x_id, customMapping.cast1, customMapping.cast2, customMapping.cast3].filter(
+      [customMapping.name, customMapping.x_id, customMapping.vrc_url, customMapping.cast1, customMapping.cast2, customMapping.cast3].filter(
         (i) => i >= 0
       )
     );
@@ -175,7 +176,7 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
     }
     const mappingWithExtra = { ...customMapping, extraColumns };
 
-    onImportUserRows(customRows, mappingWithExtra, options);
+    onImportUserRows(customRows, { ...mappingWithExtra, castInputType, castUseWeight }, options);
   };
 
   const maxColIndex = customRows || customHeaderRow
@@ -231,6 +232,36 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
             >
               VRCパターン（ツイッター名・アカウントID・希望キャスト等）を適用
             </button>
+            <div className="form-group" style={{ marginBottom: 12 }}>
+              <label className="form-label" style={{ fontSize: 14, marginBottom: 4 }}>
+                希望キャスト欄の形式
+              </label>
+              <select
+                className="import-column-mapping__select"
+                value={castInputType}
+                onChange={(e) => {
+                  const value = e.target.value as 'multiple' | 'single';
+                  setCastInputType(value);
+                  if (value === 'multiple') {
+                    setCastUseWeight(false);
+                  }
+                }}
+                style={{ marginBottom: 8 }}
+              >
+                <option value="multiple">複数指定可（カンマ区切りまたはチェックボックス）</option>
+                <option value="single">単一項目（希望キャスト1、希望キャスト2...）</option>
+              </select>
+              {castInputType === 'single' && (
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                  <input
+                    type="checkbox"
+                    checked={castUseWeight}
+                    onChange={(e) => setCastUseWeight(e.target.checked)}
+                  />
+                  <span style={{ fontSize: 13 }}>希望の重みをつける（第一希望、第二希望...として扱う）</span>
+                </label>
+              )}
+            </div>
             {columnsWithMultipleCommas.length > 0 && (
               <div className="form-group" style={{ marginBottom: 12 }}>
                 <label className="form-label" style={{ fontSize: 12 }}>
@@ -266,6 +297,7 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
               {(
                 [
                   'name',
+                  'vrc_url',
                   'x_id',
                   'cast1',
                   'cast2',

@@ -2,6 +2,7 @@ export interface UserBean {
   timestamp: string;
   name: string;
   x_id: string;
+  vrc_url?: string; // VRCアカウントURL(オプション)
   first_flag: string;
   casts: string[];
   note: string;

@@ -3,16 +3,15 @@ import type { CastBean, NGUserEntry } from '@/common/types/entities';
 import { Repository } from '@/stores/AppContext';
 import { useAppContext } from '@/stores/AppContext';
 import { ConfirmModal } from '@/components/ConfirmModal';
-import { InputModal } from '@/components/InputModal';
 import { AppSelect, type AppSelectOption } from '@/components/AppSelect';
-import type { NGJudgmentType, NGMatchingBehavior, CautionUser, NGException } from '@/features/matching/types/matching-system-types';
+import type { NGJudgmentType, NGMatchingBehavior, CautionUser } from '@/features/matching/types/matching-system-types';
 import { parseXUsername } from '@/common/xIdUtils';
 
 type PersistCastsFn = (casts: CastBean[]) => void | Promise<void>;
 
 const NG_JUDGMENT_LABELS: Record<NGJudgmentType, string> = {
   username: 'ユーザー名のみで判定',
-  accountId: 'アカウントID(X)のみで判定',
+  accountId: 'アカウントID(X)のみで判定（推奨）',
   either: 'ユーザー名 OR アカウントID（どちらか一致でNG）',
 };
 
@@ -44,7 +43,6 @@ export const NGUserManagementPage: React.FC<{
   const [inputXId, setInputXId] = useState('');
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [showCautionSelect, setShowCautionSelect] = useState(false);
-  const [showExceptionModal, setShowExceptionModal] = useState(false);
 
   useEffect(() => {
     const allCasts = repository.getAllCasts();
@@ -82,23 +80,23 @@ export const NGUserManagementPage: React.FC<{
   const handleAddNg = () => {
     const nameToAdd = inputNgName.trim();
     const xIdRaw = inputXId.trim();
-    if (!nameToAdd || !selectedCastName) {
-      setAlertMessage('ユーザー名を入力してください。');
+    if (!xIdRaw || !selectedCastName) {
+      setAlertMessage('XアカウントIDを入力してください。');
       return;
     }
 
     const cast = casts.find((c) => c.name === selectedCastName);
     if (!cast) return;
 
-    // X ID が入力されていればパース、なければ undefined（username-only 登録も可）
-    const accountId = xIdRaw ? (parseXUsername(xIdRaw) ?? undefined) : undefined;
-    if (xIdRaw && !accountId) {
+    // X ID が必須、名前はオプション
+    const accountId = parseXUsername(xIdRaw) ?? undefined;
+    if (!accountId) {
       setAlertMessage('有効な X ID を入力してください（@username、ユーザー名、または x.com URL）。');
       return;
     }
 
     const newEntry: NGUserEntry = {
-      username: nameToAdd,
+      username: nameToAdd || undefined,
       accountId,
     };
 
@@ -220,34 +218,6 @@ export const NGUserManagementPage: React.FC<{
     [setMatchingSettings],
   );
 
-  const handleSubmitException = useCallback(
-    (values: Record<string, string>) => {
-      const newOne: NGException = {
-        username: values.username,
-        accountId: values.accountId,
-        registeredAt: new Date().toISOString(),
-      };
-      setMatchingSettings((prev) => ({
-        ...prev,
-        ngExceptions: { exceptions: [...prev.ngExceptions.exceptions, newOne] },
-      }));
-      setShowExceptionModal(false);
-    },
-    [setMatchingSettings],
-  );
-
-  const handleRemoveException = useCallback(
-    (index: number) => {
-      setMatchingSettings((prev) => ({
-        ...prev,
-        ngExceptions: {
-          exceptions: prev.ngExceptions.exceptions.filter((_, i) => i !== index),
-        },
-      }));
-    },
-    [setMatchingSettings],
-  );
-
   const castNgListByCast = useMemo(() => {
     return casts.map((cast) => {
       const entries = getNgEntriesFromCast(cast);
@@ -323,18 +293,18 @@ export const NGUserManagementPage: React.FC<{
             <div className="form-group">
               <label className="form-label">NGユーザーを追加</label>
               <p className="form-inline-note ng-page__field-hint">
-                ユーザー名は必須です。X ID は任意ですが、入力すると判定精度が上がります。
+                XアカウントIDは必須です。ユーザー名は任意ですが、入力すると識別しやすくなります。
               </p>
               <div className="ng-page__add-row">
                 <input
-                  placeholder="ユーザー名（必須）"
+                  placeholder="ユーザー名（任意）"
                   className="form-input ng-page__add-input ng-page__add-input--name"
                   value={inputNgName}
                   onChange={(e) => setInputNgName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddNg()}
                 />
                 <input
-                  placeholder="X ID（任意: @username や x.com URL）"
+                  placeholder="X ID（必須: @username や x.com URL）"
                   className="form-input ng-page__add-input ng-page__add-input--id"
                   value={inputXId}
                   onChange={(e) => setInputXId(e.target.value)}
@@ -452,7 +422,7 @@ export const NGUserManagementPage: React.FC<{
         <div className="ng-page__section-header">
           <h2 className="ng-page__section-title">要注意人物</h2>
           <p className="ng-page__section-desc">
-            複数キャストがNGにしたユーザーを自動で要注意にします（判定基準の設定に従います）。手動では既存のNGユーザーから選択して登録できます。
+            複数キャストがNGにしたユーザーを自動で要注意にします。判定はXアカウントIDで行います。手動では既存のNGユーザーから選択して登録できます。
           </p>
         </div>
         <div className="ng-page__caution-controls">
@@ -522,42 +492,6 @@ export const NGUserManagementPage: React.FC<{
         )}
       </div>
 
-      {/* ── NG例外セクション ── */}
-      <div className="ng-page__section">
-        <div className="ng-page__section-header">
-          <h2 className="ng-page__section-title">NG例外</h2>
-          <p className="ng-page__section-desc">
-            登録したユーザーは応募リストの要注意警告を出しません。キャストのNG設定には影響しません（ユーザー名・アカウントID両方必須）。
-          </p>
-        </div>
-        <div className="ng-page__exception-controls">
-          <button type="button" className="btn-primary btn-fixed-h" onClick={() => setShowExceptionModal(true)}>
-            NG例外を追加
-          </button>
-        </div>
-        {matchingSettings.ngExceptions.exceptions.length > 0 ? (
-          <div className="ng-page__exception-list">
-            {matchingSettings.ngExceptions.exceptions.map((e, i) => (
-              <div key={`${e.username}-${e.accountId}-${i}`} className="ng-page__exception-chip">
-                <span className="ng-page__exception-chip-text">
-                  {e.username} <span className="ng-page__exception-chip-id">@{e.accountId}</span>
-                </span>
-                <button
-                  type="button"
-                  className="ng-page__exception-chip-remove"
-                  onClick={() => handleRemoveException(i)}
-                  aria-label={`${e.username} を例外から削除`}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <span className="text-muted-italic">NG例外はありません。</span>
-        )}
-      </div>
-
       {alertMessage && (
         <ConfirmModal
           message={alertMessage}
@@ -608,20 +542,6 @@ export const NGUserManagementPage: React.FC<{
             <span className="text-muted-italic">登録可能なNGユーザーがありません。</span>
           )}
         </ConfirmModal>
-      )}
-
-      {showExceptionModal && (
-        <InputModal
-          title="NG例外を追加"
-          description="例外登録するユーザーのユーザー名とアカウントIDを入力してください。"
-          fields={[
-            { key: 'username', label: 'ユーザー名', placeholder: 'ユーザー名を入力', required: true },
-            { key: 'accountId', label: 'アカウントID (X)', placeholder: '@username', required: true },
-          ]}
-          onSubmit={handleSubmitException}
-          onCancel={() => setShowExceptionModal(false)}
-          submitLabel="追加"
-        />
       )}
     </div>
   );

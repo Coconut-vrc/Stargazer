@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { Menu, X, LogOut, Settings, UserX, Bug, HelpCircle, FileText, Database, Sliders, Ticket, LayoutGrid, Users, Home, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { Menu, X, LogOut, Settings, Bug, HelpCircle, Database, Users, Home } from 'lucide-react';
 import { invoke } from '@/tauri';
 import { DataManagementPage } from '@/features/data-management/DataManagementPage';
 import { CastNgManagementPage } from '@/features/cast-ng-management/CastNgManagementPage';
@@ -26,29 +26,13 @@ export const AppContainer: React.FC = () => {
     setActivePage,
     repository,
     currentWinners,
-    matchingTypeCode,
     setMatchingTypeCode,
-    rotationCount,
     setRotationCount,
     setCurrentWinners,
-    totalTables,
     setTotalTables,
-    groupCount,
-    usersPerGroup,
-    usersPerTable,
-    castsPerRotation,
     themeId,
-    matchingSettings,
   } = useAppContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem(STORAGE_KEYS.SIDEBAR_COLLAPSED) === 'true';
-  });
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.SIDEBAR_COLLAPSED, String(isSidebarCollapsed));
-  }, [isSidebarCollapsed]);
 
   const [columnCheckError, setColumnCheckError] = useState<string | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -116,7 +100,7 @@ export const AppContainer: React.FC = () => {
 
   const handleResetApplication = () => {
     clearSessionData();
-    setMatchingTypeCode('M001');
+    setMatchingTypeCode('NONE');
     setRotationCount(DEFAULT_ROTATION_COUNT);
     setTotalTables(15);
     setActivePage('home');
@@ -205,19 +189,10 @@ export const AppContainer: React.FC = () => {
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
-        <aside className={`sidebar ${isMenuOpen ? 'open' : ''} ${isSidebarCollapsed ? 'sidebar--collapsed' : ''}`}>
+        <aside className={`sidebar ${isMenuOpen ? 'open' : ''}`}>
           <div className="sidebar-inner">
             <div className="sidebar-title">
-              {!isSidebarCollapsed && <HeaderLogo />}
-              <button
-                type="button"
-                className="sidebar-collapse-btn"
-                onClick={() => setIsSidebarCollapsed((v) => !v)}
-                title={isSidebarCollapsed ? 'サイドバーを開く' : 'サイドバーを閉じる'}
-                aria-label={isSidebarCollapsed ? 'サイドバーを開く' : 'サイドバーを閉じる'}
-              >
-                {isSidebarCollapsed ? <PanelLeft size={20} /> : <PanelLeftClose size={20} />}
-              </button>
+              <HeaderLogo />
             </div>
             {sidebarButtons.map((button, index) => (
               <button
@@ -232,17 +207,17 @@ export const AppContainer: React.FC = () => {
                 {button.icon != null ? (
                   <>
                     {button.icon}
-                    {!isSidebarCollapsed && <span className="sidebar-button-label">{button.text}</span>}
+                    <span className="sidebar-button-label">{button.text}</span>
                   </>
                 ) : (
-                  !isSidebarCollapsed && button.text
+                  button.text
                 )}
               </button>
             ))}
             <div className="sidebar-block sidebar-block--push">
               <button onClick={() => setShowResetConfirm(true)} className="sidebar-button logout" title={RESET_APPLICATION.BUTTON_LABEL}>
                 <LogOut size={18} />
-                {!isSidebarCollapsed && <span className="sidebar-button-label">{RESET_APPLICATION.BUTTON_LABEL}</span>}
+                <span className="sidebar-button-label">{RESET_APPLICATION.BUTTON_LABEL}</span>
               </button>
             </div>
           </div>

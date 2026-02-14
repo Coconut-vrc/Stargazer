@@ -25,7 +25,7 @@ function getInitialSession(): PersistedSession | null {
     const o = d as Record<string, unknown>;
     if (!Array.isArray(o.winners)) return null;
     const totalTables = typeof (o as { totalTables?: number }).totalTables === 'number' ? (o as { totalTables: number }).totalTables : 15;
-    let matchingTypeCode: MatchingTypeCode = 'M001';
+    let matchingTypeCode: MatchingTypeCode = 'NONE';
     if (typeof o.matchingTypeCode === 'string' && VALID_MATCHING_CODES.includes(o.matchingTypeCode)) {
       matchingTypeCode = o.matchingTypeCode as MatchingTypeCode;
     }
@@ -168,7 +168,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [activePage, setActivePage] = useState<PageType>(getInitialActivePage);
   const [launchBehavior, setLaunchBehaviorState] = useState<LaunchBehavior>(getInitialLaunchBehavior);
   const [currentWinners, setCurrentWinners] = useState<UserBean[]>(initialSession?.winners ?? []);
-  const [matchingTypeCode, setMatchingTypeCode] = useState<MatchingTypeCode>(initialSession?.matchingTypeCode ?? 'M001');
+  const [matchingTypeCode, setMatchingTypeCode] = useState<MatchingTypeCode>(initialSession?.matchingTypeCode ?? 'NONE');
   const [rotationCount, setRotationCount] = useState<number>(initialSession?.rotationCount ?? DEFAULT_ROTATION_COUNT);
   const [themeId, setThemeId] = useState<ThemeId>(() => getInitialThemeId());
   const [totalTables, setTotalTables] = useState<number>(initialSession?.totalTables ?? 15);

@@ -8,16 +8,21 @@ export interface ColumnMapping {
   timestamp: number;
   name: number;
   x_id: number;
+  vrc_url: number; // VRCアカウントURL
   first_flag: number;
   cast1: number;
   cast2: number;
   cast3: number;
   note: number;
   is_pair_ticket: number;
-  /** カスタム用: 2列目ユーザー名（例: VRC名）。name が空のときのフォールバック */
+  /** カスタム用: 2列目ユーザー名(例: VRC名)。name が空のときのフォールバック */
   nameColumn2?: number;
-  /** カスタム用: 応募リストに出す追加列（ラベル付きで raw_extra に入る） */
+  /** カスタム用: 応募リストに出す追加列(ラベル付きで raw_extra に入る) */
   extraColumns?: { columnIndex: number; label: string }[];
+  /** 希望キャストの形式: 'multiple' = 複数指定可(カンマ区切り), 'single' = 単一項目 */
+  castInputType?: 'multiple' | 'single';
+  /** 希望の重みをつけるか(単一の場合のみ有効) */
+  castUseWeight?: boolean;
 }
 
 export type ImportStyle = 'custom';
@@ -27,6 +32,7 @@ export const CUSTOM_PRESET_VRC: ColumnMapping = {
   timestamp: -1,
   name: 1,
   x_id: 2,
+  vrc_url: -1,
   first_flag: -1,
   cast1: 3,
   cast2: -1,
@@ -46,6 +52,7 @@ export function createEmptyColumnMapping(): ColumnMapping {
     timestamp: -1,
     name: -1,
     x_id: -1,
+    vrc_url: -1,
     first_flag: -1,
     cast1: -1,
     cast2: -1,
@@ -68,6 +75,7 @@ export function getMinColumnsFromMapping(m: ColumnMapping): number {
     m.timestamp,
     m.name,
     m.x_id,
+    m.vrc_url,
     m.first_flag,
     m.cast1,
     m.cast2,

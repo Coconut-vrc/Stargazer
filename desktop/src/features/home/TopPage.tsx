@@ -1,13 +1,8 @@
 import React from 'react';
 import {
   HelpCircle,
-  FileText,
   Database,
-  Sliders,
-  Ticket,
-  LayoutGrid,
   Users,
-  UserX,
   Settings,
   Bug,
 } from 'lucide-react';
@@ -16,33 +11,23 @@ import { NAV } from '@/common/copy';
 
 /** グループ定義：ラベルと含まれるページ */
 const NAV_GROUPS: { label: string; pages: PageType[] }[] = [
-  { label: 'メインフロー', pages: ['guide', 'import', 'db', 'lotteryCondition', 'lottery', 'matching'] },
-  { label: '管理', pages: ['cast', 'ngManagement'] },
+  { label: 'メインフロー', pages: ['guide', 'dataManagement'] },
+  { label: '管理', pages: ['castNgManagement'] },
   { label: 'その他', pages: ['settings', 'debug'] },
 ];
 
-const ICON_MAP: Record<Exclude<PageType, 'home'>, React.ReactNode> = {
+const ICON_MAP: Partial<Record<Exclude<PageType, 'home'>, React.ReactNode>> = {
   guide: <HelpCircle size={36} />,
-  import: <FileText size={36} />,
-  db: <Database size={36} />,
-  lotteryCondition: <Sliders size={36} />,
-  lottery: <Ticket size={36} />,
-  matching: <LayoutGrid size={36} />,
-  cast: <Users size={36} />,
-  ngManagement: <UserX size={36} />,
+  dataManagement: <Database size={36} />,
+  castNgManagement: <Users size={36} />,
   settings: <Settings size={36} />,
   debug: <Bug size={36} />,
 };
 
-const LABEL_MAP: Record<Exclude<PageType, 'home'>, string> = {
+const LABEL_MAP: Partial<Record<Exclude<PageType, 'home'>, string>> = {
   guide: NAV.GUIDE,
-  import: NAV.IMPORT,
-  db: NAV.DB,
-  lotteryCondition: NAV.LOTTERY_CONDITION,
-  lottery: NAV.LOTTERY,
-  matching: NAV.MATCHING,
-  cast: NAV.CAST,
-  ngManagement: NAV.NG_MANAGEMENT,
+  dataManagement: NAV.DATA_MANAGEMENT,
+  castNgManagement: NAV.CAST_NG_MANAGEMENT,
   settings: NAV.SETTINGS,
   debug: NAV.DEBUG,
 };
