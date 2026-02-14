@@ -3,7 +3,8 @@ import {
   IMPORT_STYLE,
   IMPORT_COLUMN_LABELS,
   STUB_IMPORT_BASIC_PATH,
-  STUB_IMPORT_CUSTOM_VRC_PATH,
+  STUB_IMPORT_CHECKBOX_PATH,
+  TEST_CSV_PATHS,
 } from '@/common/copy';
 import { isTauri } from '@/tauri';
 import { parseCSV } from '@/common/csvParse';
@@ -244,11 +245,33 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
           <p className="form-inline-note" style={{ margin: 0 }}>
             スタブ:{' '}
             <a href={STUB_IMPORT_BASIC_PATH} download="stub-import-basic.csv">
-              基本テンプレート用
+              基本（200名）
             </a>
             {' / '}
-            <a href={STUB_IMPORT_CUSTOM_VRC_PATH} download="stub-import-custom-vrc.csv">
-              カスタムVRC用
+            <a href={STUB_IMPORT_CHECKBOX_PATH} download="stub-import-checkbox.csv">
+              カンマ区切り（200名）
+            </a>
+          </p>
+          <p className="form-inline-note" style={{ margin: 0, fontSize: 11, opacity: 0.7 }}>
+            テスト:{' '}
+            <a href={TEST_CSV_PATHS.ng} download="test-200-ng.csv">
+              NG検証（200名）
+            </a>
+            {' / '}
+            <a href={TEST_CSV_PATHS.group10x20} download="test-200-group-10x20.csv">
+              M005-10×20
+            </a>
+            {' / '}
+            <a href={TEST_CSV_PATHS.group6x20} download="test-120-group-6x20.csv">
+              M005-6×20
+            </a>
+            {' / '}
+            <a href={TEST_CSV_PATHS.multiple5x3} download="test-200-multiple-5x3.csv">
+              M006-5×3
+            </a>
+            {' / '}
+            <a href={TEST_CSV_PATHS.multiple4x3} download="test-60-multiple-4x3.csv">
+              M006-4×3
             </a>
           </p>
         </div>

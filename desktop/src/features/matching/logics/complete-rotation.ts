@@ -5,7 +5,7 @@
  * 区分コードで完全分離。他ロジックと共通化しない。
  */
 
-import type { UserBean, CastBean } from '@/stores/AppContext';
+import type { UserBean, CastBean } from '@/common/types/entities';
 import type { MatchedCast, TableSlot, MatchingResult } from './matching-result-types';
 import type { NGJudgmentType, NGMatchingBehavior } from '@/features/matching/types/matching-system-types';
 import { isUserNGForCast } from './ng-judgment';

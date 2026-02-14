@@ -8,6 +8,7 @@ export const APP_NAME = 'Stargazer';
 export const DEFAULT_ROTATION_COUNT = 2;
 
 export const NAV = {
+  HOME: 'ホーム',
   GUIDE: 'ガイド',
   IMPORT: 'データ読取',
   DB: 'DBデータ確認',
@@ -18,6 +19,21 @@ export const NAV = {
   NG_MANAGEMENT: 'NGユーザー管理',
   SETTINGS: '設定',
   DEBUG: 'デバッグ',
+} as const;
+
+export const EXTERNAL_LINK = {
+  MODAL_TITLE: '外部リンク',
+  MODAL_MESSAGE: '外部リンクを開きますか？',
+  CONFIRM_LABEL: '開く',
+  CANCEL_LABEL: 'キャンセル',
+} as const;
+
+export const RESET_APPLICATION = {
+  BUTTON_LABEL: '応募データリセット',
+  MODAL_TITLE: '応募データのリセット',
+  MODAL_MESSAGE: '応募データをリセットします。\n取り込んだ応募者・当選結果・マッチング結果がすべてクリアされます。\nよろしいですか？',
+  CONFIRM_LABEL: 'リセットする',
+  CANCEL_LABEL: 'キャンセル',
 } as const;
 
 export const ALERT = {
@@ -35,8 +51,22 @@ export const IMPORT_STYLE = {
 
 /** 基本テンプレート用スタブCSVのパス（public 配下） */
 export const STUB_IMPORT_BASIC_PATH = '/stub-import-basic.csv';
-/** カスタムVRC用スタブCSVのパス */
-export const STUB_IMPORT_CUSTOM_VRC_PATH = '/stub-import-custom-vrc.csv';
+/** チェックボックス式（カンマ区切り希望キャスト）スタブCSVのパス */
+export const STUB_IMPORT_CHECKBOX_PATH = '/stub-import-checkbox.csv';
+
+/** テスト用CSVパス一覧（各ロジック向け） */
+export const TEST_CSV_PATHS = {
+  /** NG/要注意人物テスト（NG一致10名 + 通常190名） */
+  ng: '/test-200-ng.csv',
+  /** M005 グループマッチング（10グループ×20名） */
+  group10x20: '/test-200-group-10x20.csv',
+  /** M005 グループマッチング小規模（6グループ×20名） */
+  group6x20: '/test-120-group-6x20.csv',
+  /** M006 複数マッチング（5名/テーブル, 3キャスト/ローテ） */
+  multiple5x3: '/test-200-multiple-5x3.csv',
+  /** M006 複数マッチング小規模（4名/テーブル, 5キャスト/ローテ） */
+  multiple4x3: '/test-60-multiple-4x3.csv',
+} as const;
 
 export const IMPORT_COLUMN_LABELS = {
   timestamp: 'タイムスタンプ',
@@ -48,6 +78,12 @@ export const IMPORT_COLUMN_LABELS = {
   cast3: '希望キャスト3',
   note: '備考',
   is_pair_ticket: 'ペアチケット',
+} as const;
+
+export const SETTINGS = {
+  LAUNCH_BEHAVIOR_LABEL: '起動時の画面',
+  LAUNCH_TOP: '毎回ホームへ',
+  LAUNCH_LAST: '前回の画面を開く',
 } as const;
 
 export const GUIDE = {

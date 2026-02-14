@@ -1,7 +1,7 @@
 # マッチングシステム機能追加仕様書
 
-**バージョン:** 2.1  
-**最終更新日:** 2026年2月
+**バージョン:** 2.2  
+**最終更新日:** 2026年2月14日
 
 **アプリ構成の前提**  
 本アプリ（Stargazer）は **Tauri 2 デスクトップアプリ**で、完全ローカル運用です。外部API・認証は使用しません。抽選・マッチング結果のエクスポートはCSVダウンロードで行います。マッチングロジックは `desktop/src/features/matching/` 配下に実装されています。
@@ -49,28 +49,28 @@
 
 以下の2つから選択：
 
-#### 1. 警告モード（新規実装）
+#### 1. 警告モード（✅ 実装済み — ハイライト表示）
 
 - マッチング実行
-- 結果画面でNGユーザーをハイライト表示
-- ドラッグ&ドロップで別のユーザーと入れ替え可能
-- 入れ替え先のキャストについてもNG判定を再実行
-- リアルタイムで警告表示を更新
+- 結果画面でNGユーザーを黄色ハイライト + ⚠アイコンで表示
+- ツールチップで「このユーザーはキャスト○○のNG対象です」表示
 
-#### 2. 除外モード（既に実装済み）
+#### 2. 除外モード（✅ 実装済み）
 
 - マッチングアルゴリズム内部で自動除外
 - そのキャストとNGユーザーをマッチングさせない
 
-### 1-2. 警告モードUI仕様（新規実装部分）
+### 1-2. 警告モードUI仕様
 
-#### 結果画面
+#### 結果画面（✅ 実装済み）
 
-- NGユーザーが含まれるマッチング結果を黄色/オレンジでハイライト
-- 警告アイコン表示
-- ツールチップで「このユーザーはキャスト○○のNG対象です」表示
+- NGユーザーが含まれるマッチング結果を黄色でハイライト（`matching-cell-ng-warning`）
+- ⚠ 警告アイコン表示（`matching-ng-icon`）
+- ツールチップで「このユーザーはキャスト○○のNG対象です」表示（`title` 属性）
 
-#### ドラッグ&ドロップ機能
+#### ドラッグ&ドロップ機能（🔲 未実装）
+
+> **現在未実装。** 将来的に以下の動作を想定：
 
 1. NGユーザーをドラッグ
 2. 別のテーブル/スロットにドロップ
@@ -81,25 +81,54 @@
 
 ### 1-3. データ構造
 
+#### NGユーザーエントリ（`common/types/entities.ts`）
+
 ```typescript
-type NGUserSetting = {
-  castId: string;
-  ngUsers: Array<{
-    username?: string;
-    accountId?: string;
-  }>;
-  judgmentType: 'username' | 'accountId' | 'either';
-  matchingBehavior: 'warn' | 'exclude';
+// NGユーザー1件。登録時は名前＋ X ID。
+interface NGUserEntry {
+  username?: string;   // VRChat表示名
+  accountId?: string;  // X（旧Twitter）アカウントID
+}
+```
+
+> **設計判断:** NG判定に必要な識別子は **VRChat表示名（= username）** と **Xアカウント（= accountId）** の2つ。Google フォームのほぼ全てがこの2項目を必須として取得しているため、VRC URL は NG 判定には不要。キャスト自身の VRC プロフィールリンク（`CastBean.vrc_profile_url`）は別途キャスト管理で保持する。
+
+#### NG設定（グローバル — 全キャスト共通）
+
+```typescript
+// judgmentType・matchingBehavior はキャストごとではなくグローバル設定。
+// 実体: matching-settings-store.ts の MatchingSettingsState
+interface MatchingSettingsState {
+  ngJudgmentType: 'username' | 'accountId' | 'either';
+  ngMatchingBehavior: 'warn' | 'exclude';
+  caution: CautionUserSettings;
+  ngExceptions: NGExceptionSettings;
+}
+```
+
+> **補足:** 各キャストのNGリストは `CastBean.ng_entries` (NGUserEntry[]) に保持される。グローバルな判定基準・挙動と組み合わせて判定する。
+
+#### 警告モード用の結果データ（`matching-result-types.ts`）
+
+```typescript
+// 1スロット分のマッチング結果
+interface MatchedCast {
+  cast: { name: string; is_present: boolean; ng_users: string[] };
+  rank: number;
+  isNGWarning?: boolean; // 警告モード用フラグ
+  ngReason?: string;     // 「このユーザーはキャスト○○のNG対象です」
 }
 
-// 警告モード用の結果データ
-type MatchingResult = {
-  tableId: string;
-  rotationNumber: number;
-  userId: string;
-  castId: string;
-  isNGWarning: boolean; // 警告モード用フラグ
-  ngReason?: string; // 警告理由
+// テーブル1行分
+interface TableSlot {
+  user: UserBean | null;
+  matches: MatchedCast[];
+}
+
+// マッチング結果全体
+interface MatchingResult {
+  userMap: Map<string, MatchedCast[]>;
+  tableSlots?: TableSlot[]; // テーブル形式の場合のみ
 }
 ```
 
@@ -115,11 +144,20 @@ type MatchingResult = {
 - 閾値（1名〜）は設定可能
 - 閾値以上のキャストがNGに設定したユーザーを自動的に要注意人物として登録
 
-#### ⚠️ 判定条件（厳密）
+#### NGカウント（「何人のキャストが NG にしているか」の集計）
 
-- **ユーザー名 AND アカウントIDの両方が一致**
+- **1-1 の判定基準（`ngJudgmentType`）に従う**
+- 設定が「ユーザー名のみ」なら username 一致でカウント、「どちらか」なら OR でカウント
+- これにより username のみのNGエントリやレガシー `ng_users` もカウント対象になる
+- `ng-judgment.ts` の `isUserNGForCast` を使用し、NG判定ロジックと一貫させる
+
+#### ⚠️ 要注意人物の同一人物判定（厳密）
+
+- 登録される CautionUser のレコードには **ユーザー名 AND アカウントID の両方が必須**
+- `isCautionUser` で応募者と要注意リストを照合する際は **両方が一致** した場合のみ該当
 - どちらか片方だけが一致しても別人として扱う
-- **理由:** NGユーザーは身元を明確に把握する必要があるため
+- **理由:** 要注意人物の誤判定（同名の別人をフラグ）を防ぐため
+- **補足:** 応募ユーザーに username または x_id が欠けている場合、自動登録対象外
 
 ### 2-2. 手動登録
 
@@ -159,14 +197,14 @@ type MatchingResult = {
 ```typescript
 type CautionUser = {
   username: string;
-  accountId: string; // 必須
+  accountId: string;          // 必須
   registrationType: 'auto' | 'manual';
-  ngCastCount?: number; // 自動登録の場合のみ
-  registeredAt: Date;
+  ngCastCount?: number;       // 自動登録の場合のみ
+  registeredAt: string;       // ISO 8601 文字列（JSON シリアライズのため）
 }
 
 type CautionUserSettings = {
-  autoRegisterThreshold: number; // 1〜
+  autoRegisterThreshold: number; // 1〜（デフォルト: 2）
   cautionUsers: CautionUser[];
 }
 ```
@@ -237,8 +275,8 @@ type CautionUserSettings = {
 ```typescript
 type NGException = {
   username: string;
-  accountId: string; // 必須
-  registeredAt: Date;
+  accountId: string;    // 必須
+  registeredAt: string; // ISO 8601 文字列（JSON シリアライズのため）
   note?: string;
 }
 
@@ -308,7 +346,9 @@ type NGExceptionSettings = {
 
 ---
 
-## 4-3. ロジック5: グループマッチング（新規実装）
+## 4-3. ロジック5: グループマッチング（✅ 実装済み）
+
+> **`group-matching.ts` に対角線配置アルゴリズムで実装済み。** 以下は仕様。
 
 ### 設定項目
 
@@ -420,7 +460,9 @@ type Group = {
 
 ---
 
-## 4-4. ロジック6: 複数マッチング（新規実装）
+## 4-4. ロジック6: 複数マッチング（✅ 実装済み）
+
+> **`multiple-matching.ts` にテーブル×ユニット対角線配置で実装済み。** 以下は仕様。
 
 ### 設定項目
 
@@ -543,33 +585,42 @@ desktop/src/
   layout/
     AppContainer.tsx              # ルーティング・サイドバー
   features/
+    home/
+      TopPage.tsx                 # トップ画面（メニュータイル）
     matching/
       MatchingPage.tsx            # マッチング結果画面
       logics/
         matching_service.ts       # エントリ・振り分け
-        matching-result-types.ts  # 型定義
-        complete-random.ts        # M001
-        complete-rotation.ts       # M002
-        vacant-random.ts          # M003
-        vacant-rotation.ts        # M004
-        group-matching.ts         # M005
-        multiple-matching.ts      # M006
-        ng-judgment.ts            # NG判定
-        caution-user.ts           # 要注意人物
+        matching-result-types.ts  # 型定義（MatchedCast, TableSlot, MatchingResult）
+        complete-random.ts        # M001 ✅
+        complete-rotation.ts      # M002 ✅
+        vacant-random.ts          # M003 ✅
+        vacant-rotation.ts        # M004 ✅
+        group-matching.ts         # M005 ✅
+        multiple-matching.ts      # M006 ✅
+        ng-judgment.ts            # NG判定 ✅
+        caution-user.ts           # 要注意人物・NG例外判定 ✅
       types/
-        matching-type-codes.ts
-        matching-system-types.ts
+        matching-type-codes.ts    # M001〜M006 区分コード
+        matching-system-types.ts  # NG・要注意・例外・設定の型定義
       stores/
-        matching-settings-store.ts # NG設定・要注意・NG例外の永続化
+        matching-settings-store.ts # NG設定・要注意・NG例外の永続化（localStorage）
     lottery/                       # 抽選条件・抽選結果
     db/                            # DBデータ確認
     cast/                          # キャスト管理
     ng-user/                       # NGユーザー管理
     guide/                         # ガイド
     settings/                      # 設定
-    import/                         # データ読取
-  common/                          # 型・定数・downloadCsv 等
-  components/                      # DiscordTable, ConfirmModal 等
+    import/                        # データ読取（ImportPage）
+    importFlow/                    # インポートフロー（モーダルウィザード）
+      index.ts
+      types.ts
+      constants.ts
+  common/
+    types/
+      entities.ts                 # UserBean, CastBean, NGUserEntry（正の定義）
+    config.ts                     # STORAGE_KEYS 等
+  components/                      # DiscordTable, ConfirmModal, AppSelect 等
   stores/
     AppContext.tsx                # グローバル状態・Repository
 ```
@@ -580,18 +631,19 @@ desktop/src/
 
 ### Phase 1: NGユーザー基盤
 
-1. NGユーザー設定機能（除外モードは実装済み、警告モードを追加）
-2. 警告モード結果画面UI（ハイライト＋ドラッグ&ドロップ）
-3. 要注意人物機能（自動登録＋手動登録）
-4. NG例外設定機能
-5. 応募リスト画面のUI実装
+1. ✅ NGユーザー設定機能（除外モード・警告モード両方実装済み）
+2. ✅ 警告モード結果画面UI（ハイライト表示実装済み）
+   - 🔲 ドラッグ&ドロップによる入れ替えは未実装
+3. ✅ 要注意人物機能（自動登録＋手動登録 実装済み）
+4. ✅ NG例外設定機能（実装済み）
+5. ✅ 応募リスト画面のUI実装
 
 ### Phase 2: マッチングロジック
 
-6. 既存ロジックの名称変更（1-4）
-7. バリデーション機能の実装
-8. グループマッチング（5）
-9. 複数マッチング（6）
+6. ✅ 既存ロジックの名称変更（M001〜M004）
+7. ✅ バリデーション機能の実装
+8. ✅ グループマッチング（M005）— 対角線配置アルゴリズム
+9. ✅ 複数マッチング（M006）— テーブル×ユニット対角線配置
 
 ### Phase 3: 統合テスト
 
@@ -605,14 +657,18 @@ desktop/src/
 
 ### NGユーザー判定
 
-- 要注意人物の判定: ユーザー名 AND アカウントIDの両方一致（厳密）
-- 判定基準によって比較方法を変える
-- 大文字小文字の扱いを統一
+- **キャストのNGリスト照合（NG判定）:** 1-1 の判定基準（`ngJudgmentType`）に従う
+  - 自動登録のNGカウントもこの判定基準を使用する
+- **要注意人物の同一人物判定（`isCautionUser`）:** ユーザー名 AND アカウントIDの両方一致（厳密 AND）
+- **NG例外判定（`isNGException`）:** ユーザー名 AND アカウントIDの両方一致（厳密 AND）
+- 大文字小文字の扱いを統一（`trim().toLowerCase()`）
 - 空白文字のトリム処理
+- アカウントIDの先頭 `@` は比較時に除去
 
 ### 警告モード
 
-- ドラッグ&ドロップ後のNG再判定を忘れずに
+- ✅ ハイライト表示・ツールチップは実装済み
+- 🔲 ドラッグ&ドロップ後のNG再判定（D&D自体が未実装）
 - リアルタイムでハイライト更新
 - パフォーマンス考慮（大量データでも快適に動作）
 
@@ -645,6 +701,7 @@ desktop/src/
 |---------|------|---------|
 | 2.0 | 2026-02-13 | 初版作成 |
 | 2.1 | 2026-02 | アプリ構成の前提（Tauri・完全ローカル）を追記。ファイル構成案を現行の features/matching 構成に更新。 |
+| 2.2 | 2026-02-14 | 実装コードとの照合結果を反映。データ構造を実装に合わせて修正（`registeredAt: Date` → `string`、`NGUserEntry` に `vrc_profile_url` 追加、`NGUserSetting` をグローバル設定に変更、`MatchingResult` を3層構造に更新）。M005/M006/ドラッグ&ドロップの未実装を明記。ファイル構成案に `home/` `importFlow/` を追加。実装順序に進捗マークを付与。 |
 
 ---
 

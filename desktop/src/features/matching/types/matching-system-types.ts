@@ -1,27 +1,19 @@
 /**
  * マッチングシステム機能追加仕様に基づく型定義。
  * 仕様書: docs/matching-system-specification.md
+ *
+ * NGUserEntry の正の定義は common/types/entities.ts にある。
+ * このファイルでは re-export のみ行い、マッチング固有の型を定義する。
  */
+
+/** NGUserEntry は entities.ts を正とする（username + accountId の2フィールド構成） */
+export type { NGUserEntry } from '@/common/types/entities';
 
 /** NG判定基準 */
 export type NGJudgmentType = 'username' | 'accountId' | 'either';
 
 /** マッチング時の挙動 */
 export type NGMatchingBehavior = 'warn' | 'exclude';
-
-/** NGユーザー1件（ユーザー名 or アカウントID or 両方） */
-export interface NGUserEntry {
-  username?: string;
-  accountId?: string;
-}
-
-/** キャストごとのNG設定（拡張用。既存 ng_users: string[] と併用） */
-export interface NGUserSetting {
-  castId: string;
-  ngUsers: NGUserEntry[];
-  judgmentType: NGJudgmentType;
-  matchingBehavior: NGMatchingBehavior;
-}
 
 /** 警告モード用のマッチング結果1スロット */
 export interface MatchedCastWithWarning {

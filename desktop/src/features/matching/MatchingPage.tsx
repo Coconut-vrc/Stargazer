@@ -1,4 +1,4 @@
-// app/pages/MatchingPage.tsx
+// desktop/src/features/matching/MatchingPage.tsx
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { toPng } from 'html-to-image';
 import { Repository, type UserBean, type MatchingTypeCode } from '@/stores/AppContext';
@@ -6,6 +6,7 @@ import type { MatchingSettingsState } from '@/features/matching/stores/matching-
 import { MatchingService, MatchedCast, type TableSlot } from '@/features/matching/logics/matching_service';
 import { DiscordTable, DiscordTableColumn } from '@/components/DiscordTable';
 import { ConfirmModal } from '@/components/ConfirmModal';
+import { XLinkInline } from '@/components/XLinkCell';
 import { downloadCsv } from '@/common/downloadCsv';
 import { MATCHING_SHEET_PREFIX } from '@/common/sheetColumns';
 import { MATCHING_TYPE_LABELS } from '@/features/matching/types/matching-type-codes';
@@ -141,7 +142,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
             {row.user ? (
               <>
                 <div className="text-user-name">{row.user.name}</div>
-                <div className="text-x-id">@{row.user.x_id}</div>
+                <XLinkInline xId={row.user.x_id} />
               </>
             ) : (
               <span className="text-unassigned">空</span>
@@ -257,7 +258,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
               {assignment ? (
                 <div className="stack-vertical-4">
                   <div className="text-body-sm">{assignment.userName}</div>
-                  <div className="text-x-id">@{assignment.x_id}</div>
+                  <XLinkInline xId={assignment.x_id} />
                   <div>{renderRankBadge(assignment.rank)}</div>
                 </div>
               ) : (

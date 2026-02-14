@@ -11,6 +11,8 @@ interface ConfirmModalProps {
   confirmLabel?: string;
   cancelLabel?: string;
   type?: 'confirm' | 'alert';
+  /** message の下に追加で表示するカスタムコンテンツ */
+  children?: React.ReactNode;
 }
 
 const DEFAULT_TITLE_ALERT = 'お知らせ';
@@ -24,6 +26,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   confirmLabel = 'OK',
   cancelLabel = 'キャンセル',
   type = 'confirm',
+  children,
 }) => {
   const displayTitle = title ?? (type === 'alert' ? DEFAULT_TITLE_ALERT : DEFAULT_TITLE_CONFIRM);
   const open = true;
@@ -37,24 +40,29 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     }
   };
 
+  const modalContainer =
+    typeof document !== 'undefined' ? (document.getElementById('modal-root') ?? document.body) : undefined;
+
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="modal-overlay" />
-        <Dialog.Content className="modal-content">
-          <Dialog.Title className="modal-title">{displayTitle}</Dialog.Title>
-          <Dialog.Description className="modal-message">{message}</Dialog.Description>
-          <div className="modal-buttons">
-            {type === 'confirm' && onCancel && (
-              <button type="button" className="modal-btn-cancel" onClick={onCancel}>
-                {cancelLabel}
+      <Dialog.Portal container={modalContainer}>
+        <Dialog.Overlay className="modal-overlay">
+          <Dialog.Content className="modal-content">
+            <Dialog.Title className="modal-title">{displayTitle}</Dialog.Title>
+            <Dialog.Description className="modal-message">{message}</Dialog.Description>
+            {children}
+            <div className="modal-buttons">
+              {type === 'confirm' && onCancel && (
+                <button type="button" className="modal-btn-cancel" onClick={onCancel}>
+                  {cancelLabel}
+                </button>
+              )}
+              <button type="button" className="btn-primary modal-btn-confirm" onClick={onConfirm}>
+                {confirmLabel}
               </button>
-            )}
-            <button type="button" className="btn-primary modal-btn-confirm" onClick={onConfirm}>
-              {confirmLabel}
-            </button>
-          </div>
-        </Dialog.Content>
+            </div>
+          </Dialog.Content>
+        </Dialog.Overlay>
       </Dialog.Portal>
     </Dialog.Root>
   );

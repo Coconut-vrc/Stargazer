@@ -59,17 +59,17 @@
 | 3×3 シェアハウス | 特別企画 | 君の気になる子は誰？(複数可)、呼ばれたい名前、スキンシップ範囲。フォーム実体確認済み |
 | My Sweet Mummy × OKEANOS | 特別企画 | VR酔い、参加経験、どこで知ったか、要望。1ページ目のみ確認、キャスト指名なし |
 | LUNA REAL × カジノLU | 特別企画 | 1ページ目: VRC名/リンク・Xのみ。2ページ目以降未確認。フォーム実体確認済み |
-| 競技大喜利会 | その他 | （記載なし） |
-| VitalLink（看護師RP） | その他 | （記載なし） |
-| F-Lick-Out（ASMR） | その他 | （記載なし） |
-| なっぱちゃん個人イベント | その他 | （記載なし） |
-| Velvet V 合同個人イベント | その他 | （記載なし） |
-| Ephemeral Sugar -Bitter- 第3回 | その他 | （記載なし） |
-| 渡海鉄道 WIT | その他 | （記載なし） |
-| Mag・Mell 晩餐会 | その他 | （記載なし） |
-| Secret Dream 第2回 | その他 | （記載なし） |
-| The Ecstasy × Egil=Sapphire | その他 | （記載なし） |
-| AMS A Momentary Secret | その他 | （記載なし） |
+| 競技大喜利会 | その他 | お名前・VRC表示名・X、プレイ歴・大喜利経験、参加要件確認。1ページ目のみ、キャスト指名なし |
+| VitalLink（看護師RP） | その他 | お名前、X URL、VRCアカウント名、フォロー・グループ参加確認。キャスト指名なし |
+| F-Lick-Out（ASMR） | その他 | ❌ 受付終了のため質問項目未取得 |
+| なっぱちゃん個人イベント | その他 | VRCお名前・URL、X URL、応募ポストRP、ファングループ、してほしいこと（自由記述）。キャスト指名なし |
+| Velvet V 合同個人イベント | その他 | X URL、VRC URL、VRC名、指名キャスト(1人)。フォーム実体確認済み |
+| Ephemeral Sugar -Bitter- 第3回 | その他 | 呼んでほしい名前、お触り・甘え・距離感、声の高さ、V感、なで音、学生/社会人、フォロー・RP、メッセージ。**X欄なし** |
+| 渡海鉄道 WIT | その他 | 1ページ目: 応募条件確認のみ。2ページ目未確認 |
+| Mag・Mell 晩餐会 | その他 | ❌ 受付終了のため質問項目未取得 |
+| Secret Dream 第2回 | その他 | VRCユーザーネーム、X URL、距離近い接客OK、フォロー・DM確認。キャスト指名なし |
+| The Ecstasy × Egil=Sapphire | その他 | 1ページ目: 規約確認のみ。2ページ目未確認 |
+| AMS A Momentary Secret | その他 | 参加希望の部、フォロー・RP・禁止事項確認、気になるキャスト3人まで、一言。フォーム実体確認済み |
 
 </details>
 
@@ -504,57 +504,159 @@
 #### 22. 競技大喜利会（参加希望）
 **📎 フォームURL**: https://docs.google.com/forms/d/e/1FAIpQLSd4yvjiUpT_8aXHnTp7RN644lmpF7Xq5aAQIScuxA8v92ojjQ/viewform
 
+**質問項目**（フォーム実体確認済み・1ページ目）
+- あなたのお名前
+- VRChatでの表示名（Display Name）
+- X（旧Twitter）アカウント名（@の後ろのスクリーンネーム）
+- VRChatのプレイ歴（1ヶ月未満～3年以上）
+- 大喜利の経験（ほとんどやったことがない～結構やってる）
+- 参加要件の確認（PCVR必須・VC可能・撮影・公開同意・全体参加・40MB以下 等）
+
+※「Next」で2ページ目あり。キャスト指名欄は1ページ目にはなし。
+
+**特記事項**
+- テスト開催。PCVR必須（デスクトップ不可）。
+
 ---
 
 #### 23. VitalLink（看護師RP事前応募）
 **📎 フォームURL**: https://docs.google.com/forms/d/e/1FAIpQLSdOTPTNexsrZZTLj-jGvyBANforLfLWRvBoReZjqEc1jx1cYQ/viewform
 
+**質問項目**（フォーム実体確認済み）
+- お名前
+- XのURL
+- VRCのアカウント名
+- 確認（X @PasaCatVRC フォロー・DM解放、VRCグループ「ぱしゃきゃ、と」参加）
+
+**特記事項**
+- 2/21(土)22:00～23:00頃。締切2/19(木)18:00。患者さん役で看護師RP。キャスト指名欄なし。
+
 ---
 
-#### 24. F-Lick-Out（ASMR事前応募）⚠️ **Closed可能性**
+#### 24. F-Lick-Out（ASMR事前応募）❌ **受付終了**
 **📎 フォームURL**: https://docs.google.com/forms/d/e/1FAIpQLSc22Iyx-RVbyp40JDMuoWY9If3_eDMt4H-wETNlJSDDm9cMMg/viewform
+
+**ステータス**: 「This form is no longer accepting responses」のため、質問項目は未取得。
 
 ---
 
 #### 25. なっぱちゃん個人イベント（事前抽選）
 **📎 フォームURL**: https://docs.google.com/forms/d/e/1FAIpQLSflDIaWSdrQoyrDCsXJubpwPLkiNx9jR6h4keEuhBDr8XBQUA/viewform
 
+**質問項目**（フォーム実体確認済み）
+- VRChatでのお名前
+- VRChatアカウント（URL形式）
+- Xアカウント（URL形式）
+- 応募ポストRPしましたか？
+- ファングループに入ってる？
+- ふたりきりでしてほしいこと・してみたいこと（自由記述）
+
+**特記事項**
+- なっぱちゃんと1部30分。日時は当選後に相談。キャスト指名欄なし（個人イベントのため）。
+
 ---
 
 #### 26. Velvet V 合同個人イベント（事前抽選）
 **📎 フォームURL**: https://docs.google.com/forms/d/e/1FAIpQLSd3JaRw2XLECOMTq18cU6fAeCWpOt4wXI6t8xu3gsA1ZfYZUg/viewform
+
+**質問項目**（フォーム実体確認済み）
+- XアカウントのURL
+- VRChatアカウントURL
+- VRChat名
+- 指名キャスト（絢丸、麗華、兎々、雪華、雪姫から1人）
+
+**特記事項**
+- 2/20(金)22:00～。完全予約制・一人を指名して応募。前後半2ローテ。
 
 ---
 
 #### 27. Ephemeral Sugar -Bitter- 第3回（事前抽選）
 **📎 フォームURL**: https://docs.google.com/forms/d/e/1FAIpQLSdS1jla03pR3-bUY7zPp_fwhSVE99n2W0Y4um95vtJxyLf5Nw/viewform
 
+**質問項目**（フォーム実体確認済み）
+- VRCのアカウント名
+- VRCのプロフィールURL
+- どんな名前で呼んでほしいですか？
+- お触りはどこまでして欲しいですか？
+- 甘えられたい / 甘えたい
+- 距離感（普通 / 近い）
+- 好きな声の高さ
+- V感の有無（部位）
+- なで音系大丈夫ですか？
+- 学生 / 社会人（抽選に影響なし）
+- イベントアカウントのフォロー・ポストのRPをしましたか？
+- 質問・キャストや運営へのメッセージ（指名は参考・当選時必ずしもそのキャストとは限らない）
+
+**特記事項**
+- 締切2/17 18:00。**X（Twitter）欄はなし**。指名は自由記述内で参考扱い。
+
 ---
 
 #### 28. 渡海鉄道 WIT（事前抽選）
 **📎 フォームURL**: https://docs.google.com/forms/d/e/1FAIpQLSfcHxVeR2-i8cyUj9RFNigj-RcJ3PJmtFL-K9zEOQ9SLCT01A/viewform
 
+**質問項目**（1ページ目のみ確認・フォーム実体確認済み）
+- 応募条件を満たしていますか？（告知ポストRP、@WIT_VRC・@EJS_VRCフォロー、イベント参加条件確認）
+
+※「Weiter」で2ページ目あり。VRC名・X等は2ページ目にある想定（未確認）。
+
+**特記事項**
+- 2/15開催 22:30～23:40。当選人数1人。締切2/13(金)。Trusted User・PCVR・日本語VC必須。
+
 ---
 
-#### 29. Mag・Mell 晩餐会（事前抽選）
+#### 29. Mag・Mell 晩餐会（事前抽選）❌ **受付終了**
 **📎 フォームURL**: https://docs.google.com/forms/d/e/1FAIpQLSetuY3OLmEDZdkrUShESqZl7ctq36HwIa3uvpkNmOc0_TaW0w/viewform
+
+**ステータス**: 「This form is no longer accepting responses」のため、質問項目は未取得。
 
 ---
 
 #### 30. Secret Dream 第2回（事前抽選）
 **📎 フォームURL**: https://docs.google.com/forms/d/e/1FAIpQLSdYJZc8PNyL5Ip85IJQ64I0k7TR2HIPEdb7CVb0ppRtZbuJVw/viewform
 
+**質問項目**（フォーム実体確認済み）
+- VRChatのユーザーネーム
+- XアカウントのプロフィールURL
+- 大変距離の近いイベント接客ですが、よろしいでしょうか？
+- 当選時はXのDMにてご報告。フォローまたはDM解放の確認
+
+**特記事項**
+- キャスト指名欄なし。最小構成に近い。
+
 ---
 
 #### 31. The Ecstasy × Egil=Sapphire コラボ（事前抽選）
 **📎 フォームURL**: https://docs.google.com/forms/d/e/1FAIpQLSeEs2Mni7C_a-Abj0ECFQfTGobGlmFaPrx6Rquh6xH2Ncfqpg/viewform
+
+**質問項目**（1ページ目のみ確認・フォーム実体確認済み）
+- 規約確認（PCVR、Trusted User、アバター、会話可能の参加条件を満たしている）
+
+※「Next」で2ページ目あり。VRC名・X・希望キャスト等は2ページ目にある想定（未確認）。
+
+**特記事項**
+- 2/17。22:40～22:41受付。90分以上。Egil=Sapphire側との多重応募可。当日リクイン枠あり。
 
 ---
 
 #### 32. AMS A Momentary Secret（事前抽選）
 **📎 フォームURL**: https://docs.google.com/forms/d/e/1FAIpQLScxe7AoLZ8HmCJGHmSdhAk76YhuObNHEAqHFKoTi0kGf2siNw/viewform
 
+**質問項目**（フォーム実体確認済み）
+- VRChat名
+- XのURL
+- 参加希望の部（1部 / 2部 / どちらでも）
+- Xのフォロー確認
+- 応募ポストのRP確認（RP無しは抽選対象外）
+- 禁止事項の厳守確認
+- 気になるキャストを3人までお選びください（指名権とは無関係）※つばき、虹詩依恋歌、緑川ラム、潤海かな 等多数
+- キャストやイベントへ一言（任意）
+
+**特記事項**
+- 2/20(金)。1部23:30～/2部24:45～。締切2/18(水)19:00。指名制リクインの1対1個室イチャイチャ。
+
 ---
+
 
 ## 📌 クイックリファレンス - カテゴリー別分類
 
@@ -711,6 +813,51 @@ https://docs.google.com/forms/d/e/1FAIpQLSdYJZc8PNyL5Ip85IJQ64I0k7TR2HIPEdb7CVb0
 https://docs.google.com/forms/d/e/1FAIpQLSeEs2Mni7C_a-Abj0ECFQfTGobGlmFaPrx6Rquh6xH2Ncfqpg/viewform
 https://docs.google.com/forms/d/e/1FAIpQLScxe7AoLZ8HmCJGHmSdhAk76YhuObNHEAqHFKoTi0kGf2siNw/viewform
 ```
+
+追加
+# Bar・クラブ系
+https://docs.google.com/forms/d/e/1FAIpQLSeTrXyBdXu8Z3SMblEmG9ZL8xkQSauwdCk6P1Czm6KwtfnumQ/viewform  RESLEXION Evolution（2/21）
+https://docs.google.com/forms/d/e/1FAIpQLSfPh0SXa8qfaGdV5XniouqUHPF7XS1W3XBIev78RGSk60AkIg/viewform  OKEANOS DESCENT（定期船上クラブ）
+https://docs.google.com/forms/d/e/1FAIpQLScxe7AoLZ8HmCJGHmSdhAk76YhuObNHEAqHFKoTi0kGf2siNw/viewform  AMS ~A Momentary Secret~
+https://docs.google.com/forms/d/e/1FAIpQLSfLUd1dz8RZx2zgT-Rqgob4MyOL6okGbJroyvgpD_kwaFnb4A/viewform  めるとらうむ
+https://docs.google.com/forms/d/e/1FAIpQLSfPhBOXlrKJkOv61J_YBkbjmKu6Ph_Iqb21-7bvsbtA_UIQsg/viewform  性癖Bar deeply おでかけ
+
+# メイド・キャバクラ・ラウンジ系
+https://docs.google.com/forms/d/e/1FAIpQLSfAkd6bAhdHYG0_3EQIOhAbkllxNnRSkKjUaGKaWOBCOGfiCg/viewform  mimiChou おうちデートキャバ
+https://docs.google.com/forms/d/e/1FAIpQLScNhFH3k5X5f2V7XxTcrdjrmbRGQrEFQHk2_0zEn-l-UQzJQA/viewform  Schlafen Lala バレンタイン特別
+https://docs.google.com/forms/d/e/1FAIpQLSdmTENFNFl81gp0RHtoAHAEbnjU8uiDY4r0BSYHVQJ85SN-PQ/viewform  元カレ元カノ喫茶 TRIANGULAR
+https://docs.google.com/forms/d/e/1FAIpQLScvO5CwqAnLb3IaGifu4d_F0v9JKcqxvlt2wO0Dr12T0XMeIw/viewform  めす男子かふぇ あどらぶ
+https://docs.google.com/forms/d/e/1FAIpQLSfG_CrBekFeRGxZeXwU58BmVjA3f_vPXwOpnB0wMUl2J375Ow/viewform  Fluffy&Deep バレンタイン
+https://docs.google.com/forms/d/e/1FAIpQLSc8a1ChQ6JDRv3Vxu9tUTpp76BTOsnWtzC3ck7cNu4QPyOiNw/viewform  LUNA REAL × カジノLU コラボ
+https://docs.google.com/forms/d/e/1FAIpQLSdl2qYUlMXsnjnBcBNNg9bcwItAVQAcTiTdtaL9eb-JxG2JNQ/viewform  はねとつのめいど喫茶（2/13回）
+
+# ホスト・ラウンジ系
+https://docs.google.com/forms/d/e/1FAIpQLSesavQJ1xj1qG7XhlJjEvutpdlKEJ1V9cuhEv4awIbVAhsDTg/viewform  CLUB SUIEN 第53回
+https://docs.google.com/forms/d/e/1FAIpQLSd8aQy4sscK9LRO7JsqXSPqvTSh5eJxVeftFe34_Kj_OkZrZw/viewform  Club Luv of Eden 特別デート
+https://docs.google.com/forms/d/e/1FAIpQLSe6UmkvSfoHMBRHQo8EUIAW_T8fEZNZbDGIVV40zMf71BvbPg/viewform  月影高校ホスト部 / ツキカゲ
+https://docs.google.com/forms/d/e/1FAIpQLSenO57T32WOMY1oBGyjkHytcc2ZMBgVqfJbt5ab5PjlYlhNxw/viewform  Pécheur 第2回
+https://docs.google.com/forms/d/e/1FAIpQLSebdVqLrmATTiDdpxuLjc07G5OV37JFs1RETAYrn-uDnUeqlQ/viewform  MEL-LOW バレンタイン特別指名
+https://docs.google.com/forms/d/e/1FAIpQLSfEu8OQJVnM0DMSLsBZb5OP3ygVR3yHerIsh_7SGaatha6Iaw/viewform  VAMP ホストクラブ（吸血あり）
+
+# 特別企画・テーマ系
+https://docs.google.com/forms/d/e/1FAIpQLScRRr0jTR02vRCKBTnObu434mjm9szxpv1Vp_8ylc3uCBDStg/viewform  教室のふたつの扉（2/26）
+https://docs.google.com/forms/d/e/1FAIpQLSd5R2wZjtIeALWtIjwiJ13ghYfkUsV1OT-OKCxALf0MZmCvDg/viewform  LabradoNight 特別営業
+https://docs.google.com/forms/d/e/1FAIpQLSdS1jla03pR3-bUY7zPp_fwhSVE99n2W0Y4um95vtJxyLf5Nw/viewform  Ephemeral Sugar -Bitter-
+https://docs.google.com/forms/d/e/1FAIpQLSfpUOPtp27Dyb2b7t1Dvh8ELDdXhlHelR6ao3HDSGk56CaJQw/viewform  DOMINATE 帝国軍人RP
+https://docs.google.com/forms/d/e/1FAIpQLSflDIaWSdrQoyrDCsXJubpwPLkiNx9jR6h4keEuhBDr8XBQUA/viewform  なっぱちゃん個人イチャイチャ
+
+# その他ユニーク系・お便り/投票系（客参加型）
+https://docs.google.com/forms/d/e/1FAIpQLSd4yvjiUpT_8aXHnTp7RN644lmpF7Xq5aAQIScuxA8v92ojjQ/viewform  大喜利会（VRChatテーマ、2/22）
+https://docs.google.com/forms/d/e/1FAIpQLScVv10jqTYhqMwT9_S40KzVUn00WBh9-q6oJh04kXoyeNHBGg/viewform  かぷショ！優秀賞投票
+https://docs.google.com/forms/d/e/1FAIpQLScJ92twnAVwDBnfHSvztWcdZG46iXcNYURXeJWZIiaXOjVbTw/viewform  FM言ノ葉 お便り
+https://docs.google.com/forms/d/e/1FAIpQLSc0FiIcMqgNyJA8SLG1kjf9effJIbuzmTYLQbvesghfwkOXIQ/viewform  今夜はラジオでお便り
+https://docs.google.com/forms/d/e/1FAIpQLSd_PN86U4Y_P_Ckreh-VWHm0yMbKmo0l5KJIMfF7-AHjtvokg/viewform  わさらじ おたより
+https://docs.google.com/forms/d/e/1FAIpQLSd-_r6AH0M3beviLzpb9Lru2SToNxegQBDxWC-9miSLiKE9JA/viewform  LOVE BLOOD -Rouge-
+https://docs.google.com/forms/d/e/1FAIpQLSe7e8rr0nxheWB9DUu1nBNnQA63mSH5-SzcrBR7qf28auvzeg/viewform  LOVE BLOOD -Noir-
+https://docs.google.com/forms/d/e/1FAIpQLSeEpwgg23VnHNAWTt7ND2O4lGidU-6rJ19uGl4W5PPZJW-fdg/viewform  CORSO お便り関連
+https://docs.google.com/forms/d/e/1FAIpQLSdYJZc8PNyL5Ip85IJQ64I0k7TR2HIPEdb7CVb0ppRtZbuJVw/viewform  その他ユニーク定期
+
+
 
 ---
 

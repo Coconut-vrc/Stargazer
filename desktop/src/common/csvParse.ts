@@ -1,26 +1,4 @@
 /**
- * ダブルクォートで囲まれたフィールドに対応した CSV 1行分のパース
- */
-export function parseCSVLine(line: string): string[] {
-  const result: string[] = [];
-  let current = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"') {
-      inQuotes = !inQuotes;
-    } else if (c === ',' && !inQuotes) {
-      result.push(current.trim());
-      current = '';
-    } else {
-      current += c;
-    }
-  }
-  result.push(current.trim());
-  return result;
-}
-
-/**
  * CSV 全文をパース（改行・ダブルクォート対応）
  */
 export function parseCSV(text: string): string[][] {

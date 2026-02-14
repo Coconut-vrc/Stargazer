@@ -1,5 +1,16 @@
 /* レイアウト系の共通スタイル（サイドバー・背景など） */
 
+/** Radix Dialog Portal 用。モーダルを最前面に表示するためのスタッキングコンテキスト */
+#modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+}
+#modal-root > * {
+  pointer-events: auto;
+}
+
 .app-container {
   display: flex;
   height: 100vh;
@@ -9,10 +20,32 @@
   color: #dbdee1;
   background: #0d0b1e;
   overflow: hidden;
+}
+
+/* アプリロゴ背景（dark / pastel のみ）。ロゴを中央に薄く表示 */
+.app-container[data-theme="dark"]::after,
+.app-container[data-theme="pastel"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: url("/logo-white.png") center center / 85vmin no-repeat;
+  opacity: 0.07;
+}
+/* ライト系テーマ：黒ロゴを使用 */
+.app-container[data-theme="pastel"]::after {
+  background-image: url("/logo-black.png");
+  opacity: 0.04;
+}
+/* app-container の子要素をロゴの上に配置 */
+.app-container > * {
   position: relative;
+  z-index: 1;
 }
 
 /* テーマ別背景。文字の見やすさを優先（ダーク系は明るい文字・ラベンダーは濃い文字でコントラスト確保） */
+/* ダーク：角のグラデーションで奥行き */
 .app-container[data-theme="dark"] {
   background:
     radial-gradient(circle at 0% 0%, rgba(26, 10, 26, 1) 0%, transparent 50%),
@@ -52,12 +85,6 @@
   --discord-button-secondary-hover: rgba(255, 255, 255, 0.95);
   --cast-present-bg: #3da87a;
   --cast-absent-bg: #b8a8c4;
-}
-
-/* グラデーション（MUUUUU風・洗練された一方向グラデ。スタイリッシュで文字視認性確保） */
-.app-container[data-theme="gradient"] {
-  background:
-    linear-gradient(165deg, #1e2232 0%, #252a3b 35%, #1a1d28 100%);
 }
 
 /* パターン（グリッド・テクスチャー系。UIコンポーネント風に改変・他テーマに影響なし） */
@@ -161,29 +188,45 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
-/* ミッドナイト（ブラック系・ネイビー。スタイリッシュ・知的な深いトーン） */
-.app-container[data-theme="midnight"] {
-  background:
-    linear-gradient(180deg, #0d0e14 0%, #13151c 50%, #0a0b0f 100%);
+/* パステル（柔らかい横グラデーション・水色→クリーム。落ち着いた雰囲気） */
+.app-container[data-theme="pastel"] {
+  background: linear-gradient(90deg, #c5dfed 0%, #e2e8e0 40%, #f0ebe3 100%);
+  color: #2d3a4a;
 }
 
-/* ミニマル（白基調・薄いグレー枠・文字は濃いグレーで視認性確保） */
-.app-container[data-theme="minimal"] {
-  background: #fafafa;
+/* スカイブルー（ラベンダーパターンの青版。ストライプ模様＋視認性を考慮した明るい背景） */
+.app-container[data-theme="skyblue"] {
+  background-color: #f8fcff;
+  background-image:
+    repeating-linear-gradient(
+      60deg,
+      rgba(135, 206, 250, 0.6) 0px 1px,
+      rgba(248, 252, 255, 0.85) 1px 21px,
+      rgba(173, 216, 230, 0.35) 21px 61px,
+      rgba(248, 252, 255, 0.85) 61px 81px
+    ),
+    repeating-linear-gradient(
+      -60deg,
+      rgba(135, 206, 250, 0.6) 0px 1px,
+      rgba(248, 252, 255, 0.85) 1px 21px,
+      rgba(173, 216, 230, 0.35) 21px 61px,
+      rgba(248, 252, 255, 0.85) 61px 81px
+    );
+  color: #1e3a5f;
 }
 
-/* スマホ: 通知欄との間に約5〜6mm（18px）の余白を取る */
+/* スマホ: 通知欄との間に余白を取る */
 .mobile-header {
   display: none;
   position: fixed;
   top: 0; left: 0; right: 0;
-  height: 52px;
-  margin-top: 18px;
+  height: 44px;
+  margin-top: 12px;
   padding-top: env(safe-area-inset-top, 0px);
   background: rgba(13, 11, 30, 0.85);
   backdrop-filter: blur(10px);
   z-index: 1000;
-  padding: 0 16px;
+  padding: 0 12px;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -201,8 +244,8 @@
   flex-shrink: 0;
 }
 .header-logo__icon svg {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
 }
 .header-logo__text {
   display: flex;
@@ -223,17 +266,6 @@
   text-transform: uppercase;
   color: rgba(219, 222, 225, 0.7);
 }
-.header-logo__star {
-  animation: header-logo-twinkle 2.4s ease-in-out infinite;
-}
-.header-logo__icon .header-logo__star:nth-of-type(1) { animation-delay: 0s; }
-.header-logo__icon .header-logo__star:nth-of-type(2) { animation-delay: 0.6s; }
-.header-logo__icon .header-logo__star:nth-of-type(3) { animation-delay: 1.2s; }
-.header-logo__icon .header-logo__star:nth-of-type(4) { animation-delay: 1.8s; }
-@keyframes header-logo-twinkle {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
-}
 
 .sidebar .header-logo {
   padding: 8px 8px 12px;
@@ -241,9 +273,11 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 .sidebar .header-logo__icon svg {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
 }
+
+/* 円形バッジ型ロゴは自前で背景を持つためフィルター不要 */
 .sidebar .header-logo__title {
   font-size: 15px;
 }
@@ -259,8 +293,61 @@
   padding: 12px 8px;
   flex-shrink: 0;
   border-right: 1px solid rgba(255, 255, 255, 0.1);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.25s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 2000;
+}
+
+/* サイドバー折りたたみ（デスクトップのみ） */
+.sidebar.sidebar--collapsed {
+  width: 56px;
+  padding: 12px 6px;
+}
+.sidebar.sidebar--collapsed .sidebar-title {
+  flex-direction: column;
+  padding: 8px 0;
+}
+.sidebar.sidebar--collapsed .header-logo {
+  display: none;
+}
+.sidebar.sidebar--collapsed .sidebar-button-label,
+.sidebar.sidebar--collapsed .sidebar-button.logout .sidebar-button-label {
+  display: none;
+}
+.sidebar.sidebar--collapsed .sidebar-button {
+  justify-content: center;
+  padding: 12px;
+}
+.sidebar.sidebar--collapsed .sidebar-collapse-btn {
+  margin: 0 auto;
+}
+
+.sidebar-title {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 8px 0 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #949ba4;
+  cursor: pointer;
+  transition: background 0.17s ease, color 0.17s ease;
+}
+.sidebar-collapse-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 .sidebar-inner { display: flex; flex-direction: column; height: 100%; gap: 4px; }
 .sidebar-button {
@@ -285,14 +372,25 @@
   .mobile-header { display: flex; }
   .sidebar {
     position: fixed;
-    top: 70px; left: 0; bottom: 0;
+    top: 56px; left: 0; bottom: 0;
     width: 280px;
     transform: translateX(-100%);
     background: rgba(30, 31, 34, 0.7)!important;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
   }
   .sidebar.open { transform: translateX(0); }
-  .main-content { margin-top: 70px; height: calc(100vh - 70px); padding: 16px; }
+  /* モバイルでは折りたたみ無効（常にフル表示） */
+  .sidebar.sidebar--collapsed {
+    width: 280px;
+    padding: 12px 8px;
+  }
+  .sidebar.sidebar--collapsed .sidebar-title { flex-direction: row; }
+  .sidebar.sidebar--collapsed .header-logo { display: flex; }
+  .sidebar.sidebar--collapsed .sidebar-button-label { display: block; }
+  .sidebar.sidebar--collapsed .sidebar-button.logout .sidebar-button-label { display: block; }
+  .sidebar.sidebar--collapsed .sidebar-button { justify-content: flex-start; padding: 12px; }
+  .sidebar-collapse-btn { display: none; }
+  .main-content { margin-top: 56px; height: calc(100vh - 56px); padding: 16px; }
   table th, table td { white-space: nowrap; }
   .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(2px); z-index: 1500; }
 }

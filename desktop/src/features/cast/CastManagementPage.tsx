@@ -1,10 +1,34 @@
-// pages/CastManagementPage.tsx の全量
+// desktop/src/features/cast/CastManagementPage.tsx
 
-import React, { useState, useEffect } from 'react';
-import type { CastBean } from '@/common/types/entities';
+import React, { useState, useEffect, useCallback } from 'react';
+import type { CastBean, ContactLink } from '@/common/types/entities';
 import { Repository } from '@/stores/AppContext';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { CAST_PAGE_NOTICE } from '@/common/copy';
+import { parseXUsername, getXProfileUrl } from '@/common/xIdUtils';
+import { openInDefaultBrowser } from '@/common/openExternal';
+import { EXTERNAL_LINK } from '@/common/copy';
+
+/* ── URL バリデーション ── */
+
+/** X 入力: 空 / @username / ユーザー名 / x.com or twitter.com URL のみ有効 */
+function isValidXInput(val: string): boolean {
+  const t = val.trim();
+  if (!t) return true;
+  if (t.startsWith('@')) return true;
+  // URL っぽい場合は x.com / twitter.com を含むか
+  if (t.includes('.') || t.startsWith('http')) {
+    return /x\.com|twitter\.com/i.test(t);
+  }
+  return true; // plain username
+}
+
+/** VRC 入力: 空 / vrchat.com を含む URL のみ有効 */
+function isValidVrcInput(val: string): boolean {
+  const t = val.trim();
+  if (!t) return true;
+  return /vrchat\.com/i.test(t);
+}
 
 type PersistCastsFn = (casts: CastBean[]) => void | Promise<void>;
 
@@ -19,6 +43,7 @@ export const CastManagementPage: React.FC<{
   const [confirmMessage, setConfirmMessage] = useState<{ message: string; onConfirm: () => void } | null>(null);
   const [loadExternalError, setLoadExternalError] = useState<string | null>(null);
   const [loadExternalLoading, setLoadExternalLoading] = useState(false);
+  const [pendingExternalUrl, setPendingExternalUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const allCasts = repository.getAllCasts();
@@ -77,6 +102,64 @@ export const CastManagementPage: React.FC<{
     onPersistCasts?.(nextCasts);
   };
 
+  const handleUpdateCastField = (castName: string, field: 'x_id' | 'vrc_profile_url', value: string) => {
+    const trimmed = value.trim();
+    const nextCasts = casts.map((c) =>
+      c.name === castName ? { ...c, [field]: trimmed || undefined } : c
+    );
+    repository.saveCasts(nextCasts);
+    setCasts(nextCasts);
+    onPersistCasts?.(nextCasts);
+  };
+
+  /* ── 自由形式の連絡先 ── */
+  const handleAddContact = useCallback((castName: string) => {
+    const nextCasts = casts.map((c) => {
+      if (c.name !== castName) return c;
+      const contacts: ContactLink[] = [...(c.contacts ?? []), { label: '', value: '' }];
+      return { ...c, contacts };
+    });
+    repository.saveCasts(nextCasts);
+    setCasts(nextCasts);
+    onPersistCasts?.(nextCasts);
+  }, [casts, repository, onPersistCasts]);
+
+  const handleUpdateContact = useCallback((castName: string, index: number, field: 'label' | 'value', val: string) => {
+    const nextCasts = casts.map((c) => {
+      if (c.name !== castName) return c;
+      const contacts = [...(c.contacts ?? [])];
+      if (!contacts[index]) return c;
+      contacts[index] = { ...contacts[index], [field]: val };
+      return { ...c, contacts };
+    });
+    repository.saveCasts(nextCasts);
+    setCasts(nextCasts);
+    onPersistCasts?.(nextCasts);
+  }, [casts, repository, onPersistCasts]);
+
+  const handleRemoveContact = useCallback((castName: string, index: number) => {
+    const nextCasts = casts.map((c) => {
+      if (c.name !== castName) return c;
+      const contacts = (c.contacts ?? []).filter((_, i) => i !== index);
+      return { ...c, contacts: contacts.length > 0 ? contacts : undefined };
+    });
+    repository.saveCasts(nextCasts);
+    setCasts(nextCasts);
+    onPersistCasts?.(nextCasts);
+  }, [casts, repository, onPersistCasts]);
+
+  const handleRequestOpenExternal = (url: string) => {
+    if (!url || !url.trim()) return;
+    setPendingExternalUrl(url.trim());
+  };
+
+  const handleConfirmOpenExternal = async () => {
+    if (pendingExternalUrl) {
+      await openInDefaultBrowser(pendingExternalUrl);
+      setPendingExternalUrl(null);
+    }
+  };
+
   /** アプリ外の sample-casts.json を取得して既存キャストにマージする */
   const handleLoadSampleCasts = async () => {
     setLoadExternalError(null);
@@ -97,10 +180,20 @@ export const CastManagementPage: React.FC<{
       const toAdd: CastBean[] = [];
       for (const item of raw) {
         if (item && typeof item.name === 'string' && item.name.trim() !== '' && !existingNames.has(item.name.trim())) {
+          const xId = typeof item.x_id === 'string' ? item.x_id.trim() || undefined : undefined;
+          const vrcUrl = typeof item.vrc_profile_url === 'string' ? item.vrc_profile_url.trim() || undefined : undefined;
+          const contacts: ContactLink[] | undefined = Array.isArray(item.contacts)
+            ? item.contacts
+                .filter((ct: unknown) => ct && typeof ct === 'object' && 'label' in (ct as Record<string, unknown>) && 'value' in (ct as Record<string, unknown>))
+                .map((ct: { label: string; value: string }) => ({ label: String(ct.label), value: String(ct.value) }))
+            : undefined;
           toAdd.push({
             name: item.name.trim(),
             is_present: Boolean(item.is_present),
             ng_users: Array.isArray(item.ng_users) ? item.ng_users : [],
+            x_id: xId,
+            vrc_profile_url: vrcUrl,
+            contacts: contacts && contacts.length > 0 ? contacts : undefined,
           });
           existingNames.add(item.name.trim());
         }
@@ -145,16 +238,6 @@ export const CastManagementPage: React.FC<{
       <div
         className="cast-page-notice"
         role="alert"
-        style={{
-          padding: '12px 16px',
-          marginBottom: '20px',
-          borderRadius: '8px',
-          backgroundColor: 'rgba(240, 178, 50, 0.15)',
-          border: '1px solid var(--discord-text-warning, #f0b232)',
-          color: 'var(--discord-text-normal)',
-          fontSize: '13px',
-          lineHeight: 1.6,
-        }}
       >
         {CAST_PAGE_NOTICE}
       </div>
@@ -227,27 +310,27 @@ export const CastManagementPage: React.FC<{
         {/* 外部データから読み込み（public/sample-casts.json） */}
         <div className="form-card form-card--flex-col">
           <label className="form-label">外部データから読み込む</label>
-          <p className="text-muted" style={{ marginBottom: '12px', fontSize: '13px' }}>
+          <p className="text-muted text-sm mb-12">
             public/sample-casts.json の内容を読み込み、既存のキャストにマージします。同名は追加されません。
           </p>
-          <div className="flex-end" style={{ flexWrap: 'wrap', gap: '8px' }}>
+          <div className="flex-end flex-wrap-gap8">
             <button
               type="button"
               onClick={handleLoadSampleCasts}
               disabled={loadExternalLoading}
               className="btn-primary btn-fixed-h"
             >
-              {loadExternalLoading ? '読み込み中...' : 'サンプルキャスト（10名）を読み込む'}
+              {loadExternalLoading ? '読み込み中...' : 'サンプルキャスト（24名）を読み込む'}
             </button>
           </div>
           {loadExternalError && (
-            <p role="alert" className="text-danger" style={{ marginTop: '8px', fontSize: '13px' }}>
+            <p role="alert" className="text-danger text-sm mt-8">
               {loadExternalError}
             </p>
           )}
         </div>
 
-        <p className="form-inline-note" style={{ color: 'var(--discord-text-muted)', marginTop: 4 }}>
+        <p className="form-inline-note text-muted-color mt-4">
           NGユーザーの登録・解除は「NGユーザー管理」で行います。
         </p>
       </div>
@@ -277,11 +360,153 @@ export const CastManagementPage: React.FC<{
             >
               {cast.is_present ? '出席中' : '欠席'}
             </button>
+
+            {/* Lit.Link 風リンク設定 */}
+            <div className="litlink">
+              {/* X (Twitter) */}
+              <div className="litlink__item">
+                <div className="litlink__icon litlink__icon--x" aria-label="X (Twitter)">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                </div>
+                <div className="litlink__body">
+                  <input
+                    type="text"
+                    placeholder="@username or https://x.com/..."
+                    className={'litlink__input' + (!isValidXInput(cast.x_id ?? '') ? ' litlink__input--error' : '')}
+                    value={cast.x_id ?? ''}
+                    onChange={(e) => handleUpdateCastField(cast.name, 'x_id', e.target.value)}
+                  />
+                  {!isValidXInput(cast.x_id ?? '') && (
+                    <span className="litlink__validation-error">x.com または twitter.com の URL を入力してください</span>
+                  )}
+                </div>
+                {(() => {
+                  const username = cast.x_id ? parseXUsername(cast.x_id) : null;
+                  if (username) {
+                    const xUrl = getXProfileUrl(username);
+                    return (
+                      <button
+                        type="button"
+                        className="litlink__open"
+                        onClick={() => handleRequestOpenExternal(xUrl)}
+                        title={`@${username} を開く`}
+                      >
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                          <polyline points="15 3 21 3 21 9"/>
+                          <line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+
+              {/* VRChat */}
+              <div className="litlink__item">
+                <div className="litlink__icon litlink__icon--vrc" aria-label="VRChat">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                    <path d="M1.5 5.5L8.8 18h6.4L22.5 5.5h-4.8l-5.7 10-5.7-10z"/>
+                  </svg>
+                </div>
+                <div className="litlink__body">
+                  <input
+                    type="text"
+                    placeholder="https://vrchat.com/home/user/usr_..."
+                    className={'litlink__input' + (!isValidVrcInput(cast.vrc_profile_url ?? '') ? ' litlink__input--error' : '')}
+                    value={cast.vrc_profile_url ?? ''}
+                    onChange={(e) => handleUpdateCastField(cast.name, 'vrc_profile_url', e.target.value)}
+                  />
+                  {!isValidVrcInput(cast.vrc_profile_url ?? '') && (
+                    <span className="litlink__validation-error">vrchat.com の URL を入力してください</span>
+                  )}
+                </div>
+                {cast.vrc_profile_url ? (
+                  <button
+                    type="button"
+                    className="litlink__open"
+                    onClick={() => handleRequestOpenExternal(cast.vrc_profile_url!)}
+                    title="VRCプロフィールを開く"
+                  >
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                      <polyline points="15 3 21 3 21 9"/>
+                      <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                  </button>
+                ) : null}
+              </div>
+
+              {/* 自由形式の連絡先 */}
+              {(cast.contacts ?? []).map((contact, ci) => (
+                <div className="litlink__item" key={ci}>
+                  <div className="litlink__icon litlink__icon--custom" aria-label="連絡先">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                      <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                  </div>
+                  <div className="litlink__body litlink__body--dual">
+                    <input
+                      type="text"
+                      placeholder="ラベル (例: Discord, LINE...)"
+                      className="litlink__input litlink__input--label"
+                      value={contact.label}
+                      onChange={(e) => handleUpdateContact(cast.name, ci, 'label', e.target.value)}
+                    />
+                    <input
+                      type="text"
+                      placeholder="ID / URL / 連絡先..."
+                      className="litlink__input litlink__input--value"
+                      value={contact.value}
+                      onChange={(e) => handleUpdateContact(cast.name, ci, 'value', e.target.value)}
+                    />
+                  </div>
+                  {contact.value && /^https?:\/\//.test(contact.value.trim()) ? (
+                    <button
+                      type="button"
+                      className="litlink__open"
+                      onClick={() => handleRequestOpenExternal(contact.value.trim())}
+                      title="リンクを開く"
+                    >
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                      </svg>
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="litlink__remove"
+                    onClick={() => handleRemoveContact(cast.name, ci)}
+                    title="この連絡先を削除"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className="litlink__add"
+                onClick={() => handleAddContact(cast.name)}
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                連絡先を追加
+              </button>
+            </div>
+
             <button
               type="button"
               onClick={() => handleDeleteCast(cast.name)}
-              className="cast-card__delete-button"
-              style={{ marginTop: 8 }}
+              className="cast-card__delete-button mt-8"
             >
               キャストを削除
             </button>
@@ -304,6 +529,17 @@ export const CastManagementPage: React.FC<{
           onCancel={() => setConfirmMessage(null)}
           confirmLabel="OK"
           type="confirm"
+        />
+      )}
+      {pendingExternalUrl && (
+        <ConfirmModal
+          type="confirm"
+          title={EXTERNAL_LINK.MODAL_TITLE}
+          message={`${EXTERNAL_LINK.MODAL_MESSAGE}\n\n${pendingExternalUrl}`}
+          confirmLabel={EXTERNAL_LINK.CONFIRM_LABEL}
+          cancelLabel={EXTERNAL_LINK.CANCEL_LABEL}
+          onConfirm={handleConfirmOpenExternal}
+          onCancel={() => setPendingExternalUrl(null)}
         />
       )}
     </div>

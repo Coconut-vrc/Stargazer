@@ -1,18 +1,24 @@
 /**
- * 要注意人物の判定（仕様書 2-1）。
- * 判定条件: ユーザー名 AND アカウントID の両方が一致（厳密）。
+ * 要注意人物の判定・自動登録（仕様書 2-1）。
+ *
+ * - NGカウント（自動登録）: 1-1 の判定基準 (ngJudgmentType) に従う
+ * - 同一人物判定 (isCautionUser): ユーザー名 AND アカウントID の両方一致（厳密 AND）
+ * - NG例外判定 (isNGException): ユーザー名 AND アカウントID の両方一致（厳密 AND）
  */
 
 import type { UserBean, CastBean } from '@/common/types/entities';
-import { isUserNGForCast } from './ng-judgment';
-import type { NGJudgmentType } from '@/features/matching/types/matching-system-types';
-import type { CautionUser } from '@/features/matching/types/matching-system-types';
+import type { NGJudgmentType, CautionUser, NGException } from '@/features/matching/types/matching-system-types';
+import { isUserNGForCast } from '@/features/matching/logics/ng-judgment';
 
 function normalize(s: string): string {
-  return s.trim().toLowerCase();
+  return s.trim().toLowerCase().replace(/^@/, '');
 }
 
-/** 応募ユーザーが要注意リストの誰かと一致するか（name AND accountId） */
+/**
+ * 応募ユーザーが要注意リストの誰かと一致するか。
+ * 仕様 2-1: ユーザー名 AND アカウントID の両方が一致（厳密）。
+ * どちらか片方だけが一致しても別人として扱う。
+ */
 export function isCautionUser(
   user: UserBean,
   cautionUsers: CautionUser[],
@@ -24,10 +30,14 @@ export function isCautionUser(
   );
 }
 
-/** 例外リストに一致すれば警告を出さない（name AND accountId 両方一致） */
+/**
+ * 例外リストに一致すれば警告を出さない。
+ * 仕様 3-2/3-3: ユーザー名 AND アカウントID の両方が一致（厳密）。
+ * accountId がない場合は例外判定不可。
+ */
 export function isNGException(
   user: UserBean,
-  exceptions: { username: string; accountId: string }[],
+  exceptions: NGException[],
 ): boolean {
   const nameNorm = normalize(user.name);
   const idNorm = normalize(user.x_id);
@@ -38,7 +48,16 @@ export function isNGException(
 
 /**
  * 応募リストのユーザーについて、何人のキャストがそのユーザーをNGにしているか集計し、
- * 閾値以上なら要注意リスト用のエントリを返す（仕様: ユーザー名 AND アカウントID の両方で厳密一致）。
+ * 閾値以上なら要注意リスト用のエントリを返す。
+ *
+ * カウントロジック:
+ *   - 各キャストのNGリストとの照合は ngJudgmentType（設定画面で選択）に従う。
+ *     これにより username のみのレガシー ng_entries / ng_users もカウント対象になる。
+ *   - isUserNGForCast を再利用し、ng-judgment.ts と一貫した判定を行う。
+ *
+ * 登録される CautionUser:
+ *   - 応募ユーザーの username / accountId(x_id) の両方が揃っている場合のみ登録。
+ *     これにより isCautionUser（厳密 AND）で正しくマッチできる。
  */
 export function computeAutoCautionUsers(
   casts: CastBean[],
@@ -49,11 +68,17 @@ export function computeAutoCautionUsers(
   const result: CautionUser[] = [];
   const now = new Date().toISOString();
   for (const user of applyUsers) {
+    const nameNorm = normalize(user.name);
+    const idNorm = normalize(user.x_id);
+    // 登録される CautionUser には両方必要（isCautionUser が厳密 AND のため）
+    if (!nameNorm || !idNorm) continue;
+
     let count = 0;
     for (const cast of casts) {
+      // NG判定は ngJudgmentType に従う（username-only エントリでも判定可能）
       if (isUserNGForCast(user, cast, judgmentType)) count += 1;
     }
-    if (count >= threshold && user.name.trim() && user.x_id.trim()) {
+    if (count >= threshold) {
       result.push({
         username: user.name.trim(),
         accountId: user.x_id.trim(),

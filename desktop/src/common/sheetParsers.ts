@@ -95,7 +95,10 @@ export function parseCastSheetRows(rows: unknown[][]): CastBean[] {
     .filter((c) => c.name);
 }
 
-/** キャスト一覧を cast-data.csv 用の CSV 文字列に変換する（ヘッダー付き） */
+/**
+ * キャスト一覧を cast-data.csv 用の CSV 文字列に変換する（ヘッダー付き）。
+ * 現在は未使用。将来の CSV エクスポート機能で使用予定。
+ */
 function escapeCsvCell(value: string): string {
   if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
     return '"' + value.replace(/"/g, '""') + '"';
@@ -108,7 +111,11 @@ export function castBeansToCsvContent(casts: CastBean[]): string {
   const dataLines = casts.map((c) => {
     const name = escapeCsvCell(c.name);
     const isPresent = c.is_present ? '1' : '0';
-    const ngUsers = escapeCsvCell(c.ng_users.join(','));
+    const ngParts =
+      c.ng_entries && c.ng_entries.length > 0
+        ? c.ng_entries.map((e) => (e.accountId ? `${e.username ?? ''}@${e.accountId}` : e.username ?? '')).filter(Boolean)
+        : c.ng_users;
+    const ngUsers = escapeCsvCell(Array.isArray(ngParts) ? ngParts.join(',') : '');
     return `${name},${isPresent},${ngUsers}`;
   });
   return [header, ...dataLines].join('\n');

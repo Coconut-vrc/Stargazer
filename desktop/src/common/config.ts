@@ -7,4 +7,9 @@ export const STORAGE_KEYS = {
   SESSION: 'chocomelapp_session',
   THEME: 'stargazer_theme_id',
   MATCHING_SETTINGS: 'stargazer_matching_settings',
+  LAUNCH_BEHAVIOR: 'stargazer_launch_behavior',
+  SIDEBAR_COLLAPSED: 'stargazer_sidebar_collapsed',
 } as const;
+
+/** 起動時の画面遷移 */
+export type LaunchBehavior = 'top' | 'last';

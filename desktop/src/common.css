@@ -7,9 +7,6 @@
 
 :root {
   /* base colors */
-  --color-purple-deep: #1A0A1A;
-  --color-violet-mid: #0D0B1E;
-  --color-navy-dark: #05121B;
   --text-main: #dbdee1;
   --text-muted: rgba(255, 255, 255, 0.4);
   --line-color: rgba(255, 255, 255, 0.1);
@@ -270,6 +267,67 @@ tbody tr:nth-child(even) {
   max-width: 1200px;
 }
 
+/* トップ画面：グリッド形式・グループ別 */
+.top-page {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.top-page__title {
+  margin-bottom: 4px;
+}
+.top-page__subtitle {
+  margin-bottom: 32px;
+}
+.top-page__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.top-page__group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.top-page__group-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--discord-text-muted);
+  margin: 0;
+}
+.top-page__group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+.top-page__tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 36px 28px;
+  background-color: var(--discord-bg-secondary);
+  border: 1px solid var(--discord-border);
+  border-radius: 14px;
+  color: var(--discord-text-normal);
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.17s ease, border-color 0.17s ease, transform 0.12s ease;
+}
+.top-page__tile:hover {
+  background-color: var(--discord-bg-hover);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+.top-page__tile-icon {
+  color: var(--discord-accent-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .page-card-narrow {
   background-color: var(--discord-bg-dark);
   border-radius: 8px;
@@ -280,7 +338,7 @@ tbody tr:nth-child(even) {
   text-align: left;
 }
 
-/* 繝ｬ繧､繧｢繧ｦ繝医・繝ｦ繝ｼ繝・ぅ繝ｪ繝・ぅ・医う繝ｳ繝ｩ繧､繝ｳ莉｣譖ｿ・・*/
+/* レイアウト・ユーティリティ（インライン代替） */
 .flex-col-gap20 {
   display: flex;
   flex-direction: column;
@@ -288,12 +346,8 @@ tbody tr:nth-child(even) {
   margin-bottom: 32px;
 }
 .flex-col-flex1 { display: flex; flex-direction: column; flex: 1; }
-.flex-col-flex2 { display: flex; flex-direction: column; flex: 2; }
 .flex-end { display: flex; justify-content: flex-end; }
-.form-card--z { position: relative; z-index: 100; }
 .btn-fixed-h { height: 40px; padding: 0 24px; }
-.btn-fixed-h--sm { height: 40px; min-width: 96px; }
-.dropdown-inner { display: flex; flex-direction: column; flex: 1; }
 .text-muted-italic { font-size: 12px; color: var(--discord-text-muted); font-style: italic; }
 .banner-muted {
   padding: 12px;
@@ -301,7 +355,6 @@ tbody tr:nth-child(even) {
   border-radius: 8px;
   color: var(--discord-text-muted);
 }
-.dropdown-arrow { font-size: 10px; }
 
 .page-header {
   margin-bottom: 24px;
@@ -489,7 +542,7 @@ select.form-input {
   opacity: 1;
 }
 
-/* 繧ｹ繝槭・・壹・繝・メ繝ｳ繧ｰ譁ｹ蠑上・繧ｿ繝ｳ繧・陦瑚｡ｨ遉ｺ縺ｫ縺励※驕ｸ謚槫・繧頑崛縺域凾縺ｮ縺後◆縺､縺阪ｒ髦ｲ豁｢ */
+/* スマホ: マッチング方式ボタンを表示切替時のがたつき防止 */
 @media (max-width: 768px) {
   .btn-option {
     flex-direction: column;
@@ -504,7 +557,8 @@ select.form-input {
 }
 
 /* ========================================
-   繝・く繧ｹ繝茨ｼ域э蜻ｳ縺悟・縺九ｋ蜷榊燕・・   ======================================== */
+   テキスト（希望が分かる名前）
+   ======================================== */
 
 .text-user-name {
   font-weight: 600;
@@ -514,6 +568,19 @@ select.form-input {
 .text-x-id {
   font-size: 12px;
   color: var(--discord-text-link);
+}
+
+.text-x-id--clickable {
+  cursor: pointer;
+  text-decoration: none;
+  transition: text-decoration 0.15s, opacity 0.15s;
+}
+.text-x-id--clickable:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+.text-x-id--caution {
+  color: var(--discord-accent-yellow, #faa61a);
 }
 
 .text-body-sm {
@@ -527,7 +594,7 @@ select.form-input {
 }
 
 /* ========================================
-   繝槭ャ繝√Φ繧ｰ逕ｨ繝舌ャ繧ｸ
+   マッチング用バッジ
    ======================================== */
 
 .rank-badge {
@@ -588,7 +655,8 @@ select.form-input {
 }
 
 /* ========================================
-   菴咏區繝ｻ繝ｬ繧､繧｢繧ｦ繝茨ｼ亥・縺九ｊ繧・☆縺・錐蜑搾ｼ・   ======================================== */
+   構成・レイアウト（分かりやすい区分）
+   ======================================== */
 
 .page-header-tight {
   margin-bottom: 16px;
@@ -602,13 +670,13 @@ select.form-input {
 }
 
 .section-block {
-  background-color: var(--discord-bg-primary);
+  background-color: var(--discord-bg-main);
   padding: 16px;
   border-radius: 8px;
 }
 
 .section-block-with-mb {
-  background-color: var(--discord-bg-primary);
+  background-color: var(--discord-bg-main);
   padding: 16px;
   border-radius: 8px;
   margin-bottom: 32px;
@@ -624,7 +692,7 @@ select.form-input {
   font-size: 13px;
 }
 
-/* 繝ｬ繧､繧｢繧ｦ繝育畑繝ｦ繝ｼ繝・ぅ繝ｪ繝・ぅ・医う繝ｳ繝ｩ繧､繝ｳ莉｣譖ｿ繝ｻ繝｢繝・け蜿ら・逕ｨ・・*/
+/* レイアウト用ユーティリティ（インライン代替・モック参考用） */
 .page-header-subtitle--tight {
   font-size: 12px;
   margin-bottom: 20px;
@@ -761,165 +829,327 @@ select.form-input {
   background-color: var(--discord-button-primary-hover);
 }
 
-/* ========== ミニマルテーマ（白基調・個別定義はすべてこのブロック内。他テーマに影響しない） ========== */
-.app-container[data-theme="minimal"] {
-  color: #2d2d2d;
-  --discord-bg-dark: #ffffff;
+/* ========== パステルテーマ（柔らかいグラデーション・水色→クリーム） ========== */
+.app-container[data-theme="pastel"] {
+  --cast-present-bg: #2e9d6e;
+  --cast-absent-bg: #9da8b8;
+  --discord-bg-dark: rgba(255, 255, 255, 0.9);
   --discord-bg-main: transparent;
-  --discord-bg-secondary: #ffffff;
-  --discord-bg-hover: rgba(0, 0, 0, 0.04);
-  --discord-bg-selected: rgba(0, 0, 0, 0.06);
-  --discord-bg-alt: rgba(0, 0, 0, 0.02);
-  --discord-bg-sidebar: #ffffff;
-  --discord-text-normal: #3a3a3a;
-  --discord-text-muted: #6b6b6b;
-  --discord-text-link: #505050;
-  --discord-text-header: #1a1a1a;
-  --discord-border: rgba(0, 0, 0, 0.12);
-  --discord-divider: rgba(0, 0, 0, 0.1);
-  --discord-button-primary: #ffffff;
-  --discord-button-primary-hover: rgba(0, 0, 0, 0.06);
-  --discord-button-secondary: transparent;
-  --discord-button-secondary-hover: rgba(0, 0, 0, 0.04);
+  --discord-bg-secondary: rgba(255, 255, 255, 0.85);
+  --discord-bg-hover: rgba(100, 150, 180, 0.12);
+  --discord-bg-selected: rgba(100, 150, 180, 0.18);
+  --discord-bg-alt: rgba(197, 220, 235, 0.3);
+  --discord-bg-sidebar: rgba(255, 255, 255, 0.92);
+  --discord-text-normal: #2d3a4a;
+  --discord-text-muted: rgba(45, 58, 74, 0.7);
+  --discord-text-link: #3d6b8a;
+  --discord-text-header: #1a2530;
+  --discord-border: rgba(100, 150, 180, 0.3);
+  --discord-divider: rgba(100, 150, 180, 0.2);
+  --discord-button-primary: #5a9cc4;
+  --discord-button-primary-hover: #4a8bb4;
+  --discord-button-secondary: rgba(100, 150, 180, 0.15);
+  --discord-button-secondary-hover: rgba(100, 150, 180, 0.22);
 }
-.app-container[data-theme="minimal"] .sidebar {
-  background: #ffffff !important;
-  border-right: 1px solid rgba(0, 0, 0, 0.12);
+.app-container[data-theme="pastel"] .sidebar {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-right: 1px solid rgba(100, 150, 180, 0.25);
 }
-.app-container[data-theme="minimal"] .sidebar-button {
-  color: #5a5a5a;
+.app-container[data-theme="pastel"] .sidebar-button {
+  color: #3d5a6e;
 }
-.app-container[data-theme="minimal"] .sidebar-button:hover {
-  background: rgba(0, 0, 0, 0.04);
-  color: #2d2d2d;
+.app-container[data-theme="pastel"] .sidebar-button:hover {
+  background: rgba(100, 150, 180, 0.1);
+  color: #2d3a4a;
 }
-.app-container[data-theme="minimal"] .sidebar-button.active {
-  background: rgba(0, 0, 0, 0.06);
-  color: #1a1a1a;
-  box-shadow: inset 4px 0 0 #2d2d2d;
+.app-container[data-theme="pastel"] .sidebar-button.active {
+  background: rgba(100, 150, 180, 0.15);
+  color: #1a2530;
+  box-shadow: inset 4px 0 0 #5a9cc4;
 }
-.app-container[data-theme="minimal"] .mobile-header {
-  background: rgba(255, 255, 255, 0.98);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+.app-container[data-theme="pastel"] .sidebar-button.logout {
+  color: #b54a4a;
 }
-.app-container[data-theme="minimal"] .menu-toggle {
+.app-container[data-theme="pastel"] .sidebar-theme-pills {
+  background: rgba(197, 220, 235, 0.4);
+}
+.app-container[data-theme="pastel"] .sidebar-theme-pill:hover {
+  background: rgba(100, 150, 180, 0.15);
+}
+.app-container[data-theme="pastel"] .sidebar-theme-pill.active {
+  background: rgba(90, 156, 196, 0.35);
+  color: #1a2530;
+}
+.app-container[data-theme="pastel"] .mobile-header {
+  background: rgba(255, 255, 255, 0.97);
+  border-bottom: 1px solid rgba(100, 150, 180, 0.3);
+}
+.app-container[data-theme="pastel"] .menu-toggle {
+  background: #5a9cc4;
+  color: #fff;
+}
+.app-container[data-theme="pastel"] .header-logo__title {
+  color: #1a2530;
+}
+.app-container[data-theme="pastel"] .header-logo__tagline {
+  color: rgba(45, 58, 74, 0.7);
+}
+.app-container[data-theme="pastel"] .main-content {
   background: transparent;
-  color: #3a3a3a;
-  border: 1px solid rgba(0, 0, 0, 0.2);
 }
-.app-container[data-theme="minimal"] .menu-toggle:hover {
-  background: rgba(0, 0, 0, 0.04);
+.app-container[data-theme="pastel"] .page-card-narrow,
+.app-container[data-theme="pastel"] .page-card {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(100, 150, 180, 0.3);
 }
-.app-container[data-theme="minimal"] .header-logo__title {
-  color: #1a1a1a;
+.app-container[data-theme="pastel"] .modal-overlay {
+  background: rgba(45, 58, 74, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
-.app-container[data-theme="minimal"] .header-logo__tagline {
-  color: #6b6b6b;
+.app-container[data-theme="pastel"] .modal-content {
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(100, 150, 180, 0.35);
+  box-shadow: 0 20px 60px rgba(45, 58, 74, 0.12);
 }
-.app-container[data-theme="minimal"] .main-content {
-  background: #fafafa;
+.app-container[data-theme="pastel"] .modal-title {
+  color: #1a2530;
 }
-.app-container[data-theme="minimal"] .page-card-narrow,
-.app-container[data-theme="minimal"] .page-card {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+.app-container[data-theme="pastel"] .modal-message {
+  color: #2d3a4a;
 }
-.app-container[data-theme="minimal"] .btn-primary {
-  background: #ffffff;
-  color: #2d2d2d;
-  border: 1px solid rgba(0, 0, 0, 0.2);
+.app-container[data-theme="pastel"] .modal-btn-cancel {
+  background: rgba(100, 150, 180, 0.15);
+  color: #2d3a4a;
+  border: 1px solid rgba(100, 150, 180, 0.35);
 }
-.app-container[data-theme="minimal"] .btn-primary:hover {
-  background: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.25);
+.app-container[data-theme="pastel"] .modal-btn-cancel:hover {
+  background: rgba(100, 150, 180, 0.25);
 }
-.app-container[data-theme="minimal"] .sidebar-theme-pills {
-  background: rgba(0, 0, 0, 0.04);
+.app-container[data-theme="pastel"] .btn-primary.modal-btn-confirm {
+  background: #5a9cc4;
+  color: #fff;
 }
-.app-container[data-theme="minimal"] .sidebar-theme-pill {
-  color: #5a5a5a;
+.app-container[data-theme="pastel"] .btn-primary.modal-btn-confirm:hover {
+  background: #4a8bb4;
 }
-.app-container[data-theme="minimal"] .sidebar-theme-pill:hover {
-  background: rgba(0, 0, 0, 0.06);
-  color: #2d2d2d;
+.app-container[data-theme="pastel"] .settings-theme-tile {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(100, 150, 180, 0.3);
 }
-.app-container[data-theme="minimal"] .sidebar-theme-pill.active {
-  background: #2d2d2d;
+.app-container[data-theme="pastel"] .settings-theme-tile:hover {
+  background: rgba(197, 220, 235, 0.3);
+  border-color: rgba(100, 150, 180, 0.5);
+}
+.app-container[data-theme="pastel"] .settings-theme-tile.active {
+  border-color: #5a9cc4;
+  background: rgba(100, 150, 180, 0.12);
+}
+.app-container[data-theme="pastel"] .theme-preview__layout {
+  border-color: rgba(100, 150, 180, 0.35);
+}
+.app-container[data-theme="pastel"] .theme-preview:hover .theme-preview__layout {
+  border-color: rgba(100, 150, 180, 0.5);
+}
+.app-container[data-theme="pastel"] .theme-preview.active .theme-preview__layout {
+  border-color: #5a9cc4;
+  box-shadow: 0 0 0 2px rgba(90, 156, 196, 0.3);
+}
+.app-container[data-theme="pastel"] .form-input,
+.app-container[data-theme="pastel"] input[type="text"],
+.app-container[data-theme="pastel"] input[type="number"],
+.app-container[data-theme="pastel"] select {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(100, 150, 180, 0.4);
+  color: #2d3a4a;
+}
+/* キャストカード出欠 */
+.app-container[data-theme="pastel"] .cast-card__status-dot--present {
+  background-color: var(--cast-present-bg);
+}
+.app-container[data-theme="pastel"] .cast-card__status-dot--absent {
+  background-color: var(--cast-absent-bg);
+}
+.app-container[data-theme="pastel"] .cast-card__presence-button--present {
+  background-color: var(--cast-present-bg);
+  color: #fff;
+}
+.app-container[data-theme="pastel"] .cast-card__presence-button--absent {
+  background-color: var(--cast-absent-bg);
+  color: #2d3a4a;
+}
+.app-container[data-theme="pastel"] .cast-presence-summary__col--present .cast-presence-summary__label {
+  color: var(--cast-present-bg);
+}
+.app-container[data-theme="pastel"] .cast-presence-summary__chip--present {
+  background-color: var(--cast-present-bg);
+  color: #fff;
+}
+.app-container[data-theme="pastel"] .cast-presence-summary__col--absent .cast-presence-summary__label {
+  color: #5a6a7a;
+}
+.app-container[data-theme="pastel"] .cast-presence-summary__chip--absent {
+  background-color: rgba(157, 168, 184, 0.25);
+  color: #2d3a4a;
+  border-color: rgba(100, 150, 180, 0.3);
+}
+
+/* ========== チェックテーマ（ストライプ青・スプライト構造を青系で再現） ========== */
+.app-container[data-theme="skyblue"] {
+  --cast-present-bg: #2e9d6e;
+  --cast-absent-bg: #8db4c9;
+  --discord-bg-dark: rgba(255, 255, 255, 0.96);
+  --discord-bg-main: transparent;
+  --discord-bg-secondary: rgba(255, 255, 255, 0.92);
+  --discord-bg-hover: rgba(70, 140, 210, 0.08);
+  --discord-bg-selected: rgba(70, 140, 210, 0.14);
+  --discord-bg-alt: rgba(70, 140, 210, 0.06);
+  --discord-bg-sidebar: rgba(255, 255, 255, 0.94);
+  --discord-text-normal: #1e3a5f;
+  --discord-text-muted: rgba(30, 58, 95, 0.65);
+  --discord-text-link: #2d7cc4;
+  --discord-text-header: #152942;
+  --discord-border: rgba(70, 140, 210, 0.25);
+  --discord-divider: rgba(70, 140, 210, 0.18);
+  --discord-button-primary: #4a8ec8;
+  --discord-button-primary-hover: #3a7eb8;
+  --discord-button-secondary: rgba(70, 140, 210, 0.12);
+  --discord-button-secondary-hover: rgba(70, 140, 210, 0.2);
+}
+.app-container[data-theme="skyblue"] .sidebar-theme-pills {
+  background: rgba(70, 140, 210, 0.1);
+}
+.app-container[data-theme="skyblue"] .sidebar {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-right: 1px solid rgba(70, 140, 210, 0.2);
+}
+.app-container[data-theme="skyblue"] .sidebar-button {
+  color: #3a6a9a;
+}
+.app-container[data-theme="skyblue"] .sidebar-button.active {
+  background: rgba(255, 255, 255, 0.95);
+  color: #152942;
+  box-shadow: inset 4px 0 0 #4a8ec8;
+}
+.app-container[data-theme="skyblue"] .sidebar-button.logout {
+  color: var(--discord-accent-red);
+}
+.app-container[data-theme="skyblue"] .mobile-header {
+  background: rgba(240, 248, 255, 0.98);
+  border-bottom: 1px solid rgba(70, 140, 210, 0.2);
+}
+.app-container[data-theme="skyblue"] .menu-toggle {
+  background: #4a8ec8;
   color: #ffffff;
 }
-.app-container[data-theme="minimal"] .sidebar-button.logout {
-  color: #8b3a3a;
+.app-container[data-theme="skyblue"] .header-logo__title {
+  color: #152942;
 }
-.app-container[data-theme="minimal"] .modal-overlay {
-  background: rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(4px);
+.app-container[data-theme="skyblue"] .header-logo__tagline {
+  color: rgba(30, 58, 95, 0.6);
 }
-.app-container[data-theme="minimal"] .modal-content {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+.app-container[data-theme="skyblue"] .main-content {
+  background-color: rgba(255, 255, 255, 0.88);
 }
-.app-container[data-theme="minimal"] .modal-title {
-  color: #1a1a1a;
+.app-container[data-theme="skyblue"] .page-card-narrow {
+  background-color: rgba(255, 255, 255, 0.96);
+  border-color: rgba(70, 140, 210, 0.22);
 }
-.app-container[data-theme="minimal"] .modal-message {
-  color: #3a3a3a;
+.app-container[data-theme="skyblue"] .page-card {
+  background-color: rgba(255, 255, 255, 0.94);
+  border-color: rgba(70, 140, 210, 0.22);
 }
-.app-container[data-theme="minimal"] .modal-btn-cancel {
-  background: #ffffff;
-  color: #3a3a3a;
-  border: 1px solid rgba(0, 0, 0, 0.2);
+/* キャストカード出欠 */
+.app-container[data-theme="skyblue"] .cast-card__status-dot--present {
+  background-color: var(--cast-present-bg);
 }
-.app-container[data-theme="minimal"] .modal-btn-cancel:hover {
-  background: rgba(0, 0, 0, 0.04);
+.app-container[data-theme="skyblue"] .cast-card__status-dot--absent {
+  background-color: var(--cast-absent-bg);
 }
-.app-container[data-theme="minimal"] .btn-primary.modal-btn-confirm {
-  background: #ffffff;
-  color: #2d2d2d;
-  border: 1px solid rgba(0, 0, 0, 0.2);
+.app-container[data-theme="skyblue"] .cast-card__presence-button--present {
+  background-color: var(--cast-present-bg);
+  color: #fff;
 }
-.app-container[data-theme="minimal"] .btn-primary.modal-btn-confirm:hover {
-  background: rgba(0, 0, 0, 0.06);
+.app-container[data-theme="skyblue"] .cast-card__presence-button--absent {
+  background-color: var(--cast-absent-bg);
+  color: #152942;
 }
-.app-container[data-theme="minimal"] .settings-theme-tile {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+.app-container[data-theme="skyblue"] .cast-presence-summary__col--present .cast-presence-summary__label {
+  color: var(--cast-present-bg);
 }
-.app-container[data-theme="minimal"] .settings-theme-tile:hover {
-  background: rgba(0, 0, 0, 0.03);
-  border-color: rgba(0, 0, 0, 0.18);
+.app-container[data-theme="skyblue"] .cast-presence-summary__chip--present {
+  background-color: var(--cast-present-bg);
+  color: #fff;
 }
-.app-container[data-theme="minimal"] .settings-theme-tile.active {
-  border-color: #2d2d2d;
-  background: rgba(0, 0, 0, 0.04);
+.app-container[data-theme="skyblue"] .cast-presence-summary__col--absent .cast-presence-summary__label {
+  color: #4a6a80;
 }
-.app-container[data-theme="minimal"] .theme-swatch {
-  border-color: rgba(0, 0, 0, 0.12);
+.app-container[data-theme="skyblue"] .cast-presence-summary__chip--absent {
+  background-color: rgba(141, 180, 201, 0.35);
+  color: #152942;
 }
-.app-container[data-theme="minimal"] .theme-swatch:hover {
-  border-color: rgba(0, 0, 0, 0.2);
+/* モーダル */
+.app-container[data-theme="skyblue"] .modal-overlay {
+  background-color: rgba(30, 58, 95, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
-.app-container[data-theme="minimal"] .theme-swatch.active {
-  border-color: #2d2d2d;
-  box-shadow: 0 0 0 2px #2d2d2d, 0 4px 12px rgba(0, 0, 0, 0.12);
+.app-container[data-theme="skyblue"] .modal-content {
+  background-color: var(--discord-bg-dark);
+  border-color: var(--discord-border);
+  box-shadow: 0 20px 60px rgba(30, 58, 95, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5);
 }
-.app-container[data-theme="minimal"] .form-control,
-.app-container[data-theme="minimal"] input[type="text"],
-.app-container[data-theme="minimal"] input[type="number"],
-.app-container[data-theme="minimal"] select {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  color: #2d2d2d;
+.app-container[data-theme="skyblue"] .modal-title {
+  color: var(--discord-text-header);
 }
-.app-container[data-theme="minimal"] .btn-toggle {
-  background: transparent;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  color: #5a5a5a;
+.app-container[data-theme="skyblue"] .modal-message {
+  color: var(--discord-text-normal);
 }
-.app-container[data-theme="minimal"] .btn-toggle.active {
-  background: rgba(0, 0, 0, 0.08);
-  color: #1a1a1a;
-  border-color: rgba(0, 0, 0, 0.25);
+.app-container[data-theme="skyblue"] .modal-btn-cancel {
+  background-color: var(--discord-button-secondary);
+  color: var(--discord-text-normal);
+  border-color: var(--discord-border);
+}
+.app-container[data-theme="skyblue"] .modal-btn-cancel:hover {
+  background-color: var(--discord-button-secondary-hover);
+}
+.app-container[data-theme="skyblue"] .btn-primary.modal-btn-confirm {
+  background-color: var(--discord-button-primary);
+  color: #fff;
+}
+.app-container[data-theme="skyblue"] .btn-primary.modal-btn-confirm:hover {
+  background-color: var(--discord-button-primary-hover);
+}
+/* テーマプレビュー */
+.app-container[data-theme="skyblue"] .theme-preview__layout {
+  border-color: rgba(70, 140, 210, 0.25);
+}
+.app-container[data-theme="skyblue"] .theme-preview:hover .theme-preview__layout {
+  border-color: rgba(70, 140, 210, 0.4);
+}
+.app-container[data-theme="skyblue"] .theme-preview.active .theme-preview__layout {
+  border-color: #4a8ec8;
+  box-shadow: 0 0 0 2px rgba(74, 142, 200, 0.25);
+}
+/* フォーム入力 */
+.app-container[data-theme="skyblue"] .form-input,
+.app-container[data-theme="skyblue"] input[type="text"],
+.app-container[data-theme="skyblue"] input[type="number"],
+.app-container[data-theme="skyblue"] select {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(70, 140, 210, 0.25);
+  color: #1e3a5f;
+}
+/* ボタントグル */
+.app-container[data-theme="skyblue"] .btn-toggle {
+  background: rgba(70, 140, 210, 0.08);
+  color: #3a6a9a;
+  border: 1px solid rgba(70, 140, 210, 0.2);
+}
+.app-container[data-theme="skyblue"] .btn-toggle.active {
+  background: rgba(74, 142, 200, 0.18);
+  color: #152942;
+  border-color: rgba(74, 142, 200, 0.4);
 }
 
 .sidebar-theme-pill {
@@ -987,42 +1217,104 @@ select.form-input {
   white-space: nowrap;
 }
 
-/* テーマ選択：色プレビューのみ（設定タブ専用） */
-.theme-selector--swatches {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+/* テーマ選択：ミニレイアウトプレビュー（設定タブ専用） */
+.theme-selector {
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
 }
-.theme-swatch {
-  aspect-ratio: 1;
-  border-radius: 10px;
-  border: 2px solid var(--discord-border);
-  overflow: hidden;
+.theme-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
   cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.theme-preview__layout {
+  display: flex;
+  width: 80px;
+  height: 56px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid var(--discord-border);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  background: var(--discord-bg-secondary);
 }
-.theme-swatch:hover {
+.theme-preview:hover .theme-preview__layout {
   border-color: rgba(255, 255, 255, 0.25);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
-.theme-swatch.active {
+.theme-preview.active .theme-preview__layout {
   border-color: var(--discord-accent-blue);
-  box-shadow: 0 0 0 1px var(--discord-accent-blue), 0 4px 16px rgba(88, 101, 242, 0.35);
+  box-shadow: 0 0 0 1px var(--discord-accent-blue), 0 2px 8px rgba(88, 101, 242, 0.3);
 }
-.theme-swatch:focus-visible {
+.theme-preview:focus-visible .theme-preview__layout {
   outline: 2px solid var(--discord-accent-blue);
   outline-offset: 2px;
 }
-.theme-swatch__stripes {
+/* サイドバー */
+.theme-preview__sidebar {
+  width: 22px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  width: 100%;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 3px;
 }
-.theme-swatch__stripe {
+.theme-preview__sidebar-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.theme-preview__sidebar-line {
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+}
+/* コンテンツエリア */
+.theme-preview__content {
   flex: 1;
-  min-height: 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+}
+.theme-preview__card {
+  width: 100%;
+  border-radius: 3px;
+  padding: 4px 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.theme-preview__card-line {
+  height: 2px;
+  width: 100%;
+  border-radius: 1px;
+}
+.theme-preview__card-line--short {
+  width: 60%;
+}
+.theme-preview__accent {
+  width: 70%;
+  height: 5px;
+  border-radius: 2px;
+}
+/* ラベル */
+.theme-preview__label {
+  font-size: 10px;
+  color: var(--discord-text-muted, #888);
+  line-height: 1;
+}
+.theme-preview.active .theme-preview__label {
+  color: var(--discord-accent-blue);
+  font-weight: 600;
 }
 
 /* データ読取：カスタム形式の列マッピング */
@@ -1074,7 +1366,7 @@ select.form-input {
 }
 
 /* ========================================
-   繧ｨ繧ｯ繧ｹ繝昴・繝医・繧ｿ繝ｳ
+   エクスポートボタン
    ======================================== */
 
 .btn-export-secondary {
@@ -1382,14 +1674,15 @@ select.form-input {
 }
 
 /* ========================================
-   Cast management: 蜃ｺ蟶ｭ閠・・谺蟶ｭ閠・荳隕ｧ・亥ｰ上＆繧∽ｸ逕ｻ髱｢・・   ======================================== */
+   Cast management: 出席者・欠席者 一覧
+   ======================================== */
 
 .cast-presence-summary {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 16px;
   margin-bottom: 24px;
-  padding: 12px 16px;
+  padding: 16px 20px;
   background-color: var(--discord-bg-secondary);
   border: 1px solid var(--discord-border);
   border-radius: 8px;
@@ -1401,11 +1694,10 @@ select.form-input {
 }
 
 .cast-presence-summary__label {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
-  text-transform: uppercase;
   letter-spacing: 0.03em;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .cast-presence-summary__col--present .cast-presence-summary__label {
@@ -1419,36 +1711,38 @@ select.form-input {
 .cast-presence-summary__list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
   min-height: 28px;
 }
 
 .cast-presence-summary__chip {
-  padding: 5px 10px;
-  border-radius: 4px;
+  padding: 5px 14px;
+  border-radius: 16px;
   font-size: 12px;
   font-weight: 600;
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
   font-family: inherit;
   transition: opacity 0.15s ease, transform 0.1s ease;
 }
 .cast-presence-summary__chip:hover {
-  opacity: 0.9;
+  opacity: 0.85;
 }
 .cast-presence-summary__chip:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 
 .cast-presence-summary__chip--present {
-  background-color: rgba(35, 165, 89, 0.35);
+  background-color: var(--cast-present-bg, #23a559);
   color: #fff;
+  border-color: transparent;
 }
 
 .cast-presence-summary__chip--absent {
-  background-color: rgba(255, 255, 255, 0.12);
+  background-color: var(--discord-bg-alt, rgba(255, 255, 255, 0.08));
   color: var(--discord-text-normal);
+  border-color: var(--discord-border);
 }
 
 .cast-presence-summary__empty {
@@ -1539,6 +1833,170 @@ select.form-input {
   background-color: var(--discord-accent-red);
 }
 
+/* ─── Lit.Link 風リンクカード ─── */
+.litlink {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.litlink__item {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.litlink__item:focus-within {
+  border-color: var(--discord-accent-blue);
+  box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.25);
+}
+.litlink__item:has(.litlink__input--error) {
+  border-color: var(--discord-accent-red);
+}
+.litlink__item:has(.litlink__input--error):focus-within {
+  border-color: var(--discord-accent-red);
+  box-shadow: 0 0 0 2px rgba(237, 66, 69, 0.25);
+}
+
+.litlink__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 999px 0 0 999px;
+  color: #ffffff;
+}
+.litlink__icon--x {
+  background: #000000;
+}
+.litlink__icon--vrc {
+  background: #1275e2;
+}
+
+.litlink__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.litlink__input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--discord-text-normal);
+  font-size: 12px;
+  padding: 8px 10px;
+  outline: none;
+}
+.litlink__input::placeholder {
+  color: var(--discord-text-muted);
+  opacity: 0.6;
+}
+.litlink__input--error {
+  color: var(--discord-accent-red);
+}
+.litlink__input--error ~ .litlink__validation-error,
+.litlink__validation-error {
+  display: block;
+  font-size: 10px;
+  color: var(--discord-accent-red);
+  padding: 0 10px 6px;
+  line-height: 1.2;
+}
+
+.litlink__open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  margin-right: 2px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--discord-text-link);
+  cursor: pointer;
+  transition: background 0.17s ease, color 0.17s ease;
+}
+.litlink__open:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+/* カスタム連絡先アイコン */
+.litlink__icon--custom {
+  background: #5865f2;
+}
+
+/* 削除ボタン */
+.litlink__remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  margin-right: 4px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(237, 66, 69, 0.15);
+  color: #ed4245;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.17s ease;
+  line-height: 1;
+}
+.litlink__remove:hover {
+  background: rgba(237, 66, 69, 0.3);
+}
+
+/* ラベル + 値のデュアル入力 */
+.litlink__body--dual {
+  display: flex;
+  gap: 0;
+  flex: 1;
+  min-width: 0;
+}
+.litlink__input--label {
+  flex: 0 0 110px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  font-weight: 600;
+  font-size: 11px !important;
+}
+.litlink__input--value {
+  flex: 1;
+}
+
+/* 連絡先追加ボタン */
+.litlink__add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 0;
+  border-radius: 999px;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: var(--discord-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.17s ease, color 0.17s ease, background-color 0.17s ease;
+}
+.litlink__add:hover {
+  border-color: var(--discord-accent-blue);
+  color: var(--discord-accent-blue);
+  background: rgba(88, 101, 242, 0.06);
+}
+
 .cast-card__ng-header {
   display: flex;
   justify-content: space-between;
@@ -1598,15 +2056,283 @@ select.form-input {
 .ng-list__chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  font-size: 12px;
+  background-color: rgba(237, 66, 69, 0.1);
+  color: var(--discord-accent-red);
+  padding: 4px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(237, 66, 69, 0.27);
+}
+.ng-list__chip-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--discord-text-muted);
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+.ng-list__chip-remove:hover {
+  color: var(--discord-accent-red);
+}
+
+/* キャスト別NG一覧：チップ形式 */
+.ng-cast-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+.ng-cast-summary__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 12px;
+  background-color: var(--discord-bg-secondary);
+  border: 1px solid var(--discord-border);
+  border-radius: 8px;
+}
+.ng-cast-summary__cast-name {
+  flex-shrink: 0;
   font-size: 13px;
-  background-color: rgba(237, 66, 69, 0.12);
+  font-weight: 700;
+  color: var(--discord-text-header);
+  min-width: 80px;
+  padding-top: 4px;
+}
+.ng-cast-summary__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
+/* 読み取り専用チップ（削除ボタンなし） */
+.ng-list__chip--readonly {
+  cursor: default;
+}
+
+/* ── 要注意人物：NGユーザーから選択リスト ── */
+.ng-select-list {
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+.ng-select-list__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.ng-select-list__item:hover {
+  background-color: var(--discord-bg-hover, rgba(255,255,255,0.06));
+}
+.ng-select-list__item input[type="checkbox"] {
+  margin-top: 3px;
+  flex-shrink: 0;
+  accent-color: var(--discord-accent, #5865f2);
+}
+.ng-select-list__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ng-select-list__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--discord-text);
+}
+.ng-select-list__id {
+  font-weight: 400;
+  color: var(--discord-text-muted);
+  margin-left: 4px;
+}
+.ng-select-list__id--missing {
+  font-style: italic;
+  opacity: 0.6;
+}
+.ng-select-list__casts {
+  font-size: 11px;
+  color: var(--discord-text-muted);
+}
+
+/* ========================================
+   NGユーザー管理ページ：リデザイン
+   ======================================== */
+
+.ng-page {
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ng-page__header {
+  margin-bottom: 4px;
+}
+.ng-page__header .page-header-subtitle {
+  margin-top: 6px;
+  max-width: 600px;
+}
+
+.ng-page__section {
+  background-color: var(--discord-bg-dark);
+  border: 1px solid var(--discord-border);
+  border-radius: 10px;
+  padding: 24px;
+}
+
+.ng-page__section-header {
+  margin-bottom: 20px;
+}
+
+.ng-page__section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--discord-text-header);
+  margin: 0 0 4px 0;
+}
+
+.ng-page__section-desc {
+  font-size: 13px;
+  color: var(--discord-text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ng-page__empty-note {
+  font-size: 14px;
+  color: var(--discord-text-muted);
+  text-align: center;
+  padding: 16px 0;
+}
+
+.ng-page__field-hint {
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.ng-page__add-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ng-page__add-input--name {
+  flex: 1 1 120px;
+  min-width: 100px;
+}
+
+.ng-page__add-input--id {
+  flex: 2 1 220px;
+  min-width: 180px;
+}
+
+/* 判定設定の2カラムグリッド */
+.ng-page__settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 640px) {
+  .ng-page__settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 要注意人物：閾値＋ボタン */
+.ng-page__caution-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.ng-page__threshold-group {
+  margin-bottom: 0;
+}
+.ng-page__threshold-input {
+  max-width: 80px;
+}
+
+/* 種別バッジ */
+.ng-page__badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.02em;
+}
+.ng-page__badge--manual {
+  background-color: rgba(88, 101, 242, 0.18);
+  color: var(--discord-accent-blue);
+}
+.ng-page__badge--auto {
+  background-color: rgba(35, 165, 89, 0.18);
+  color: var(--discord-accent-green);
+}
+
+/* テーブル内削除ボタン */
+.ng-page__remove-btn {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid rgba(237, 66, 69, 0.3);
+  color: var(--discord-accent-red);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.ng-page__remove-btn:hover {
+  background-color: rgba(237, 66, 69, 0.15);
+  border-color: rgba(237, 66, 69, 0.5);
+}
+
+/* NG例外コントロール */
+.ng-page__exception-controls {
+  margin-bottom: 16px;
+}
+
+/* NG例外チップリスト */
+.ng-page__exception-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ng-page__exception-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  background-color: rgba(88, 101, 242, 0.1);
   color: var(--discord-text-normal);
   padding: 6px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(237, 66, 69, 0.25);
+  border: 1px solid rgba(88, 101, 242, 0.2);
+  transition: background-color 0.15s ease;
 }
-.ng-list__chip-remove {
+.ng-page__exception-chip:hover {
+  background-color: rgba(88, 101, 242, 0.16);
+}
+.ng-page__exception-chip-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ng-page__exception-chip-id {
+  font-size: 12px;
+  color: var(--discord-text-muted);
+}
+.ng-page__exception-chip-remove {
   background: none;
   border: none;
   cursor: pointer;
@@ -1615,10 +2341,31 @@ select.form-input {
   line-height: 1;
   padding: 0 2px;
   border-radius: 4px;
+  transition: color 0.15s ease, background-color 0.15s ease;
 }
-.ng-list__chip-remove:hover {
+.ng-page__exception-chip-remove:hover {
   color: var(--discord-accent-red);
   background-color: rgba(237, 66, 69, 0.15);
+}
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+  .ng-page__section {
+    padding: 18px 16px;
+  }
+  .ng-page__add-row {
+    flex-direction: column;
+  }
+  .ng-page__add-input--name,
+  .ng-page__add-input--id {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+  }
+  .ng-page__caution-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 /* ========================================
@@ -1670,7 +2417,7 @@ select.form-input {
 }
 
 /* ========================================
-   繧ｬ繧､繝峨・繝ｼ繧ｸ逕ｨ
+   ガイドページ用
    ======================================== */
 
 .guide-section {
@@ -1897,7 +2644,7 @@ select.form-input {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/** 蜷・判髱｢縺ｮ讖溯・繝ｻFAQ 縺ｪ縺ｩ縺ｧ菴ｿ縺・き繝ｼ繝会ｼ亥酔荳翫せ繧ｿ繧､繝ｫ繧貞・騾壼喧・・*/
+/** 各画面の機能・FAQ などで使うカード（同上スタイルを共通化） */
 .guide-card {
   background: linear-gradient(135deg, var(--discord-bg-secondary), var(--discord-bg-dark));
   padding: 24px;
@@ -2050,6 +2797,32 @@ select.form-input {
   width: 100%;
 }
 
+/* ========================================
+   InputModal（入力フォーム付きモーダル）
+   ======================================== */
+
+.input-modal {
+  max-width: 460px;
+}
+.input-modal__desc {
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+.input-modal__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.input-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.input-modal__field .form-label {
+  margin-bottom: 0;
+}
+
 .form-subtitle-mb {
   font-size: 14px;
   margin-bottom: 24px;
@@ -2153,9 +2926,9 @@ select.form-input {
 }
 
 /* ========================================
-   繧､繝ｳ繝昴・繝医ヵ繝ｭ繝ｼ・・謚槭Δ繝ｼ繝繝ｫ + 繧ｹ繝ｩ繧､繝・+ 繝ｭ繝ｼ繝・ぅ繝ｳ繧ｰ・・   ======================================== */
+   インポートフロー：モーダル + スライダー + ローディング
 
-/* 繝ｭ繝ｼ繝・ぅ繝ｳ繧ｰ陦ｨ遉ｺ・育せ貊・い繝九Γ・・*/
+/* ローディング表示（点滅アニメ） */
 .import-loading-message {
   margin-top: 8px;
   font-size: 14px;
@@ -2180,7 +2953,7 @@ select.form-input {
   50% { opacity: 1; }
 }
 
-/* 繧ｹ繝ｩ繧､繝繝ｼ・・oogle隱崎ｨｼ鬚ｨ縺ｮ讓ｪ繧ｹ繝ｩ繧､繝会ｼ・*/
+/* スライダー（Google認証風の横スライド） */
 .import-flow-slider {
   overflow: hidden;
   width: 100%;
@@ -2199,7 +2972,7 @@ select.form-input {
   padding: 0 2px;
 }
 
-/* 繧ｹ繝ｩ繧､繝繝ｼ蜀・・隕冶ｪ肴ｧ */
+/* スライダー内の要素調整 */
 .import-flow-slider .modal-title {
   font-size: 19px;
   font-weight: 700;
@@ -2239,7 +3012,8 @@ select.form-input {
 }
 
 /* ========================================
-   Toast騾夂衍・医せ繝翫ャ繧ｯ繝舌・・・   ======================================== */
+   Toast通知（スナックバー）
+   ======================================== */
 
 .toast-notification {
   position: fixed;
@@ -2295,7 +3069,7 @@ select.form-input {
   }
 }
 
-/* 繧ｹ繝槭・逕ｨ縺ｮ繝医・繧ｹ繝郁ｪｿ謨ｴ */
+/* スマホ用のトースト調整 */
 @media (max-width: 768px) {
   .toast-notification {
     bottom: 16px;
@@ -2316,4 +3090,133 @@ select.form-input {
       transform: translateY(0);
     }
   }
+}
+
+/* ─── ユーティリティクラス ─── */
+.mt-4 { margin-top: 4px; }
+.mt-8 { margin-top: 8px; }
+.mt-24 { margin-top: 24px; }
+.mb-12 { margin-bottom: 12px; }
+.text-sm { font-size: 13px; }
+.text-muted-color { color: var(--discord-text-muted); }
+.flex-wrap-gap8 { flex-wrap: wrap; gap: 8px; }
+
+/* ─── キャスト管理ページ: 注意ブロック ─── */
+.cast-page-notice {
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  background-color: rgba(240, 178, 50, 0.15);
+  border: 1px solid var(--discord-text-warning, #f0b232);
+  color: var(--discord-text-normal);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ─── DB名簿ビュー: テーブル ─── */
+.db-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+.db-table__th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 11px;
+  color: var(--discord-text-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+  border-bottom: 1px solid var(--discord-border);
+  background-color: var(--discord-bg-sidebar);
+}
+
+.db-table__th-hint {
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--discord-text-muted);
+  margin-left: 6px;
+  font-style: italic;
+}
+
+.db-table__cell {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--discord-text-normal);
+  border-bottom: 1px solid var(--discord-border);
+}
+
+.db-table__cell--caution {
+  background-color: rgba(237, 66, 69, 0.15);
+}
+
+.db-table__cell--link {
+  cursor: pointer;
+  color: var(--discord-text-link);
+  transition: background-color 0.17s ease;
+}
+.db-table__cell--link:hover {
+  background-color: var(--discord-bg-hover);
+}
+
+.db-table__cell--note {
+  color: var(--discord-text-muted);
+  font-size: 11px;
+}
+
+.db-table__cell--empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--discord-text-muted);
+}
+
+/* ─── アクセントカラーボタン ─── */
+.btn-accent-yellow {
+  width: auto;
+  padding: 8px 16px;
+  font-size: 13px;
+  background-color: var(--discord-accent-yellow);
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.btn-accent-yellow:hover {
+  filter: brightness(1.1);
+}
+
+/* ─── 危険バナー ─── */
+.banner-muted--danger {
+  margin-bottom: 16px;
+  border-left: 4px solid var(--discord-text-danger);
+  background-color: rgba(237, 66, 69, 0.1);
+}
+
+/* ─── ライトテーマ: Lit.Link 風リンクカード調整 ─── */
+.app-container[data-theme="lavender"] .litlink__item,
+.app-container[data-theme="pastel"] .litlink__item,
+.app-container[data-theme="skyblue"] .litlink__item {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+.app-container[data-theme="lavender"] .litlink__open,
+.app-container[data-theme="pastel"] .litlink__open,
+.app-container[data-theme="skyblue"] .litlink__open {
+  background: rgba(0, 0, 0, 0.06);
+}
+.app-container[data-theme="lavender"] .litlink__open:hover,
+.app-container[data-theme="pastel"] .litlink__open:hover,
+.app-container[data-theme="skyblue"] .litlink__open:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+.app-container[data-theme="lavender"] .litlink__input--label,
+.app-container[data-theme="pastel"] .litlink__input--label,
+.app-container[data-theme="skyblue"] .litlink__input--label {
+  border-right-color: rgba(0, 0, 0, 0.1) !important;
+}
+.app-container[data-theme="lavender"] .litlink__add,
+.app-container[data-theme="pastel"] .litlink__add,
+.app-container[data-theme="skyblue"] .litlink__add {
+  border-color: rgba(0, 0, 0, 0.15);
 }

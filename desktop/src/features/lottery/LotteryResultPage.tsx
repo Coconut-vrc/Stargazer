@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useAppContext } from '@/stores/AppContext';
 import { ConfirmModal } from '@/components/ConfirmModal';
-import { ALERT } from '@/common/copy';
+import { ALERT, EXTERNAL_LINK } from '@/common/copy';
 import { downloadCsv } from '@/common/downloadCsv';
+import { openInDefaultBrowser } from '@/common/openExternal';
 
 export const LotteryResultPage: React.FC = () => {
   const { currentWinners, setActivePage } = useAppContext();
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
 
   const handleExportCsv = () => {
     if (currentWinners.length === 0) {
@@ -85,8 +87,15 @@ export const LotteryResultPage: React.FC = () => {
                     #{index + 1}
                   </td>
                   <td className="table-cell" style={{ fontSize: '14px' }}>{user.name}</td>
-                  <td className="table-cell" style={{ fontSize: '13px', color: 'var(--discord-text-link)' }}>
-                    @{user.x_id}
+                  <td
+                    className="table-cell text-x-id--clickable"
+                    style={{ fontSize: '13px', color: 'var(--discord-text-link)', cursor: user.x_id ? 'pointer' : 'default' }}
+                    onClick={() => {
+                      const handle = user.x_id?.replace(/^@/, '');
+                      if (handle) setPendingUrl(`https://x.com/${handle}`);
+                    }}
+                  >
+                    {user.x_id ? `@${user.x_id.replace(/^@/, '')}` : '—'}
                   </td>
                   <td className="table-cell" style={{ fontSize: '13px' }}>{user.casts[0] || '—'}</td>
                   <td className="table-cell" style={{ fontSize: '13px' }}>{user.casts[1] || '—'}</td>
@@ -148,6 +157,21 @@ export const LotteryResultPage: React.FC = () => {
           マッチング開始
         </button>
       </div>
+
+      {pendingUrl && (
+        <ConfirmModal
+          title={EXTERNAL_LINK.MODAL_TITLE}
+          message={`${pendingUrl}\n\nXのプロフィールページを開きますか？`}
+          onConfirm={async () => {
+            await openInDefaultBrowser(pendingUrl);
+            setPendingUrl(null);
+          }}
+          onCancel={() => setPendingUrl(null)}
+          confirmLabel={EXTERNAL_LINK.CONFIRM_LABEL}
+          cancelLabel={EXTERNAL_LINK.CANCEL_LABEL}
+          type="confirm"
+        />
+      )}
 
       {alertMessage && (
         <ConfirmModal

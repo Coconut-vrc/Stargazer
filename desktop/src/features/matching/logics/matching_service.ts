@@ -4,7 +4,7 @@
  * ここでは振り分けと警告モードの付与のみ行う。
  */
 
-import type { UserBean, CastBean } from '@/stores/AppContext';
+import type { UserBean, CastBean } from '@/common/types/entities';
 import type { MatchingTypeCode } from '@/features/matching/types/matching-type-codes';
 import { isUserNGForCast, getNGReasonForCast } from './ng-judgment';
 import type { NGJudgmentType, NGMatchingBehavior } from '@/features/matching/types/matching-system-types';

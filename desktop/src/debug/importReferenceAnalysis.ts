@@ -81,17 +81,49 @@ export const FORM_COMPATIBILITY: FormCompatibilityRow[] = [
   { name: '3×3 シェアハウス', category: '特別企画', docItems: '同意複数, VRC URL, X URL, 君の気になる子は誰？(複数可), 呼ばれたい名前, スキンシップ範囲', basicTemplate: '○', customImport: '○', note: 'バレンタイン限定。フォーム実体確認済み。希望1相当は「君の気になる子」1列。', basicTemplateItems: { userName: true, xAccount: true, castHope1: true, castHope2: false, castHope3: false } },
   { name: 'My Sweet Mummy × OKEANOS', category: '特別企画', docItems: 'VRCお名前, VRC URL, X URL, VR酔い, 参加経験, どこで知ったか, 要望。2ページ目あり', basicTemplate: '○', customImport: '○', note: 'フォーム実体確認済み（1ページ目）。キャスト指名欄なし。', basicTemplateItems: { userName: true, xAccount: true, castHope1: false, castHope2: false, castHope3: false } },
   { name: 'LUNA REAL × カジノLU', category: '特別企画', docItems: '1ページ目: VRC名/リンク, X。2ページ目以降未確認', basicTemplate: '○', customImport: '○', note: '2/27開催。1ページ目のみ取得。最小構成に近い。', basicTemplateItems: { userName: true, xAccount: true, castHope1: false, castHope2: false, castHope3: false } },
-  { name: '競技大喜利会', category: 'その他', docItems: '（記載なし）', basicTemplate: '△', customImport: '○', note: 'カスタムで対応可。', basicTemplateItems: null },
-  { name: 'VitalLink（看護師RP）', category: 'その他', docItems: '（記載なし）', basicTemplate: '△', customImport: '○', note: '同上。', basicTemplateItems: null },
-  { name: 'F-Lick-Out（ASMR）', category: 'その他', docItems: '（記載なし）', basicTemplate: '△', customImport: '○', note: 'Closed可能性。形式はカスタムで対応可。', basicTemplateItems: null },
-  { name: 'なっぱちゃん個人イベント', category: 'その他', docItems: '（記載なし）', basicTemplate: '△', customImport: '○', note: '同上。', basicTemplateItems: null },
-  { name: 'Velvet V 合同個人イベント', category: 'その他', docItems: '（記載なし）', basicTemplate: '△', customImport: '○', note: '同上。', basicTemplateItems: null },
-  { name: 'Ephemeral Sugar -Bitter- 第3回', category: 'その他', docItems: '（記載なし）', basicTemplate: '△', customImport: '○', note: '同上。', basicTemplateItems: null },
-  { name: '渡海鉄道 WIT', category: 'その他', docItems: '（記載なし）', basicTemplate: '△', customImport: '○', note: '同上。', basicTemplateItems: null },
-  { name: 'Mag・Mell 晩餐会', category: 'その他', docItems: '（記載なし）', basicTemplate: '△', customImport: '○', note: '同上。', basicTemplateItems: null },
-  { name: 'Secret Dream 第2回', category: 'その他', docItems: '（記載なし）', basicTemplate: '△', customImport: '○', note: '同上。', basicTemplateItems: null },
-  { name: 'The Ecstasy × Egil=Sapphire', category: 'その他', docItems: '（記載なし）', basicTemplate: '△', customImport: '○', note: '同上。', basicTemplateItems: null },
-  { name: 'AMS A Momentary Secret', category: 'その他', docItems: '（記載なし）', basicTemplate: '△', customImport: '○', note: '同上。', basicTemplateItems: null },
+  { name: '競技大喜利会', category: 'その他', docItems: 'お名前, VRC表示名, X(@～), プレイ歴, 大喜利経験, 参加要件確認。2ページ目あり', basicTemplate: '○', customImport: '○', note: 'テスト開催。1ページ目のみ取得。キャスト指名欄なし。', basicTemplateItems: { userName: true, xAccount: true, castHope1: false, castHope2: false, castHope3: false } },
+  { name: 'VitalLink（看護師RP）', category: 'その他', docItems: 'お名前, X URL, VRCアカウント名, フォロー・グループ参加確認', basicTemplate: '○', customImport: '○', note: '2/21開催。フォーム実体確認済み。キャスト指名欄なし。', basicTemplateItems: { userName: true, xAccount: true, castHope1: false, castHope2: false, castHope3: false } },
+  { name: 'F-Lick-Out（ASMR）', category: 'その他', docItems: '（受付終了のため未取得）', basicTemplate: '△', customImport: '○', note: 'フォーム受付終了。質問項目は未取得。', basicTemplateItems: null },
+  { name: 'なっぱちゃん個人イベント', category: 'その他', docItems: 'VRCお名前, VRC URL, X URL, 応募ポストRP, ファングループ, してほしいこと(自由記述)', basicTemplate: '○', customImport: '○', note: 'フォーム実体確認済み。個人イベントのためキャスト指名欄なし。', basicTemplateItems: { userName: true, xAccount: true, castHope1: false, castHope2: false, castHope3: false } },
+  { name: 'Velvet V 合同個人イベント', category: 'その他', docItems: 'X URL, VRC URL, VRC名, 指名キャスト(1人)', basicTemplate: '○', customImport: '○', note: '2/20。フォーム実体確認済み。希望1＝指名キャスト。', basicTemplateItems: { userName: true, xAccount: true, castHope1: true, castHope2: false, castHope3: false } },
+  { name: 'Ephemeral Sugar -Bitter- 第3回', category: 'その他', docItems: 'VRC名, VRC URL, 呼んでほしい名前, お触り・甘え・距離感・声・V感・なで音, 学生/社会人, フォロー・RP, メッセージ(指名は参考)', basicTemplate: '△', customImport: '○', note: 'X欄なし。VRC名のみで name にマッピング可。指名は自由記述内。', basicTemplateItems: { userName: true, xAccount: false, castHope1: false, castHope2: false, castHope3: false } },
+  { name: '渡海鉄道 WIT', category: 'その他', docItems: '1ページ目: 応募条件確認のみ。2ページ目未確認', basicTemplate: '△', customImport: '○', note: '1ページ目のみ取得。2ページ目にVRC・X等の想定。', basicTemplateItems: null },
+  { name: 'Mag・Mell 晩餐会', category: 'その他', docItems: '（受付終了のため未取得）', basicTemplate: '△', customImport: '○', note: 'フォーム受付終了。質問項目は未取得。', basicTemplateItems: null },
+  { name: 'Secret Dream 第2回', category: 'その他', docItems: 'VRCユーザーネーム, X URL, 距離近い接客OK, フォロー・DM確認', basicTemplate: '○', customImport: '○', note: 'フォーム実体確認済み。最小構成に近い。キャスト指名欄なし。', basicTemplateItems: { userName: true, xAccount: true, castHope1: false, castHope2: false, castHope3: false } },
+  { name: 'The Ecstasy × Egil=Sapphire', category: 'その他', docItems: '1ページ目: 規約確認のみ。2ページ目未確認', basicTemplate: '△', customImport: '○', note: '2/17。1ページ目のみ取得。', basicTemplateItems: null },
+  { name: 'AMS A Momentary Secret', category: 'その他', docItems: 'VRChat名, X URL, 参加希望の部, フォロー・RP・禁止事項確認, 気になるキャスト3人まで, 一言', basicTemplate: '○', customImport: '○', note: '2/20。フォーム実体確認済み。希望1相当は「気になるキャスト」1列（3人まで）。', basicTemplateItems: { userName: true, xAccount: true, castHope1: true, castHope2: false, castHope3: false } },
+
+  // ── 追加分（2026-02-14 Grok 取得） ──
+
+  // Bar・クラブ系
+  { name: 'RESLEXION Evolution（2/21）', category: 'Bar・クラブ', docItems: '（フォーム未取得）', basicTemplate: '△', customImport: '○', note: '2/21開催。質問項目は未確認。', basicTemplateItems: null },
+  { name: 'OKEANOS DESCENT（定期船上クラブ）', category: 'Bar・クラブ', docItems: '（フォーム未取得）', basicTemplate: '△', customImport: '○', note: '定期開催。質問項目は未確認。', basicTemplateItems: null },
+  { name: 'めるとらうむ', category: 'Bar・クラブ', docItems: '（フォーム未取得）', basicTemplate: '△', customImport: '○', note: '質問項目は未確認。', basicTemplateItems: null },
+  { name: '性癖Bar deeply おでかけ', category: 'Bar・クラブ', docItems: '（フォーム未取得）', basicTemplate: '△', customImport: '○', note: '質問項目は未確認。', basicTemplateItems: null },
+
+  // メイド・キャバクラ・ラウンジ系
+  { name: 'Fluffy&Deep バレンタイン', category: 'メイド・キャバ', docItems: '（フォーム未取得）', basicTemplate: '△', customImport: '○', note: 'バレンタイン企画。質問項目は未確認。', basicTemplateItems: null },
+  { name: 'はねとつのめいど喫茶（2/13回）', category: 'メイド・キャバ', docItems: '（フォーム未取得）', basicTemplate: '△', customImport: '○', note: '2/13開催。質問項目は未確認。', basicTemplateItems: null },
+
+  // ホスト・ラウンジ系
+  { name: '月影高校ホスト部 / ツキカゲ', category: 'ホスト', docItems: '（フォーム未取得）', basicTemplate: '△', customImport: '○', note: '質問項目は未確認。', basicTemplateItems: null },
+  { name: 'Pécheur 第2回', category: 'ホスト', docItems: '（フォーム未取得・Grand Openと同構成の可能性）', basicTemplate: '○', customImport: '○', note: '第2回。Grand Openと同構成の場合は希望2列＋意気込み。', basicTemplateItems: null },
+  { name: 'MEL-LOW バレンタイン特別指名', category: 'ホスト', docItems: '（フォーム未取得）', basicTemplate: '△', customImport: '○', note: 'バレンタイン特別。質問項目は未確認。', basicTemplateItems: null },
+  { name: 'VAMP ホストクラブ（吸血あり）', category: 'ホスト', docItems: '（フォーム未取得）', basicTemplate: '△', customImport: '○', note: '吸血コンセプト。質問項目は未確認。', basicTemplateItems: null },
+
+  // 特別企画・テーマ系
+  { name: '教室のふたつの扉（2/26）', category: '特別企画', docItems: '（フォーム未取得）', basicTemplate: '△', customImport: '○', note: '2/26開催。質問項目は未確認。', basicTemplateItems: null },
+  { name: 'LabradoNight 特別営業', category: '特別企画', docItems: '（フォーム未取得）', basicTemplate: '△', customImport: '○', note: '特別営業。質問項目は未確認。', basicTemplateItems: null },
+  { name: 'DOMINATE 帝国軍人RP', category: '特別企画', docItems: '（フォーム未取得）', basicTemplate: '△', customImport: '○', note: '帝国軍人RPコンセプト。質問項目は未確認。', basicTemplateItems: null },
+
+  // その他ユニーク系・お便り/投票系
+  { name: 'かぷショ！優秀賞投票', category: 'その他（投票）', docItems: '（フォーム未取得）', basicTemplate: '×', customImport: '×', note: '投票フォーム。抽選・マッチング対象外。', basicTemplateItems: null },
+  { name: 'FM言ノ葉 お便り', category: 'その他（お便り）', docItems: '（フォーム未取得）', basicTemplate: '×', customImport: '×', note: 'お便りフォーム。抽選・マッチング対象外。', basicTemplateItems: null },
+  { name: '今夜はラジオでお便り', category: 'その他（お便り）', docItems: '（フォーム未取得）', basicTemplate: '×', customImport: '×', note: 'お便りフォーム。抽選・マッチング対象外。', basicTemplateItems: null },
+  { name: 'わさらじ おたより', category: 'その他（お便り）', docItems: '（フォーム未取得）', basicTemplate: '×', customImport: '×', note: 'おたよりフォーム。抽選・マッチング対象外。', basicTemplateItems: null },
+  { name: 'LOVE BLOOD -Rouge-', category: 'その他', docItems: '（フォーム未取得）', basicTemplate: '△', customImport: '○', note: '質問項目は未確認。', basicTemplateItems: null },
+  { name: 'LOVE BLOOD -Noir-', category: 'その他', docItems: '（フォーム未取得）', basicTemplate: '△', customImport: '○', note: '質問項目は未確認。', basicTemplateItems: null },
+  { name: 'CORSO お便り関連', category: 'その他（お便り）', docItems: '（フォーム未取得）', basicTemplate: '×', customImport: '×', note: 'お便りフォーム。抽選・マッチング対象外。', basicTemplateItems: null },
 ];
 
 /** カスタムインポートで対応できることの要約 */
@@ -111,6 +143,6 @@ export const CUSTOM_IMPORT_CAPABILITY = {
 export const ANALYSIS_META = {
   sourceDoc: 'docs/import-file-reference.md',
   sourceTitle: 'VRChatイベント事前抽選フォーム 詳細リスト',
-  analyzedAt: '2026-02',
+  analyzedAt: '2026-02-14',
   note: 'フォームの実際のCSV出力は未取得。ドキュメントに記載された「質問項目」から対応可否を判定。Google Form のエクスポート列順はフォームごとに異なるため、実際のCSVはカスタム列割り当てで確認すること。',
 };

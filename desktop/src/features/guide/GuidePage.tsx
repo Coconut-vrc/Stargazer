@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Database, Users, Settings, CheckCircle, BarChart3, HelpCircle } from 'lucide-react';
+import { FileText, Database, Users, Settings, CheckCircle, BarChart3, HelpCircle, Sheet, Download } from 'lucide-react';
 import { GUIDE } from '@/common/copy';
 
 export const GuidePage: React.FC = () => {
@@ -96,6 +96,193 @@ export const GuidePage: React.FC = () => {
         </div>
       </section>
 
+      {/* CSV準備（事前） */}
+      <section className="guide-section">
+        <h2 className="page-header-title page-header-title--md guide-section-title">
+          <Sheet size={22} />
+          CSVを用意する（事前準備）
+        </h2>
+        <p className="page-header-subtitle" style={{ marginBottom: 20, color: 'var(--discord-text-muted)' }}>
+          応募データがGoogleフォームで集まっている場合の、スプレッドシート化〜CSV出力までの手順です。
+        </p>
+
+        <div className="guide-stack-vertical">
+          {/* Step 0a: Google Form → スプレッドシート */}
+          <div className="guide-card">
+            <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+              <div>
+                <h3 style={{
+                  color: 'var(--discord-text-header)',
+                  fontSize: '18px',
+                  fontWeight: 600,
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <Sheet size={20} />
+                  Step A. Googleフォームの回答をスプレッドシートに連携する
+                </h3>
+                <p style={{ color: 'var(--discord-text-normal)', marginBottom: '16px', lineHeight: '1.7' }}>
+                  Googleフォームで応募を募集している場合、回答をスプレッドシートに自動で集約できます。
+                </p>
+                <ul style={{
+                  margin: 0,
+                  paddingLeft: '20px',
+                  color: 'var(--discord-text-normal)',
+                  fontSize: '14px',
+                  lineHeight: '1.9'
+                }}>
+                  <li>① フォームを開き、画面上部の「回答」タブをクリック</li>
+                  <li>② 真ん中のカード内の緑色ボタン「スプレッドシートにリンク」をクリック</li>
+                  <li>③ ダイアログで「新しいスプレッドシートを作成」→「作成」をクリック</li>
+                  <li>回答が自動でスプレッドシートに記録されます</li>
+                </ul>
+              </div>
+              <div className="guide-sample-preview" style={{
+                backgroundColor: '#f8f9fa',
+                padding: '20px',
+                borderRadius: '8px',
+                border: '1px solid #dadce0',
+                transform: 'scale(0.95)',
+                transformOrigin: 'top right',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.1)'
+              }}>
+                <div style={{ marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid #dadce0' }}>
+                  <div style={{ fontSize: '11px', color: '#5f6368', marginBottom: 4 }}>フォーム名</div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#3c4043' }}>抽選用フォーム</div>
+                </div>
+                <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>
+                  <div style={{ padding: '6px 12px', fontSize: 12, color: '#5f6368', borderBottom: '2px solid transparent' }}>質問</div>
+                  <div style={{ padding: '6px 12px', fontSize: 12, color: '#1a73e8', fontWeight: 600, borderBottom: '2px solid #1a73e8' }}>回答</div>
+                  <div style={{ padding: '6px 12px', fontSize: 12, color: '#5f6368', borderBottom: '2px solid transparent' }}>設定</div>
+                </div>
+                <div style={{ backgroundColor: '#fff', borderRadius: 8, border: '1px solid #dadce0', padding: 20 }}>
+                  <div style={{ fontSize: 13, color: '#3c4043', marginBottom: 16 }}>0 件の回答</div>
+                  <button style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '10px 16px', backgroundColor: '#34a853', color: '#fff',
+                    border: 'none', borderRadius: 4, fontSize: 13, fontWeight: 500
+                  }}>
+                    <span style={{ fontSize: 16 }}>＋</span>
+                    スプレッドシートにリンク
+                  </button>
+                  <div style={{ fontSize: 10, color: '#5f6368', marginTop: 12 }}>← ② ここをクリック</div>
+                </div>
+                <div style={{ marginTop: 12, padding: 12, backgroundColor: '#fff', borderRadius: 6, border: '1px solid #dadce0' }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: '#5f6368', marginBottom: 8 }}>③ 出たダイアログ</div>
+                  <div style={{ fontSize: 11, color: '#3c4043', marginBottom: 8 }}>回答の送信先を選択</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #673ab7', backgroundColor: '#fff' }} />
+                    <span style={{ fontSize: 11 }}>新しいスプレッドシートを作成</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #dadce0', backgroundColor: '#fff' }} />
+                    <span style={{ fontSize: 11, color: '#5f6368' }}>既存のスプレッドシートを選択</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                    <span style={{ fontSize: 11, color: '#5f6368' }}>キャンセル</span>
+                    <span style={{ fontSize: 11, color: '#1a73e8', fontWeight: 600 }}>作成</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 0b: スプレッドシート → CSV */}
+          <div className="guide-card">
+            <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+              <div>
+                <h3 style={{
+                  color: 'var(--discord-text-header)',
+                  fontSize: '18px',
+                  fontWeight: 600,
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <Download size={20} />
+                  Step B. スプレッドシートからCSVをダウンロードする
+                </h3>
+                <p style={{ color: 'var(--discord-text-normal)', marginBottom: '16px', lineHeight: '1.7' }}>
+                  スプレッドシートのUIを操作して、CSV形式で保存します。
+                </p>
+                <ul style={{
+                  margin: 0,
+                  paddingLeft: '20px',
+                  color: 'var(--discord-text-normal)',
+                  fontSize: '14px',
+                  lineHeight: '1.9'
+                }}>
+                  <li>① 画面上部のメニューから「ファイル」をクリック</li>
+                  <li>② 出たメニューで「ダウンロード」にマウスを乗せる</li>
+                  <li>③ 右に出るサブメニューから「カンマ区切り形式 (.csv)」をクリック</li>
+                  <li>CSVファイルがPCに保存されます</li>
+                </ul>
+              </div>
+              <div className="guide-sample-preview" style={{
+                backgroundColor: '#f8f9fa',
+                padding: '20px',
+                borderRadius: '8px',
+                border: '1px solid #dadce0',
+                transform: 'scale(0.95)',
+                transformOrigin: 'top right',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.1)'
+              }}>
+                <div style={{ marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid #dadce0' }}>
+                  <div style={{ fontSize: '11px', color: '#5f6368', marginBottom: 4 }}>スプレッドシート名 (回答)</div>
+                </div>
+                <div style={{ display: 'flex', gap: 2, marginBottom: 16, flexWrap: 'wrap' }}>
+                  <div style={{ padding: '6px 12px', fontSize: 12, fontWeight: 600, color: '#1a73e8', backgroundColor: 'rgba(26,115,232,0.1)', borderRadius: 4 }}>ファイル</div>
+                  <div style={{ padding: '6px 12px', fontSize: 12, color: '#5f6368' }}>編集</div>
+                  <div style={{ padding: '6px 12px', fontSize: 12, color: '#5f6368' }}>表示</div>
+                  <div style={{ padding: '6px 12px', fontSize: 12, color: '#5f6368' }}>挿入</div>
+                  <div style={{ padding: '6px 12px', fontSize: 12, color: '#5f6368' }}>表示形式</div>
+                  <div style={{ padding: '6px 12px', fontSize: 12, color: '#5f6368' }}>データ</div>
+                  <div style={{ padding: '6px 12px', fontSize: 12, color: '#5f6368' }}>ツール</div>
+                  <div style={{ padding: '6px 12px', fontSize: 12, color: '#5f6368' }}>拡張機能</div>
+                  <div style={{ padding: '6px 12px', fontSize: 12, color: '#5f6368' }}>ヘルプ</div>
+                </div>
+                <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
+                  <div style={{
+                    backgroundColor: '#fff', border: '1px solid #dadce0', borderRadius: 4,
+                    padding: '6px 0', minWidth: 200, boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
+                  }}>
+                    <div style={{ padding: '8px 16px', fontSize: 12, color: '#3c4043', borderBottom: '1px solid #eee' }}>新しいウィンドウで開く</div>
+                    <div style={{ padding: '8px 16px', fontSize: 12, color: '#3c4043', borderBottom: '1px solid #eee' }}>インポート</div>
+                    <div style={{ padding: '8px 16px', fontSize: 12, color: '#3c4043', borderBottom: '1px solid #eee' }}>コピーを作成</div>
+                    <div style={{ padding: '8px 16px', fontSize: 12, color: '#3c4043', borderBottom: '1px solid #eee' }}>共有</div>
+                    <div style={{ padding: '8px 16px', fontSize: 12, color: '#3c4043', borderBottom: '1px solid #eee' }}>メール</div>
+                    <div style={{ padding: '6px 16px 8px', backgroundColor: '#f8f9fa' }}>
+                      <div style={{ fontSize: 10, color: '#5f6368', marginBottom: 4 }}>② ダウンロード</div>
+                      <div style={{ paddingLeft: 8, borderLeft: '2px solid #1a73e8' }}>
+                        <div style={{ fontSize: 11, color: '#5f6368', padding: '4px 0' }}>Microsoft Excel (.xlsx)</div>
+                        <div style={{ fontSize: 11, color: '#5f6368', padding: '4px 0' }}>OpenDocument (.ods)</div>
+                        <div style={{ fontSize: 11, color: '#5f6368', padding: '4px 0' }}>PDF (.pdf)</div>
+                        <div style={{ fontSize: 11, color: '#5f6368', padding: '4px 0' }}>ウェブページ (.html)</div>
+                        <div style={{ fontSize: 11, color: '#1a73e8', fontWeight: 600, padding: '4px 0', backgroundColor: 'rgba(26,115,232,0.08)', margin: '2px -8px', paddingLeft: 8 }}>③ カンマ区切り形式 (.csv)</div>
+                        <div style={{ fontSize: 11, color: '#5f6368', padding: '4px 0' }}>タブ区切り形式 (.tsv)</div>
+                      </div>
+                    </div>
+                    <div style={{ padding: '8px 16px', fontSize: 12, color: '#3c4043', borderTop: '1px solid #eee' }}>名前を変更</div>
+                    <div style={{ padding: '8px 16px', fontSize: 12, color: '#3c4043' }}>印刷</div>
+                  </div>
+                  <div style={{ width: 120, marginLeft: 12, fontSize: 10, color: '#5f6368' }}>
+                    <div style={{ marginBottom: 4 }}>① ここをクリック</div>
+                    <div>→ ② ダウンロードにマウス</div>
+                    <div style={{ marginTop: 4 }}>→ ③ CSVを選択</div>
+                  </div>
+                </div>
+                <div style={{ marginTop: 12, padding: 8, backgroundColor: '#e8f0fe', borderRadius: 4, fontSize: 11, color: '#1967d2' }}>
+                  ファイル → ダウンロード → カンマ区切り形式 (.csv)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 各画面の説明 */}
       <section className="guide-section">
         <h2 className="page-header-title page-header-title--md guide-section-title">
@@ -122,6 +309,9 @@ export const GuidePage: React.FC = () => {
                 </h3>
                 <p style={{ color: 'var(--discord-text-normal)', marginBottom: '16px', lineHeight: '1.7' }}>
                   応募データはCSVファイルで取り込み、キャストはPC内のローカルデータから読み込みます。URLは使いません。
+                </p>
+                <p style={{ color: 'var(--discord-text-muted)', fontSize: '12px', marginBottom: '12px', lineHeight: '1.6' }}>
+                  ※ 上記「CSVを用意する」でGoogleフォーム→スプレッドシート→CSVの手順を解説しています。
                 </p>
                 <div style={{ marginTop: '16px' }}>
                   <p style={{ color: 'var(--discord-text-muted)', fontSize: '13px', marginBottom: '10px', fontWeight: 600 }}>
@@ -833,6 +1023,10 @@ export const GuidePage: React.FC = () => {
         </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {[
+            {
+              q: 'CSVの作り方が分かりません。Googleフォームの回答をどうCSVにすればいいですか？',
+              a: 'ガイド上部の「CSVを用意する（事前準備）」を参照してください。Googleフォームの回答をスプレッドシートに連携し、スプレッドシートから「ファイル → ダウンロード → カンマ区切り値」でCSVを保存する手順を説明しています。'
+            },
             {
               q: '「列数が足りません」と出ます。',
               a: 'テンプレート形式では必要な列数を満たしているか確認してください。カスタム形式では「列の割り当て」で各項目に十分な列を指定しているか確認してください。'

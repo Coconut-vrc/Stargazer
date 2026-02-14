@@ -4,22 +4,18 @@ import type { UserBean } from '@/stores/AppContext';
 import { DiscordTable, DiscordTableColumn } from '@/components/DiscordTable';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { isCautionUser, isNGException, computeAutoCautionUsers } from '@/features/matching/logics/caution-user';
+import { openInDefaultBrowser } from '@/common/openExternal';
+import { EXTERNAL_LINK } from '@/common/copy';
 
 /**
  * X IDセル専用コンポーネント
  */
 const XLinkCell: React.FC<{
   xId: string;
-  baseStyle: React.CSSProperties;
+  isCaution: boolean;
   onConfirmOpen: (url: string) => void;
-}> = ({ xId, baseStyle, onConfirmOpen }) => {
+}> = ({ xId, isCaution, onConfirmOpen }) => {
   const handle = xId ? xId.replace(/^@/, '') : '';
-  const cellStyle: React.CSSProperties = {
-    ...baseStyle,
-    cursor: handle ? 'pointer' : 'default',
-    color: handle ? 'var(--discord-text-link)' : 'var(--discord-text-normal)',
-    transition: 'background-color 0.17s ease',
-  };
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -27,13 +23,16 @@ const XLinkCell: React.FC<{
     onConfirmOpen(`https://x.com/${handle}`);
   };
 
+  const cls = [
+    'db-table__cell',
+    isCaution ? 'db-table__cell--caution' : '',
+    handle ? 'db-table__cell--link' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <td
-      style={cellStyle}
-      onClick={handleClick}
-      onMouseEnter={(e) => handle && (e.currentTarget.style.backgroundColor = 'var(--discord-bg-hover)')}
-      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-    >
+    <td className={cls} onClick={handleClick}>
       {handle ? `@${handle}` : '—'}
     </td>
   );
@@ -85,9 +84,9 @@ const DBViewPageComponent: React.FC = () => {
     setPendingUrl(url);
   }, []);
 
-  const handleOpenUrl = useCallback(() => {
+  const handleOpenUrl = useCallback(async () => {
     if (pendingUrl) {
-      window.open(pendingUrl, '_blank', 'noopener,noreferrer');
+      await openInDefaultBrowser(pendingUrl);
       setPendingUrl(null);
     }
   }, [pendingUrl]);
@@ -96,28 +95,10 @@ const DBViewPageComponent: React.FC = () => {
     setPendingUrl(null);
   }, []);
 
-  const tableHeaderStyle: React.CSSProperties = {
-    textAlign: 'left',
-    padding: '10px 12px',
-    fontSize: '11px', // Image 1対応：一回り小さく
-    color: 'var(--discord-text-muted)',
-    textTransform: 'uppercase',
-    fontWeight: 600,
-    borderBottom: '1px solid var(--discord-border)',
-    backgroundColor: 'var(--discord-bg-sidebar)',
-  };
-
-  const cellStyle: React.CSSProperties = {
-    padding: '10px 12px',
-    fontSize: '12px', // Image 1対応：一回り小さく
-    color: 'var(--discord-text-normal)',
-    borderBottom: '1px solid var(--discord-border)',
-  };
-
   const emptyRow = useMemo(
     () => (
       <tr>
-        <td colSpan={7} className="table-cell" style={{ padding: '32px', textAlign: 'center', color: 'var(--discord-text-muted)' }}>
+        <td colSpan={7} className="db-table__cell db-table__cell--empty">
           データがありません。左メニューの「データ読取」からCSVファイルを取り込んでください。
         </td>
       </tr>
@@ -125,83 +106,63 @@ const DBViewPageComponent: React.FC = () => {
     [],
   );
 
-  const rowCellStyle = useCallback(
-    (user: UserBean) => {
-      const isCaution =
-        isCautionUser(user, cautionList) && !isNGException(user, matchingSettings.ngExceptions.exceptions);
-      return isCaution ? { ...cellStyle, backgroundColor: 'rgba(237, 66, 69, 0.15)' } : cellStyle;
-    },
-    [cellStyle, cautionList, matchingSettings.ngExceptions.exceptions],
+  const isCautionRow = useCallback(
+    (user: UserBean) =>
+      isCautionUser(user, cautionList) && !isNGException(user, matchingSettings.ngExceptions.exceptions),
+    [cautionList, matchingSettings.ngExceptions.exceptions],
   );
 
   const columns: DiscordTableColumn<(typeof userData)[number]>[] = useMemo(
     () => [
       {
         header: '名前',
-        headerStyle: tableHeaderStyle,
-        renderCell: (user) => <td style={rowCellStyle(user)}>{user.name}</td>,
+        headerClassName: 'db-table__th',
+        renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.name}</td>,
       },
       {
         header: (
           <>
             X ID
-            <span
-              style={{
-                fontSize: '9px',
-                fontWeight: 400,
-                color: 'var(--discord-text-muted)',
-                marginLeft: '6px',
-                fontStyle: 'italic',
-              }}
-            >
-              （クリックでユーザーページに遷移）
-            </span>
+            <span className="db-table__th-hint">（クリックでユーザーページに遷移）</span>
           </>
         ),
-        headerStyle: tableHeaderStyle,
+        headerClassName: 'db-table__th',
         renderCell: (user) => (
-          <XLinkCell xId={user.x_id} baseStyle={rowCellStyle(user)} onConfirmOpen={handleConfirmOpen} />
+          <XLinkCell xId={user.x_id} isCaution={isCautionRow(user)} onConfirmOpen={handleConfirmOpen} />
         ),
       },
       {
         header: '希望1',
-        headerStyle: tableHeaderStyle,
-        renderCell: (user) => <td style={rowCellStyle(user)}>{user.casts[0] || '—'}</td>,
+        headerClassName: 'db-table__th',
+        renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.casts[0] || '—'}</td>,
       },
       {
         header: '希望2',
-        headerStyle: tableHeaderStyle,
-        renderCell: (user) => <td style={rowCellStyle(user)}>{user.casts[1] || '—'}</td>,
+        headerClassName: 'db-table__th',
+        renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.casts[1] || '—'}</td>,
       },
       {
         header: '希望3',
-        headerStyle: tableHeaderStyle,
-        renderCell: (user) => <td style={rowCellStyle(user)}>{user.casts[2] || '—'}</td>,
+        headerClassName: 'db-table__th',
+        renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.casts[2] || '—'}</td>,
       },
       {
         header: '意気込み',
-        headerStyle: tableHeaderStyle,
+        headerClassName: 'db-table__th',
         renderCell: (user) => (
-          <td
-            style={{
-              ...rowCellStyle(user),
-              color: 'var(--discord-text-muted)',
-              fontSize: '11px',
-            }}
-          >
+          <td className={`db-table__cell db-table__cell--note${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>
             {user.note}
           </td>
         ),
       },
       {
         header: '',
-        headerStyle: tableHeaderStyle,
+        headerClassName: 'db-table__th',
         renderCell: (user) => {
-          const isCaution =
-            isCautionUser(user, cautionList) && !isNGException(user, matchingSettings.ngExceptions.exceptions);
+          const caution = isCautionRow(user);
           return (
-            <td style={rowCellStyle(user)}>
-              {isCaution ? (
+            <td className={`db-table__cell${caution ? ' db-table__cell--caution' : ''}`}>
+              {caution ? (
                 <button
                   type="button"
                   onClick={() => setConfirmRemoveUser(user)}
@@ -219,7 +180,7 @@ const DBViewPageComponent: React.FC = () => {
         },
       },
     ],
-    [cellStyle, tableHeaderStyle, rowCellStyle, cautionList, matchingSettings.ngExceptions.exceptions],
+    [isCautionRow, handleConfirmOpen],
   );
 
   return (
@@ -228,15 +189,7 @@ const DBViewPageComponent: React.FC = () => {
         <h1 className="page-header-title page-header-title--md">名簿データベース</h1>
         <button
           onClick={() => setActivePage('lotteryCondition')}
-          className="btn-secondary"
-          style={{
-            width: 'auto',
-            padding: '8px 16px',
-            fontSize: '13px',
-            backgroundColor: 'var(--discord-accent-yellow)',
-            color: '#000',
-            border: 'none',
-          }}
+          className="btn-accent-yellow"
         >
           抽選条件へ
         </button>
@@ -244,13 +197,8 @@ const DBViewPageComponent: React.FC = () => {
 
       {showCautionWarning && (
         <div
-          className="banner-muted"
+          className="banner-muted banner-muted--danger"
           role="alert"
-          style={{
-            marginBottom: 16,
-            borderLeft: '4px solid var(--discord-text-danger)',
-            backgroundColor: 'rgba(237, 66, 69, 0.1)',
-          }}
         >
           要注意人物が含まれています。該当行は赤でマークされ、右端の❌からリストから削除できます。NG例外に登録したユーザーは警告されません。
         </div>
@@ -260,20 +208,20 @@ const DBViewPageComponent: React.FC = () => {
         <DiscordTable
           columns={columns}
           rows={userData}
-          containerStyle={undefined}
-          tableStyle={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}
-          headerRowStyle={undefined}
+          tableClassName="db-table"
           emptyRow={emptyRow}
         />
       </div>
 
       {pendingUrl && (
         <ConfirmModal
-          message={`外部サイト（X）に遷移しますか？\n${pendingUrl}`}
+          type="confirm"
+          title={EXTERNAL_LINK.MODAL_TITLE}
+          message={`${EXTERNAL_LINK.MODAL_MESSAGE}\n\n${pendingUrl}`}
+          confirmLabel={EXTERNAL_LINK.CONFIRM_LABEL}
+          cancelLabel={EXTERNAL_LINK.CANCEL_LABEL}
           onConfirm={handleOpenUrl}
           onCancel={handleCancelOpen}
-          confirmLabel="OK"
-          type="confirm"
         />
       )}
 

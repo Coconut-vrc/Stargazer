@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { UserBean, CastBean } from '@/common/types/entities';
-import { STORAGE_KEYS } from '@/common/config';
+import { STORAGE_KEYS, type LaunchBehavior } from '@/common/config';
 import { DEFAULT_THEME_ID, THEME_IDS, type ThemeId } from '@/common/themes';
 import {
   getInitialMatchingSettings,
@@ -11,7 +11,7 @@ import { MATCHING_TYPE_CODES, type MatchingTypeCode } from '@/features/matching/
 import { DEFAULT_ROTATION_COUNT } from '@/common/copy';
 export type { UserBean, CastBean } from '@/common/types/entities';
 
-const VALID_PAGES: readonly string[] = ['import', 'db', 'cast', 'ngManagement', 'lotteryCondition', 'lottery', 'matching', 'guide', 'settings', 'debug'];
+const VALID_PAGES: readonly string[] = ['home', 'import', 'db', 'cast', 'ngManagement', 'lotteryCondition', 'lottery', 'matching', 'guide', 'settings', 'debug'];
 
 const VALID_MATCHING_CODES: readonly string[] = [...MATCHING_TYPE_CODES];
 
@@ -34,7 +34,7 @@ function getInitialSession(): PersistedSession | null {
       : DEFAULT_ROTATION_COUNT;
     const activePage = typeof o.activePage === 'string' && VALID_PAGES.includes(o.activePage)
       ? (o.activePage as PageType)
-      : 'import';
+      : 'home';
     const groupCount = typeof (o as { groupCount?: number }).groupCount === 'number' && (o as { groupCount: number }).groupCount >= 1
       ? (o as { groupCount: number }).groupCount
       : 1;
@@ -63,9 +63,20 @@ function getInitialSession(): PersistedSession | null {
   }
 }
 
-export type PageType = 'import' | 'db' | 'cast' | 'ngManagement' | 'lotteryCondition' | 'lottery' | 'matching' | 'guide' | 'settings' | 'debug';
+export type PageType = 'home' | 'import' | 'db' | 'cast' | 'ngManagement' | 'lotteryCondition' | 'lottery' | 'matching' | 'guide' | 'settings' | 'debug';
 export type { MatchingTypeCode } from '@/features/matching/types/matching-type-codes';
 export type { ThemeId } from '@/common/themes';
+
+function getInitialLaunchBehavior(): LaunchBehavior {
+  if (typeof window === 'undefined') return 'top';
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.LAUNCH_BEHAVIOR);
+    if (!raw) return 'top';
+    return raw === 'last' ? 'last' : 'top';
+  } catch {
+    return 'top';
+  }
+}
 
 function getInitialThemeId(): ThemeId {
   if (typeof window === 'undefined') return DEFAULT_THEME_ID;
@@ -116,6 +127,8 @@ export class Repository {
 interface AppContextType {
   activePage: PageType;
   setActivePage: (page: PageType) => void;
+  launchBehavior: LaunchBehavior;
+  setLaunchBehavior: (v: LaunchBehavior) => void;
   repository: Repository;
   currentWinners: UserBean[];
   setCurrentWinners: (winners: UserBean[]) => void;
@@ -142,9 +155,18 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 const repositoryInstance = new Repository();
 
+function getInitialActivePage(): PageType {
+  const launchBehavior = getInitialLaunchBehavior();
+  if (launchBehavior === 'top') return 'home';
+  const session = getInitialSession();
+  const lastPage = session?.activePage;
+  return lastPage && lastPage !== 'home' ? lastPage : 'home';
+}
+
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const initialSession = useState(() => getInitialSession())[0];
-  const [activePage, setActivePage] = useState<PageType>(initialSession?.activePage ?? 'import');
+  const [activePage, setActivePage] = useState<PageType>(getInitialActivePage);
+  const [launchBehavior, setLaunchBehaviorState] = useState<LaunchBehavior>(getInitialLaunchBehavior);
   const [currentWinners, setCurrentWinners] = useState<UserBean[]>(initialSession?.winners ?? []);
   const [matchingTypeCode, setMatchingTypeCode] = useState<MatchingTypeCode>(initialSession?.matchingTypeCode ?? 'M001');
   const [rotationCount, setRotationCount] = useState<number>(initialSession?.rotationCount ?? DEFAULT_ROTATION_COUNT);
@@ -185,10 +207,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     localStorage.setItem(STORAGE_KEYS.THEME, themeId);
   }, [themeId]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(STORAGE_KEYS.LAUNCH_BEHAVIOR, launchBehavior);
+  }, [launchBehavior]);
+
+  const setLaunchBehavior = (v: LaunchBehavior) => setLaunchBehaviorState(v);
+
   return (
     <AppContext.Provider value={{
       activePage,
       setActivePage,
+      launchBehavior,
+      setLaunchBehavior,
       repository: repositoryInstance,
       currentWinners,
       setCurrentWinners,

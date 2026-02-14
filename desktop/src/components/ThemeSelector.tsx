@@ -13,25 +13,40 @@ export const ThemeSelector: React.FC<{
 
   return (
     <RadioGroup.Root
-      className="theme-selector theme-selector--swatches"
+      className="theme-selector"
       value={themeId}
       onValueChange={handleValueChange}
       aria-label="テーマを選択"
     >
       {THEMES.map((t) => {
         const isActive = themeId === t.id;
-        const [c1, c2, c3] = t.previewColors;
+        const { bg, sidebar, card, accent, text } = t.preview;
         return (
           <RadioGroup.Item
             key={t.id}
             value={t.id}
-            className={`theme-swatch ${isActive ? 'active' : ''}`}
+            className={`theme-preview ${isActive ? 'active' : ''}`}
             title={THEME_NAMES[t.id]}
           >
-            <span className="theme-swatch__stripes">
-              <span className="theme-swatch__stripe" style={{ backgroundColor: c1 }} />
-              {c2 != null && <span className="theme-swatch__stripe" style={{ backgroundColor: c2 }} />}
-              {c3 != null && <span className="theme-swatch__stripe" style={{ backgroundColor: c3 }} />}
+            {/* ミニレイアウト */}
+            <span className="theme-preview__layout" style={{ backgroundColor: bg }}>
+              {/* サイドバー */}
+              <span className="theme-preview__sidebar" style={{ backgroundColor: sidebar }}>
+                <span className="theme-preview__sidebar-dot" style={{ backgroundColor: accent }} />
+                <span className="theme-preview__sidebar-line" style={{ backgroundColor: text, opacity: 0.25 }} />
+                <span className="theme-preview__sidebar-line" style={{ backgroundColor: text, opacity: 0.15 }} />
+              </span>
+              {/* コンテンツエリア */}
+              <span className="theme-preview__content">
+                <span className="theme-preview__card" style={{ backgroundColor: card }}>
+                  <span className="theme-preview__card-line" style={{ backgroundColor: text, opacity: 0.3 }} />
+                  <span className="theme-preview__card-line theme-preview__card-line--short" style={{ backgroundColor: text, opacity: 0.15 }} />
+                </span>
+                <span className="theme-preview__accent" style={{ backgroundColor: accent }} />
+              </span>
+            </span>
+            <span className="theme-preview__label" style={{ color: isActive ? undefined : undefined }}>
+              {THEME_NAMES[t.id]}
             </span>
           </RadioGroup.Item>
         );

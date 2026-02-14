@@ -11,6 +11,11 @@ function normalize(s: string): string {
   return s.trim().toLowerCase();
 }
 
+function normalizeIdForCompare(s: string): string {
+  const n = normalize(s);
+  return n.startsWith('@') ? n.slice(1) : n;
+}
+
 function matchEntry(user: UserBean, entry: NGUserEntry, judgmentType: NGJudgmentType): boolean {
   const nameMatch =
     entry.username !== undefined &&
@@ -19,7 +24,7 @@ function matchEntry(user: UserBean, entry: NGUserEntry, judgmentType: NGJudgment
   const idMatch =
     entry.accountId !== undefined &&
     entry.accountId.trim() !== '' &&
-    normalize(user.x_id) === normalize(entry.accountId);
+    normalizeIdForCompare(user.x_id) === normalizeIdForCompare(entry.accountId);
 
   if (judgmentType === 'username') return nameMatch;
   if (judgmentType === 'accountId') return idMatch;
