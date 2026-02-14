@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { UserBean, CastBean } from '@/common/types/entities';
-import { STORAGE_KEYS, type LaunchBehavior } from '@/common/config';
+import { STORAGE_KEYS } from '@/common/config';
 import { DEFAULT_THEME_ID, THEME_IDS, type ThemeId } from '@/common/themes';
 import {
   getInitialMatchingSettings,
@@ -11,7 +11,7 @@ import { MATCHING_TYPE_CODES, type MatchingTypeCode } from '@/features/matching/
 import { DEFAULT_ROTATION_COUNT } from '@/common/copy';
 export type { UserBean, CastBean } from '@/common/types/entities';
 
-const VALID_PAGES: readonly string[] = ['home', 'guide', 'dataManagement', 'castNgManagement', 'settings', 'debug', 'import', 'db', 'cast', 'ngManagement', 'lotteryCondition', 'lottery', 'matching'];
+const VALID_PAGES: readonly string[] = ['guide', 'dataManagement', 'castNgManagement', 'settings', 'debug', 'import', 'db', 'cast', 'ngManagement', 'lotteryCondition', 'lottery', 'matching'];
 
 const VALID_MATCHING_CODES: readonly string[] = [...MATCHING_TYPE_CODES];
 
@@ -24,7 +24,6 @@ function getInitialSession(): PersistedSession | null {
     if (!d || typeof d !== 'object') return null;
     const o = d as Record<string, unknown>;
     if (!Array.isArray(o.winners)) return null;
-    const totalTables = typeof (o as { totalTables?: number }).totalTables === 'number' ? (o as { totalTables: number }).totalTables : 15;
     let matchingTypeCode: MatchingTypeCode = 'NONE';
     if (typeof o.matchingTypeCode === 'string' && VALID_MATCHING_CODES.includes(o.matchingTypeCode)) {
       matchingTypeCode = o.matchingTypeCode as MatchingTypeCode;
@@ -34,13 +33,7 @@ function getInitialSession(): PersistedSession | null {
       : DEFAULT_ROTATION_COUNT;
     const activePage = typeof o.activePage === 'string' && VALID_PAGES.includes(o.activePage)
       ? (o.activePage as PageType)
-      : 'home';
-    const groupCount = typeof (o as { groupCount?: number }).groupCount === 'number' && (o as { groupCount: number }).groupCount >= 1
-      ? (o as { groupCount: number }).groupCount
-      : 1;
-    const usersPerGroup = typeof (o as { usersPerGroup?: number }).usersPerGroup === 'number' && (o as { usersPerGroup: number }).usersPerGroup >= 1
-      ? (o as { usersPerGroup: number }).usersPerGroup
-      : 1;
+      : 'dataManagement';
     const usersPerTable = typeof (o as { usersPerTable?: number }).usersPerTable === 'number' && (o as { usersPerTable: number }).usersPerTable >= 1
       ? (o as { usersPerTable: number }).usersPerTable
       : 1;
@@ -49,11 +42,8 @@ function getInitialSession(): PersistedSession | null {
       : 1;
     return {
       winners: o.winners as UserBean[],
-      totalTables,
       matchingTypeCode,
       rotationCount,
-      groupCount,
-      usersPerGroup,
       usersPerTable,
       castsPerRotation,
       activePage,
@@ -63,20 +53,9 @@ function getInitialSession(): PersistedSession | null {
   }
 }
 
-export type PageType = 'home' | 'guide' | 'dataManagement' | 'castNgManagement' | 'settings' | 'debug' | 'import' | 'db' | 'cast' | 'ngManagement' | 'lotteryCondition' | 'lottery' | 'matching';
+export type PageType = 'guide' | 'dataManagement' | 'castNgManagement' | 'settings' | 'debug' | 'import' | 'db' | 'cast' | 'ngManagement' | 'lotteryCondition' | 'lottery' | 'matching';
 export type { MatchingTypeCode } from '@/features/matching/types/matching-type-codes';
 export type { ThemeId } from '@/common/themes';
-
-function getInitialLaunchBehavior(): LaunchBehavior {
-  if (typeof window === 'undefined') return 'top';
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.LAUNCH_BEHAVIOR);
-    if (!raw) return 'top';
-    return raw === 'last' ? 'last' : 'top';
-  } catch {
-    return 'top';
-  }
-}
 
 function getInitialThemeId(): ThemeId {
   if (typeof window === 'undefined') return DEFAULT_THEME_ID;
@@ -92,13 +71,8 @@ function getInitialThemeId(): ThemeId {
 
 export interface PersistedSession {
   winners: UserBean[];
-  totalTables: number;
   matchingTypeCode: MatchingTypeCode;
   rotationCount: number;
-  /** M005用: グループ数 */
-  groupCount: number;
-  /** M005用: 1グループあたりの人数 */
-  usersPerGroup: number;
   /** M006用: 1テーブルあたりのユーザー数 */
   usersPerTable: number;
   /** M006用: 1ローテあたりのキャスト数 */
@@ -127,23 +101,17 @@ export class Repository {
 interface AppContextType {
   activePage: PageType;
   setActivePage: (page: PageType) => void;
-  launchBehavior: LaunchBehavior;
-  setLaunchBehavior: (v: LaunchBehavior) => void;
   repository: Repository;
   currentWinners: UserBean[];
   setCurrentWinners: (winners: UserBean[]) => void;
+  guaranteedWinners: UserBean[];
+  setGuaranteedWinners: (winners: UserBean[]) => void;
   matchingTypeCode: MatchingTypeCode;
   setMatchingTypeCode: (code: MatchingTypeCode) => void;
   rotationCount: number;
   setRotationCount: (n: number) => void;
   themeId: ThemeId;
   setThemeId: (id: ThemeId) => void;
-  totalTables: number;
-  setTotalTables: (n: number) => void;
-  groupCount: number;
-  setGroupCount: (n: number) => void;
-  usersPerGroup: number;
-  setUsersPerGroup: (n: number) => void;
   usersPerTable: number;
   setUsersPerTable: (n: number) => void;
   castsPerRotation: number;
@@ -156,24 +124,19 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 const repositoryInstance = new Repository();
 
 function getInitialActivePage(): PageType {
-  const launchBehavior = getInitialLaunchBehavior();
-  if (launchBehavior === 'top') return 'home';
   const session = getInitialSession();
   const lastPage = session?.activePage;
-  return lastPage && lastPage !== 'home' ? lastPage : 'home';
+  return lastPage ?? 'dataManagement';
 }
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const initialSession = useState(() => getInitialSession())[0];
   const [activePage, setActivePage] = useState<PageType>(getInitialActivePage);
-  const [launchBehavior, setLaunchBehaviorState] = useState<LaunchBehavior>(getInitialLaunchBehavior);
   const [currentWinners, setCurrentWinners] = useState<UserBean[]>(initialSession?.winners ?? []);
+  const [guaranteedWinners, setGuaranteedWinners] = useState<UserBean[]>([]);
   const [matchingTypeCode, setMatchingTypeCode] = useState<MatchingTypeCode>(initialSession?.matchingTypeCode ?? 'NONE');
   const [rotationCount, setRotationCount] = useState<number>(initialSession?.rotationCount ?? DEFAULT_ROTATION_COUNT);
   const [themeId, setThemeId] = useState<ThemeId>(() => getInitialThemeId());
-  const [totalTables, setTotalTables] = useState<number>(initialSession?.totalTables ?? 15);
-  const [groupCount, setGroupCount] = useState<number>(initialSession?.groupCount ?? 1);
-  const [usersPerGroup, setUsersPerGroup] = useState<number>(initialSession?.usersPerGroup ?? 1);
   const [usersPerTable, setUsersPerTable] = useState<number>(initialSession?.usersPerTable ?? 1);
   const [castsPerRotation, setCastsPerRotation] = useState<number>(initialSession?.castsPerRotation ?? 1);
   const [matchingSettings, setMatchingSettingsState] = useState<MatchingSettingsState>(() => getInitialMatchingSettings());
@@ -190,51 +153,35 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (typeof window === 'undefined') return;
     const session: PersistedSession = {
       winners: currentWinners,
-      totalTables,
       matchingTypeCode,
       rotationCount,
-      groupCount,
-      usersPerGroup,
       usersPerTable,
       castsPerRotation,
       activePage,
     };
     localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(session));
-  }, [currentWinners, totalTables, matchingTypeCode, rotationCount, groupCount, usersPerGroup, usersPerTable, castsPerRotation, activePage]);
+  }, [currentWinners, matchingTypeCode, rotationCount, usersPerTable, castsPerRotation, activePage]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     localStorage.setItem(STORAGE_KEYS.THEME, themeId);
   }, [themeId]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(STORAGE_KEYS.LAUNCH_BEHAVIOR, launchBehavior);
-  }, [launchBehavior]);
-
-  const setLaunchBehavior = (v: LaunchBehavior) => setLaunchBehaviorState(v);
-
   return (
     <AppContext.Provider value={{
       activePage,
       setActivePage,
-      launchBehavior,
-      setLaunchBehavior,
       repository: repositoryInstance,
       currentWinners,
       setCurrentWinners,
+      guaranteedWinners,
+      setGuaranteedWinners,
       matchingTypeCode,
       setMatchingTypeCode,
       rotationCount,
       setRotationCount,
       themeId,
       setThemeId,
-      totalTables,
-      setTotalTables,
-      groupCount,
-      setGroupCount,
-      usersPerGroup,
-      setUsersPerGroup,
       usersPerTable,
       setUsersPerTable,
       castsPerRotation,

@@ -1,0 +1,59 @@
+# ==========================================
+# Cursor AI Ignore List
+# ==========================================
+
+# 1. 巨大な蓄積ファイル（最優先で除外）
+# 2.6MBもあり、1回で大量のトークンを消費するため
+all_codes_combined.txt
+
+# 2. ビルド成果物・キャッシュ
+# AIが修正する必要のない自動生成ファイル
+.next/
+dist/
+out/
+build/
+*.tsbuildinfo
+.cache/
+
+# 3. 依存ライブラリ
+# ここをスキャンすると動作が極端に重くなる
+node_modules/
+
+# 4. パッケージマネージャーのロックファイル
+# 数万行の依存関係リストであり、ロジック相談には不要
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# 5. 画像・バイナリ資産
+# AIは画像の中身をテキストとして読めないため無駄
+public/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.pdf
+app-icon.png
+
+# 6. 環境変数・機密情報
+# セキュリティおよびトークン節約のため
+.env
+.env.local
+.env.production
+.env.development
+.env.example
+
+# 7. ログ・一時ファイル
+*.log
+npm-debug.log*
+yarn-debug.log*
+tmp/
+temp/
+
+# 8. その他スクリプト・ドキュメント
+# コード修正時に直接関係ないもの
+collector.py
+scripts/
+Untitled

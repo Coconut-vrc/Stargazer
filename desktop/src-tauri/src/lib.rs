@@ -22,17 +22,32 @@ fn ensure_app_dirs() -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+fn check_app_dirs_exist() -> Result<bool, String> {
+    let base = cosmoarts_store_dir()?;
+    if !base.exists() {
+        return Ok(false);
+    }
+    for name in ["cast", "import", "app", "backup"] {
+        let dir = base.join(name);
+        if !dir.exists() {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
 // --- JSON ローカルDB（キャスト・NG） ---
 fn cast_db_path() -> Result<std::path::PathBuf, String> {
     let base = cosmoarts_store_dir()?;
-    Ok(base.join("cast").join("db.json"))
+    Ok(base.join("cast").join("cast.json"))
 }
 
 #[tauri::command]
 fn read_cast_db_json() -> Result<String, String> {
     let path = cast_db_path()?;
     if path.exists() {
-        std::fs::read_to_string(&path).map_err(|e| format!("db.json 読み込み失敗: {}", e))
+        std::fs::read_to_string(&path).map_err(|e| format!("cast.json 読み込み失敗: {}", e))
     } else {
         Ok(r#"{"casts":[]}"#.to_string())
     }
@@ -44,7 +59,7 @@ fn write_cast_db_json(content: String) -> Result<(), String> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
-    std::fs::write(&path, content).map_err(|e| format!("db.json 保存失敗: {}", e))
+    std::fs::write(&path, content).map_err(|e| format!("cast.json 保存失敗: {}", e))
 }
 
 // --- デバッグ: LocalAppData 内フォルダ構造 ---
@@ -133,6 +148,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_app_data_dir,
             ensure_app_dirs,
+            check_app_dirs_exist,
             read_cast_db_json,
             write_cast_db_json,
             list_app_data_structure,

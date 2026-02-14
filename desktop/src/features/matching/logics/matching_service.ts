@@ -11,18 +11,12 @@ import type { NGJudgmentType, NGMatchingBehavior } from '@/features/matching/typ
 import type { MatchedCast, TableSlot, MatchingResult } from './matching-result-types';
 import { runCompleteRandom } from './complete-random';
 import { runCompleteRotation } from './complete-rotation';
-import { runVacantRandom } from './vacant-random';
-import { runVacantRotation } from './vacant-rotation';
-import { runGroupMatching } from './group-matching';
 import { runMultipleMatching } from './multiple-matching';
 
 export type { MatchedCast, TableSlot, MatchingResult } from './matching-result-types';
 
 export interface MatchingRunOptions {
   rotationCount: number;
-  totalTables?: number;
-  groupCount?: number;
-  usersPerGroup?: number;
   usersPerTable?: number;
   castsPerRotation?: number;
 }
@@ -65,39 +59,6 @@ export class MatchingService {
           winners,
           allCasts,
           ROUNDS,
-          ngJudgmentType,
-          ngMatchingBehavior,
-        );
-        break;
-      case 'M003':
-        result = runVacantRandom(
-          winners,
-          allCasts,
-          ROUNDS,
-          options.totalTables ?? winners.length,
-          ngJudgmentType,
-          ngMatchingBehavior,
-        );
-        break;
-      case 'M004':
-        result = runVacantRotation(
-          winners,
-          allCasts,
-          ROUNDS,
-          options.totalTables ?? winners.length,
-          ngJudgmentType,
-          ngMatchingBehavior,
-        );
-        break;
-      case 'M005':
-        result = runGroupMatching(
-          winners,
-          allCasts,
-          {
-            groupCount: options.groupCount ?? 1,
-            usersPerGroup: options.usersPerGroup ?? 1,
-            rotationCount: ROUNDS,
-          },
           ngJudgmentType,
           ngMatchingBehavior,
         );

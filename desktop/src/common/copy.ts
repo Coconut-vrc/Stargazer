@@ -8,10 +8,9 @@ export const APP_NAME = 'Stargazer';
 export const DEFAULT_ROTATION_COUNT = 2;
 
 export const NAV = {
-  HOME: 'ホーム',
   GUIDE: 'ガイド',
   DATA_MANAGEMENT: 'データ管理',
-  CAST_NG_MANAGEMENT: 'キャスト・NGユーザー管理',
+  CAST_NG_MANAGEMENT: 'キャスト管理',
   SETTINGS: '設定',
   DEBUG: 'デバッグ',
   // 旧ナビゲーション（後方互換性のため残す）
@@ -85,12 +84,6 @@ export const IMPORT_COLUMN_LABELS = {
   cast3: '希望キャスト3',
   note: '備考',
   is_pair_ticket: 'ペアチケット',
-} as const;
-
-export const SETTINGS = {
-  LAUNCH_BEHAVIOR_LABEL: '起動時の画面',
-  LAUNCH_TOP: '毎回ホームへ',
-  LAUNCH_LAST: '前回の画面を開く',
 } as const;
 
 export const GUIDE = {

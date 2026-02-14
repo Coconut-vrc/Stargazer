@@ -1,10 +1,9 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { Menu, X, LogOut, Settings, Bug, HelpCircle, Database, Users, Home } from 'lucide-react';
+import { Menu, X, LogOut, Settings, Bug, HelpCircle, Database, Users } from 'lucide-react';
 import { invoke } from '@/tauri';
 import { DataManagementPage } from '@/features/data-management/DataManagementPage';
 import { CastNgManagementPage } from '@/features/cast-ng-management/CastNgManagementPage';
 import { GuidePage } from '@/features/guide/GuidePage';
-import { TopPage } from '@/features/home/TopPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ConfirmModal } from '@/components/ConfirmModal';
@@ -29,7 +28,6 @@ export const AppContainer: React.FC = () => {
     setMatchingTypeCode,
     setRotationCount,
     setCurrentWinners,
-    setTotalTables,
     themeId,
   } = useAppContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -37,6 +35,7 @@ export const AppContainer: React.FC = () => {
   const [columnCheckError, setColumnCheckError] = useState<string | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showDirSetupConfirm, setShowDirSetupConfirm] = useState(false);
   /** CSV取り込みで既存応募データがあるときに確認用に保持する取り込み予定データ */
   const [pendingImport, setPendingImport] = useState<{
     rows: string[][];
@@ -44,7 +43,7 @@ export const AppContainer: React.FC = () => {
     options?: import('@/common/sheetParsers').MapRowOptions;
   } | null>(null);
 
-  /** キャスト一覧を LocalAppData/CosmoArtsStore/cast/db.json（JSON ローカルDB）に保存する（Tauri 内のみ） */
+  /** キャスト一覧を LocalAppData/CosmoArtsStore/cast/cast.json（JSON ローカルDB）に保存する（Tauri 内のみ） */
   const persistCastData = async (casts: import('@/common/types/entities').CastBean[]) => {
     if (!isTauri()) return;
     try {
@@ -55,7 +54,7 @@ export const AppContainer: React.FC = () => {
     }
   };
 
-  /** 起動時に Tauri 内なら LocalAppData の JSON DB（cast/db.json）からキャストを読み込む */
+  /** 起動時に Tauri 内なら LocalAppData の JSON DB（cast/cast.json）からキャストを読み込む */
   useEffect(() => {
     if (!isTauri()) return;
     const loadCastFromLocal = async () => {
@@ -92,6 +91,22 @@ export const AppContainer: React.FC = () => {
     loadCastFromLocal();
   }, [repository]);
 
+  /** 起動時にフォルダ存在確認を行い、必要なら確認モーダルを表示 */
+  useEffect(() => {
+    if (!isTauri()) return;
+    const checkDirs = async () => {
+      try {
+        const exists = await invoke<boolean>('check_app_dirs_exist');
+        if (!exists) {
+          setShowDirSetupConfirm(true);
+        }
+      } catch (e) {
+        console.warn('フォルダ存在確認に失敗:', e);
+      }
+    };
+    checkDirs();
+  }, []);
+
   const clearSessionData = () => {
     repository.resetAll();
     setCurrentWinners([]);
@@ -102,9 +117,18 @@ export const AppContainer: React.FC = () => {
     clearSessionData();
     setMatchingTypeCode('NONE');
     setRotationCount(DEFAULT_ROTATION_COUNT);
-    setTotalTables(15);
-    setActivePage('home');
+    setActivePage('dataManagement');
     setShowResetConfirm(false);
+  };
+
+  const handleDirSetupConfirm = async () => {
+    try {
+      await invoke('ensure_app_dirs');
+      setShowDirSetupConfirm(false);
+    } catch (e) {
+      setAlertMessage(`フォルダの作成に失敗しました: ${e}`);
+      setShowDirSetupConfirm(false);
+    }
   };
 
   /** ファイル選択で取り込んだ応募データ行とカラムマッピングで保存して DB 画面へ。既存の応募データ or 当選結果がある場合は上書き確認モーダルを表示。 */
@@ -149,18 +173,15 @@ export const AppContainer: React.FC = () => {
   };
 
   const sidebarButtons: { text: string; page: PageType; icon?: React.ReactNode }[] = [
-    { text: NAV.HOME, page: 'home', icon: <Home size={18} /> },
-    { text: NAV.GUIDE, page: 'guide', icon: <HelpCircle size={18} /> },
     { text: NAV.DATA_MANAGEMENT, page: 'dataManagement', icon: <Database size={18} /> },
     { text: NAV.CAST_NG_MANAGEMENT, page: 'castNgManagement', icon: <Users size={18} /> },
     ...(isDev ? [{ text: NAV.DEBUG, page: 'debug' as PageType, icon: <Bug size={18} /> }] : []),
     { text: NAV.SETTINGS, page: 'settings', icon: <Settings size={18} /> },
+    { text: NAV.GUIDE, page: 'guide', icon: <HelpCircle size={18} /> },
   ];
 
   const renderPage = () => {
     switch (activePage) {
-      case 'home':
-        return <TopPage />;
       case 'guide':
         return <GuidePage />;
       case 'dataManagement':
@@ -176,7 +197,7 @@ export const AppContainer: React.FC = () => {
           </Suspense>
         ) : null;
       default:
-        return <TopPage />;
+        return <DataManagementPage onImportUserRows={handleImportUserRows} />;
     }
   };
 
@@ -238,6 +259,17 @@ export const AppContainer: React.FC = () => {
             cancelLabel={RESET_APPLICATION.CANCEL_LABEL}
             onConfirm={handleResetApplication}
             onCancel={() => setShowResetConfirm(false)}
+          />
+        )}
+        {showDirSetupConfirm && (
+          <ConfirmModal
+            type="confirm"
+            title="初回セットアップ"
+            message={`%localAppData%\\CosmoArtsStore に以下のフォルダを作成します。\n\n・import\n・app\n・backup\n・cast\n\nよろしいですか？`}
+            confirmLabel="作成する"
+            cancelLabel="キャンセル"
+            onConfirm={handleDirSetupConfirm}
+            onCancel={() => setShowDirSetupConfirm(false)}
           />
         )}
         {pendingImport !== null && (

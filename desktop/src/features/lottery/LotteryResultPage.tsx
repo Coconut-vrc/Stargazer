@@ -6,9 +6,11 @@ import { downloadCsv } from '@/common/downloadCsv';
 import { openInDefaultBrowser } from '@/common/openExternal';
 
 export const LotteryResultPage: React.FC = () => {
-  const { currentWinners, setActivePage } = useAppContext();
+  const { currentWinners, guaranteedWinners, setActivePage } = useAppContext();
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+
+  const guaranteedIds = new Set(guaranteedWinners.map(w => w.x_id));
 
   const handleExportCsv = () => {
     if (currentWinners.length === 0) {
@@ -65,6 +67,7 @@ export const LotteryResultPage: React.FC = () => {
           <thead>
             <tr style={{ backgroundColor: 'var(--discord-bg-secondary)' }}>
               <th className="table-header-cell" style={{ width: '60px' }}>#</th>
+              <th className="table-header-cell" style={{ width: '80px' }}>区分</th>
               <th className="table-header-cell">ユーザー</th>
               <th className="table-header-cell">X ID</th>
               <th className="table-header-cell">希望1</th>
@@ -76,35 +79,41 @@ export const LotteryResultPage: React.FC = () => {
           <tbody>
             {currentWinners.length === 0 ? (
               <tr>
-                <td colSpan={7} className="table-cell" style={{ padding: '32px', textAlign: 'center', color: 'var(--discord-text-muted)' }}>
+                <td colSpan={8} className="table-cell" style={{ padding: '32px', textAlign: 'center', color: 'var(--discord-text-muted)' }}>
                   まだ抽選が行われていません。左メニューの「抽選条件」から抽選を実行してください。
                 </td>
               </tr>
             ) : (
-              currentWinners.map((user, index) => (
-                <tr key={`${user.x_id ?? user.name ?? ''}-${index}`}>
-                  <td className="table-cell" style={{ fontSize: '12px', color: 'var(--discord-text-muted)' }}>
-                    #{index + 1}
-                  </td>
-                  <td className="table-cell" style={{ fontSize: '14px' }}>{user.name}</td>
-                  <td
-                    className="table-cell text-x-id--clickable"
-                    style={{ fontSize: '13px', color: 'var(--discord-text-link)', cursor: user.x_id ? 'pointer' : 'default' }}
-                    onClick={() => {
-                      const handle = user.x_id?.replace(/^@/, '');
-                      if (handle) setPendingUrl(`https://x.com/${handle}`);
-                    }}
-                  >
-                    {user.x_id ? `@${user.x_id.replace(/^@/, '')}` : '—'}
-                  </td>
-                  <td className="table-cell" style={{ fontSize: '13px' }}>{user.casts[0] || '—'}</td>
-                  <td className="table-cell" style={{ fontSize: '13px' }}>{user.casts[1] || '—'}</td>
-                  <td className="table-cell" style={{ fontSize: '13px' }}>{user.casts[2] || '—'}</td>
-                  <td className="table-cell" style={{ fontSize: '12px', color: 'var(--discord-text-muted)' }}>
-                    {user.note || '—'}
-                  </td>
-                </tr>
-              ))
+              currentWinners.map((user, index) => {
+                const isGuaranteed = guaranteedIds.has(user.x_id);
+                return (
+                  <tr key={`${user.x_id ?? user.name ?? ''}-${index}`}>
+                    <td className="table-cell" style={{ fontSize: '12px', color: 'var(--discord-text-muted)' }}>
+                      #{index + 1}
+                    </td>
+                    <td className="table-cell" style={{ fontSize: '12px', fontWeight: isGuaranteed ? 'bold' : 'normal', color: isGuaranteed ? 'var(--discord-accent-green)' : 'var(--discord-text-muted)' }}>
+                      {isGuaranteed ? '確定' : '抽選'}
+                    </td>
+                    <td className="table-cell" style={{ fontSize: '14px' }}>{user.name}</td>
+                    <td
+                      className="table-cell text-x-id--clickable"
+                      style={{ fontSize: '13px', color: 'var(--discord-text-link)', cursor: user.x_id ? 'pointer' : 'default' }}
+                      onClick={() => {
+                        const handle = user.x_id?.replace(/^@/, '');
+                        if (handle) setPendingUrl(`https://x.com/${handle}`);
+                      }}
+                    >
+                      {user.x_id ? `@${user.x_id.replace(/^@/, '')}` : '—'}
+                    </td>
+                    <td className="table-cell" style={{ fontSize: '13px' }}>{user.casts[0] || '—'}</td>
+                    <td className="table-cell" style={{ fontSize: '13px' }}>{user.casts[1] || '—'}</td>
+                    <td className="table-cell" style={{ fontSize: '13px' }}>{user.casts[2] || '—'}</td>
+                    <td className="table-cell" style={{ fontSize: '12px', color: 'var(--discord-text-muted)' }}>
+                      {user.note || '—'}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

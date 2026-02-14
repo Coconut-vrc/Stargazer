@@ -2,24 +2,19 @@ import React, { useCallback, useState } from 'react';
 import { useAppContext } from '@/stores/AppContext';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { AppSelect } from '@/components/AppSelect';
-import { MATCHING_TYPE_CODES, MATCHING_TYPE_LABELS, isCompleteMatching, isVacantMatching } from '@/features/matching/types/matching-type-codes';
+import { MATCHING_TYPE_CODES, MATCHING_TYPE_LABELS, isCompleteMatching } from '@/features/matching/types/matching-type-codes';
 
 export const LotteryPage: React.FC = () => {
   const {
     setActivePage,
     repository,
     setCurrentWinners,
-    setTotalTables: setTotalTablesInContext,
+    guaranteedWinners,
+    setGuaranteedWinners,
     matchingTypeCode,
     setMatchingTypeCode,
     rotationCount,
     setRotationCount,
-    totalTables,
-    setTotalTables,
-    groupCount,
-    setGroupCount,
-    usersPerGroup,
-    setUsersPerGroup,
     usersPerTable,
     setUsersPerTable,
     castsPerRotation,
@@ -29,39 +24,28 @@ export const LotteryPage: React.FC = () => {
   const [count, setCount] = useState(15);
   const [confirmMessage, setConfirmMessage] = useState<string | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [showGuaranteedSelect, setShowGuaranteedSelect] = useState(false);
 
   const doRun = useCallback(() => {
     const all = repository.getAllApplyUsers();
-    const shuffled = [...all].sort(() => 0.5 - Math.random());
-    let takeCount = count;
-    if (matchingTypeCode === 'M005') {
-      takeCount = groupCount * usersPerGroup;
-    }
-    setCurrentWinners(shuffled.slice(0, takeCount));
-    if (isVacantMatching(matchingTypeCode)) {
-      setTotalTablesInContext(totalTables);
-    }
+    // 確定当選者を除外して抽選
+    const guaranteedIds = new Set(guaranteedWinners.map(w => w.x_id));
+    const eligible = all.filter(u => !guaranteedIds.has(u.x_id));
+    const shuffled = [...eligible].sort(() => 0.5 - Math.random());
+    const lotteryWinners = shuffled.slice(0, count);
+    // 確定当選者と抽選当選者を結合
+    setCurrentWinners([...guaranteedWinners, ...lotteryWinners]);
     setActivePage('lottery');
-  }, [count, repository, setActivePage, setCurrentWinners, matchingTypeCode, groupCount, usersPerGroup, totalTables, setTotalTablesInContext]);
+  }, [count, repository, setActivePage, setCurrentWinners, guaranteedWinners]);
 
   const run = useCallback(() => {
     const allCasts = repository.getAllCasts();
     const activeCastCount = allCasts.filter((c) => c.is_present).length;
-
-    if (matchingTypeCode === 'M005') {
-      const needCount = groupCount * usersPerGroup;
-      const totalUsers = repository.getAllApplyUsers().length;
-      if (needCount > totalUsers) {
-        setAlertMessage(`応募者数（${totalUsers}名）が足りません。グループ数×1グループ人数は${totalUsers}名以下にしてください。`);
-        return;
-      }
-      doRun();
-      return;
-    }
+    const totalWinners = count + guaranteedWinners.length;
 
     if (matchingTypeCode === 'M006') {
-      if (count % usersPerTable !== 0) {
-        setAlertMessage('当選者数は「1テーブルあたりのユーザー数」で割り切れる値にしてください。');
+      if (totalWinners % usersPerTable !== 0) {
+        setAlertMessage(`当選者数（確定枠${guaranteedWinners.length}名 + 抽選枠${count}名 = ${totalWinners}名）は「1テーブルあたりのユーザー数」で割り切れる値にしてください。`);
         return;
       }
       if (activeCastCount % castsPerRotation !== 0) {
@@ -72,31 +56,20 @@ export const LotteryPage: React.FC = () => {
       return;
     }
 
-    if (count > activeCastCount) {
-      setAlertMessage('出席キャスト数を超えているため、抽選人数を調整してください。');
+    if (totalWinners > activeCastCount) {
+      setAlertMessage(`当選者数の合計（確定枠${guaranteedWinners.length}名 + 抽選枠${count}名 = ${totalWinners}名）が出席キャスト数を超えています。`);
       return;
     }
 
-    if (isVacantMatching(matchingTypeCode) && totalTables < count) {
-      setAlertMessage('総テーブル数は当選者数以上にしてください。');
-      return;
-    }
-
-    if (isCompleteMatching(matchingTypeCode) && count !== activeCastCount) {
+    if (isCompleteMatching(matchingTypeCode) && totalWinners !== activeCastCount) {
       setConfirmMessage(
-        `出席者数（${activeCastCount}人）と当選人数（${count}人）が一致していませんがよろしいですか？`
-      );
-      return;
-    }
-    if (isVacantMatching(matchingTypeCode) && totalTables !== activeCastCount) {
-      setConfirmMessage(
-        `出席者数（${activeCastCount}人）と総テーブル数（${totalTables}人）が一致していませんがよろしいですか？`
+        `出席者数（${activeCastCount}人）と当選人数（確定枠${guaranteedWinners.length}名 + 抽選枠${count}名 = ${totalWinners}名）が一致していませんがよろしいですか？`
       );
       return;
     }
 
     doRun();
-  }, [matchingTypeCode, count, totalTables, groupCount, usersPerGroup, usersPerTable, castsPerRotation, repository, doRun]);
+  }, [matchingTypeCode, count, guaranteedWinners, usersPerTable, castsPerRotation, repository, doRun]);
 
   const handleConfirmOk = useCallback(() => {
     doRun();
@@ -107,8 +80,19 @@ export const LotteryPage: React.FC = () => {
     setConfirmMessage(null);
   }, []);
 
-  const showCountInput = matchingTypeCode !== 'M005';
-  const countLabel = matchingTypeCode === 'M005' ? null : isCompleteMatching(matchingTypeCode) ? '当選人数' : '当選者数';
+  const showCountInput = true;
+  const countLabel = isCompleteMatching(matchingTypeCode) ? '抽選枠人数' : '当選者数（抽選枠）';
+
+  const handleToggleGuaranteed = (user: import('@/common/types/entities').UserBean) => {
+    const isSelected = guaranteedWinners.some(w => w.x_id === user.x_id);
+    if (isSelected) {
+      setGuaranteedWinners(guaranteedWinners.filter(w => w.x_id !== user.x_id));
+    } else {
+      setGuaranteedWinners([...guaranteedWinners, user]);
+    }
+  };
+
+  const allUsers = repository.getAllApplyUsers();
 
   return (
     <div className="page-wrapper">
@@ -146,6 +130,42 @@ export const LotteryPage: React.FC = () => {
           </div>
         </div>
 
+        <div className="form-group">
+          <label className="form-label">確定当選枠</label>
+          <p className="form-inline-note mb-12">
+            抽選せずに確定で当選させるユーザーを選択できます（{guaranteedWinners.length}名選択中）
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowGuaranteedSelect(!showGuaranteedSelect)}
+            className="btn-secondary"
+          >
+            {showGuaranteedSelect ? '選択を閉じる' : '確定当選者を選択する'}
+          </button>
+          {showGuaranteedSelect && (
+            <div style={{ marginTop: '12px', maxHeight: '300px', overflowY: 'auto', border: '1px solid #ddd', padding: '8px', borderRadius: '4px' }}>
+              {allUsers.length === 0 ? (
+                <p className="form-inline-note">応募者データがありません</p>
+              ) : (
+                allUsers.map((user) => {
+                  const isSelected = guaranteedWinners.some(w => w.x_id === user.x_id);
+                  return (
+                    <label key={user.x_id} style={{ display: 'block', padding: '4px 0', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleToggleGuaranteed(user)}
+                        style={{ marginRight: '8px' }}
+                      />
+                      {user.name} ({user.x_id})
+                    </label>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </div>
+
         {showCountInput && countLabel !== null && (
           <div className="form-group">
             <label className="form-label">{countLabel}</label>
@@ -165,57 +185,6 @@ export const LotteryPage: React.FC = () => {
               )}
             </div>
           </div>
-        )}
-
-        {isVacantMatching(matchingTypeCode) && (
-          <div className="form-group">
-            <label className="form-label">総テーブル数</label>
-            <div className="form-inline-group">
-              <input
-                type="number"
-                value={totalTables}
-                min={count}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setTotalTables(Number.isFinite(v) && v >= count ? v : totalTables);
-                }}
-                className="form-number-input"
-              />
-              <span className="form-inline-note">※ 当選者を含む、用意済みテーブルの総数</span>
-            </div>
-          </div>
-        )}
-
-        {matchingTypeCode === 'M005' && (
-          <>
-            <div className="form-group">
-              <label className="form-label">グループ数</label>
-              <input
-                type="number"
-                value={groupCount}
-                min={1}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setGroupCount(Number.isFinite(v) && v >= 1 ? v : groupCount);
-                }}
-                className="form-number-input"
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">1グループあたりの人数</label>
-              <input
-                type="number"
-                value={usersPerGroup}
-                min={1}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setUsersPerGroup(Number.isFinite(v) && v >= 1 ? v : usersPerGroup);
-                }}
-                className="form-number-input"
-              />
-              <p className="form-inline-note">※ 総ユーザー数 = グループ数 × 1グループの人数</p>
-            </div>
-          </>
         )}
 
         {matchingTypeCode === 'M006' && (
