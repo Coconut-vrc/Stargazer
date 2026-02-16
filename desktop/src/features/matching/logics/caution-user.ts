@@ -10,8 +10,8 @@ import type { UserBean, CastBean } from '@/common/types/entities';
 import type { NGJudgmentType, CautionUser, NGException } from '@/features/matching/types/matching-system-types';
 import { isUserNGForCast } from '@/features/matching/logics/ng-judgment';
 
-function normalize(s: string): string {
-  return s.trim().toLowerCase().replace(/^@/, '');
+function normalize(s: string | undefined): string {
+  return (s ?? '').trim().toLowerCase().replace(/^@/, '');
 }
 
 /**
@@ -79,9 +79,12 @@ export function computeAutoCautionUsers(
       if (isUserNGForCast(user, cast, judgmentType)) count += 1;
     }
     if (count >= threshold) {
+      // @マークを必ず付与
+      const xId = user.x_id.trim();
+      const accountId = xId.startsWith('@') ? xId : `@${xId}`;
       result.push({
         username: user.name.trim(),
-        accountId: user.x_id.trim(),
+        accountId,
         registrationType: 'auto',
         ngCastCount: count,
         registeredAt: now,

@@ -1,31 +1,34 @@
 /**
  * マッチング形式の区分コード（仕様 4-1）。
- * 抽選条件で選択する7種類。ロジックは M001～M006 で完全分離。
+ * 抽選条件で選択する M000～M003。
  */
 
 export const MATCHING_TYPE_CODES = [
-  'NONE',
+  'M000',
   'M001',
   'M002',
-  'M006',
+  'M003',
 ] as const;
 
 export type MatchingTypeCode = (typeof MATCHING_TYPE_CODES)[number];
 
-/** プルダウン用ラベル（仕様 4-1 の1～6に対応） */
+/** プルダウンに表示する区分コード */
+export const MATCHING_TYPE_CODES_SELECTABLE: readonly MatchingTypeCode[] = [
+  'M000',
+  'M001',
+  'M002',
+  'M003',
+];
+
+/** プルダウン用ラベル */
 export const MATCHING_TYPE_LABELS: Record<MatchingTypeCode, string> = {
-  NONE: 'マッチングは使用しない',
-  M001: '完全ランダムマッチング',
-  M002: '完全ローテーションマッチング',
-  M006: '複数マッチング',
+  M000: 'マッチングは使用しない',
+  M001: 'ランダムマッチング',
+  M002: 'ローテーションマッチング',
+  M003: '複数名マッチング',
 };
 
-/** 完全マッチング（空席なし）＝ M001, M002 */
-export function isCompleteMatching(code: MatchingTypeCode): boolean {
+/** ランダム or ローテーション（テーブル数指定型）= M001, M002 */
+export function isTableBasedMatching(code: MatchingTypeCode): boolean {
   return code === 'M001' || code === 'M002';
-}
-
-/** ローテーション方式 ＝ M002 */
-export function isRotationMatching(code: MatchingTypeCode): boolean {
-  return code === 'M002';
 }

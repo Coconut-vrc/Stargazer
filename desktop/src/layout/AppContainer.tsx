@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Bug, HelpCircle, Database, Users } from 'lucide-react';
+import { Menu, X, HelpCircle, Database, Users } from 'lucide-react';
 import { invoke } from '@/tauri';
 import { DataManagementPage } from '@/features/data-management/DataManagementPage';
 import { CastNgManagementPage } from '@/features/cast-ng-management/CastNgManagementPage';
@@ -10,13 +10,11 @@ import { HeaderLogo } from '@/components/HeaderLogo';
 import { useAppContext, type PageType } from '@/stores/AppContext';
 import { mapRowToUserBeanWithMapping } from '@/common/sheetParsers';
 import { isTauri } from '@/tauri';
-import { NAV, DEFAULT_ROTATION_COUNT, RESET_APPLICATION, IMPORT_OVERWRITE } from '@/common/copy';
+import { NAV, IMPORT_OVERWRITE } from '@/common/copy';
 import { STORAGE_KEYS } from '@/common/config';
 import '@/common.css';
 import '@/css/layout.css';
 import { ThemeSelector } from '@/components/ThemeSelector';
-
-const isDev = import.meta.env.DEV;
 
 export const AppContainer: React.FC = () => {
   const {
@@ -24,8 +22,6 @@ export const AppContainer: React.FC = () => {
     setActivePage,
     repository,
     currentWinners,
-    setMatchingTypeCode,
-    setRotationCount,
     setCurrentWinners,
     themeId,
     setThemeId,
@@ -34,64 +30,99 @@ export const AppContainer: React.FC = () => {
 
   const [columnCheckError, setColumnCheckError] = useState<string | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showDirSetupConfirm, setShowDirSetupConfirm] = useState(false);
-  /** CSV取り込みで既存応募データがあるときに確認用に保持する取り込み予定データ */
+  /** TSV取り込みで既存応募データがあるときに確認用に保持する取り込み予定データ */
   const [pendingImport, setPendingImport] = useState<{
     rows: string[][];
     mapping: import('@/common/importFormat').ColumnMapping;
     options?: import('@/common/sheetParsers').MapRowOptions;
   } | null>(null);
 
-  /** キャスト一覧を LocalAppData/CosmoArtsStore/cast/cast.json（JSON ローカルDB）に保存する（Tauri 内のみ） */
+  /** キャスト一覧を cast.json 新形式（is_attend/ng_username/ng_userid）で保存する */
   const persistCastData = async (casts: import('@/common/types/entities').CastBean[]) => {
     if (!isTauri()) return;
     try {
-      const content = JSON.stringify({ casts });
+      const payload = casts.map((c) => ({
+        name: c.name,
+        is_attend: c.is_present,
+        urls: c.contact_urls ?? [],
+        ng_username: (c.ng_entries ?? []).map((e) => e.username ?? ''),
+        ng_userid: (c.ng_entries ?? []).map((e) => (e.accountId ? `@${String(e.accountId).replace(/^@/, '')}` : '')),
+      }));
+      const content = JSON.stringify({ casts: payload });
       await invoke('write_cast_db_json', { content });
     } catch (e) {
       console.error('キャストデータの保存に失敗しました', e);
     }
   };
 
-  /** 起動時に Tauri 内なら LocalAppData の JSON DB（cast/cast.json）からキャストを読み込む */
-  useEffect(() => {
+  /** キャストデータを LocalAppData の JSON DB から読み込む */
+  const loadCastFromLocal = React.useCallback(async () => {
     if (!isTauri()) return;
-    const loadCastFromLocal = async () => {
-      try {
-        await invoke('ensure_app_dirs');
-        const content = await invoke<string>('read_cast_db_json');
-        const data = JSON.parse(content) as { casts?: Record<string, unknown>[] };
-        const casts = Array.isArray(data.casts) ? data.casts : [];
-        const normalized = casts.map((c) => {
-          const rawEntries = Array.isArray(c.ng_entries) ? c.ng_entries : [];
-          const ng_entries = rawEntries.map((e) => {
+    try {
+      const content = await invoke<string>('read_cast_db_json');
+      const data = JSON.parse(content) as { casts?: Record<string, unknown>[] };
+      const casts = Array.isArray(data.casts) ? data.casts : [];
+      const normalized = casts.map((c) => {
+        const is_present = c.is_attend !== undefined ? Boolean(c.is_attend) : Boolean(c.is_present);
+        let ng_entries: import('@/common/types/entities').NGUserEntry[] | undefined;
+        const rawEntries = Array.isArray(c.ng_entries) ? c.ng_entries : [];
+        if (rawEntries.length > 0) {
+          ng_entries = rawEntries.map((e) => {
             if (!e || typeof e !== 'object') return null;
             const o = e as Record<string, unknown>;
             const username = typeof o.username === 'string' ? o.username.trim() || undefined : undefined;
             const accountId = typeof o.accountId === 'string' ? o.accountId.trim() || undefined : undefined;
-            const vrc_profile_url = typeof o.vrc_profile_url === 'string' ? o.vrc_profile_url.trim() || undefined : undefined;
             if (!username && !accountId) return null;
-            return { username, accountId, vrc_profile_url };
+            return { username, accountId };
           }).filter(Boolean) as import('@/common/types/entities').NGUserEntry[];
-          return {
-            name: String(c.name ?? ''),
-            is_present: Boolean(c.is_present),
-            ng_users: Array.isArray(c.ng_users) ? (c.ng_users as string[]) : [],
-            ng_entries: ng_entries.length > 0 ? ng_entries : undefined,
-            x_id: typeof c.x_id === 'string' ? c.x_id.trim() || undefined : undefined,
-            vrc_profile_url: typeof c.vrc_profile_url === 'string' ? c.vrc_profile_url.trim() || undefined : undefined,
-          };
-        });
-        repository.saveCasts(normalized as import('@/common/types/entities').CastBean[]);
-      } catch (e) {
-        console.warn('キャストデータの読み込みをスキップしました:', e);
-      }
-    };
-    loadCastFromLocal();
+        } else {
+          const ng_username = Array.isArray(c.ng_username) ? (c.ng_username as string[]) : Array.isArray(c.ng_usersname) ? (c.ng_usersname as string[]) : [];
+          const ng_userid = Array.isArray(c.ng_userid) ? (c.ng_userid as string[]) : Array.isArray(c.ng_usersid) ? (c.ng_usersid as string[]) : [];
+          if (ng_username.length > 0 || ng_userid.length > 0) {
+            const maxLen = Math.max(ng_username.length, ng_userid.length);
+            ng_entries = Array.from({ length: maxLen }, (_, i) => ({
+              username: ng_username[i]?.trim() || undefined,
+              accountId: (ng_userid[i] ?? '').toString().trim().replace(/^@/, '') || undefined,
+            })).filter((e) => e.username || e.accountId);
+          }
+        }
+        const ng_users = Array.isArray(c.ng_users) ? (c.ng_users as string[]) : [];
+        const contact_urls = Array.isArray(c.urls)
+          ? (c.urls as string[]).map((u) => String(u).trim()).filter(Boolean)
+          : typeof c.url === 'string' && c.url.trim()
+            ? [c.url.trim()]
+            : undefined;
+        return {
+          name: String(c.name ?? ''),
+          is_present,
+          contact_urls: contact_urls?.length ? contact_urls : undefined,
+          ng_users,
+          ng_entries: ng_entries?.length ? ng_entries : undefined,
+        };
+      });
+      repository.saveCasts(normalized as import('@/common/types/entities').CastBean[]);
+    } catch (e) {
+      console.warn('キャストデータの読み込みをスキップしました:', e);
+    }
   }, [repository]);
 
-  /** 起動時にフォルダ存在確認を行い、必要なら確認モーダルを表示 */
+  /** 起動時に Tauri 内なら LocalAppData の JSON DB（cast/cast.json）からキャストを読み込む。新形式(is_attend/ng_username/ng_userid/url)と旧形式の両方に対応 */
+  useEffect(() => {
+    if (!isTauri()) return;
+    // ディレクトリが存在する場合のみ読み込み実行
+    invoke<boolean>('check_app_dirs_exist')
+      .then((exists) => {
+        if (exists) {
+          loadCastFromLocal();
+        }
+      })
+      .catch(() => {
+        console.warn('ディレクトリ確認失敗');
+      });
+  }, [loadCastFromLocal]);
+
+  /** 起動時にフォルダ存在確認。初回はモーダル表示、2回目以降は消えている分を自動で作成 */
   useEffect(() => {
     if (!isTauri()) return;
     const checkDirs = async () => {
@@ -99,6 +130,8 @@ export const AppContainer: React.FC = () => {
         const exists = await invoke<boolean>('check_app_dirs_exist');
         if (!exists) {
           setShowDirSetupConfirm(true);
+        } else {
+          await invoke('ensure_app_dirs');
         }
       } catch (e) {
         console.warn('フォルダ存在確認に失敗:', e);
@@ -107,24 +140,12 @@ export const AppContainer: React.FC = () => {
     checkDirs();
   }, []);
 
-  const clearSessionData = () => {
-    repository.resetAll();
-    setCurrentWinners([]);
-    if (typeof window !== 'undefined') window.localStorage.removeItem(STORAGE_KEYS.SESSION);
-  };
-
-  const handleResetApplication = () => {
-    clearSessionData();
-    setMatchingTypeCode('NONE');
-    setRotationCount(DEFAULT_ROTATION_COUNT);
-    setActivePage('dataManagement');
-    setShowResetConfirm(false);
-  };
-
   const handleDirSetupConfirm = async () => {
     try {
       await invoke('ensure_app_dirs');
       setShowDirSetupConfirm(false);
+      // ディレクトリ作成後、キャストデータを読み込む
+      await loadCastFromLocal();
     } catch (e) {
       setAlertMessage(`フォルダの作成に失敗しました: ${e}`);
       setShowDirSetupConfirm(false);
@@ -167,7 +188,6 @@ export const AppContainer: React.FC = () => {
 
   const handleConfirmImportOverwrite = () => {
     if (!pendingImport) return;
-    clearSessionData();
     applyImport(pendingImport.rows, pendingImport.mapping, pendingImport.options);
     setPendingImport(null);
   };
@@ -175,7 +195,6 @@ export const AppContainer: React.FC = () => {
   const sidebarButtons: { text: string; page: PageType; icon?: React.ReactNode }[] = [
     { text: NAV.DATA_MANAGEMENT, page: 'dataManagement', icon: <Database size={18} /> },
     { text: NAV.CAST_NG_MANAGEMENT, page: 'castNgManagement', icon: <Users size={18} /> },
-    ...(isDev ? [{ text: NAV.DEBUG, page: 'debug' as PageType, icon: <Bug size={18} /> }] : []),
     { text: NAV.GUIDE, page: 'guide', icon: <HelpCircle size={18} /> },
   ];
 
@@ -226,7 +245,9 @@ export const AppContainer: React.FC = () => {
                 )}
               </button>
             ))}
-            <div className="sidebar-block sidebar-block--push">
+            <div className="sidebar-block sidebar-block--push" />
+            <div className="sidebar-block sidebar-theme-slider">
+              <span className="sidebar-block-label">{NAV.SETTINGS}</span>
               <ThemeSelector themeId={themeId} setThemeId={setThemeId!} />
             </div>
           </div>
@@ -238,23 +259,12 @@ export const AppContainer: React.FC = () => {
         {alertMessage !== null && (
           <ConfirmModal type="alert" message={alertMessage} onConfirm={() => setAlertMessage(null)} confirmLabel="OK" />
         )}
-        {showResetConfirm && (
-          <ConfirmModal
-            type="confirm"
-            title={RESET_APPLICATION.MODAL_TITLE}
-            message={RESET_APPLICATION.MODAL_MESSAGE}
-            confirmLabel={RESET_APPLICATION.CONFIRM_LABEL}
-            cancelLabel={RESET_APPLICATION.CANCEL_LABEL}
-            onConfirm={handleResetApplication}
-            onCancel={() => setShowResetConfirm(false)}
-          />
-        )}
         {showDirSetupConfirm && (
           <ConfirmModal
             type="confirm"
-            title="初回セットアップ"
-            message={`%localAppData%\\CosmoArtsStore に以下のフォルダを作成します。\n\n・import\n・app\n・backup\n・cast\n\nよろしいですか？`}
-            confirmLabel="作成する"
+            title="初回起動"
+            message={`データ保存のため\n%localAppData%\\CosmoArtsStore\\Stargazer\nを作成します。よろしいですか？\n\n※同意すると以降は必要ファイルが欠損していた場合自動で生成されます。`}
+            confirmLabel="OK"
             cancelLabel="キャンセル"
             onConfirm={handleDirSetupConfirm}
             onCancel={() => setShowDirSetupConfirm(false)}

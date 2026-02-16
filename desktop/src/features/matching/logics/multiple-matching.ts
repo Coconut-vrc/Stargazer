@@ -29,7 +29,7 @@ const DEFAULT_WEIGHT = 10;
 function getPreferenceRank(user: UserBean, castName: string): number {
   if (!user.casts || user.casts.length === 0) return 0;
   const idx = user.casts.indexOf(castName);
-  return idx >= 0 && idx <= 2 ? idx + 1 : 0;
+  return idx >= 0 ? idx + 1 : 0;
 }
 
 function weightedRandomIndex(items: { weight: number }[]): number {
@@ -61,13 +61,13 @@ export function runMultipleMatching(
   /* --- バリデーション --- */
   if (winners.length % usersPerTable !== 0) {
     console.error(
-      `[M006] ユーザー数不整合: ${winners.length} は ${usersPerTable} で割り切れません`,
+      `[M003] ユーザー数不整合: ${winners.length} は ${usersPerTable} で割り切れません`,
     );
     return { userMap };
   }
   if (activeCasts.length % castsPerRotation !== 0) {
     console.error(
-      `[M006] キャスト数不整合: ${activeCasts.length} は ${castsPerRotation} で割り切れません`,
+      `[M003] キャスト数不整合: ${activeCasts.length} は ${castsPerRotation} で割り切れません`,
     );
     return { userMap };
   }
@@ -75,6 +75,14 @@ export function runMultipleMatching(
   const ROUNDS = Math.max(1, rotationCount);
   const tableCount = winners.length / usersPerTable;
   const unitCount = activeCasts.length / castsPerRotation;
+
+  /* --- 重複配置防止バリデーション --- */
+  if (unitCount < tableCount) {
+    console.error(
+      `[M003] ユニット数不足: ${unitCount}ユニット < ${tableCount}テーブル。同ローテで同じキャストが複数テーブルに配置されます。`,
+    );
+    return { userMap };
+  }
 
   /* --- ユーザーをシャッフルしてテーブルに分割 --- */
   const shuffledUsers = [...winners].sort(() => Math.random() - 0.5);
@@ -113,7 +121,7 @@ export function runMultipleMatching(
 
     for (let t = 0; t < tableCount && valid; t++) {
       for (let r = 0; r < ROUNDS && valid; r++) {
-        const unitIdx = (base + t + r) % unitCount;
+        const unitIdx = (base - t + r + unitCount * ROUNDS) % unitCount; // テーブル1→2の順に巡回
         const unit = units[unitIdx];
         for (const cast of unit) {
           for (const user of tables[t]) {
@@ -145,7 +153,7 @@ export function runMultipleMatching(
       let score = 0;
       for (let t = 0; t < tableCount; t++) {
         for (let r = 0; r < ROUNDS; r++) {
-          const unitIdx = (base + t + r) % unitCount;
+          const unitIdx = (base - t + r + unitCount * ROUNDS) % unitCount; // テーブル1→2の順に巡回
           const unit = units[unitIdx];
           for (const cast of unit) {
             for (const user of tables[t]) {
@@ -164,24 +172,29 @@ export function runMultipleMatching(
   }
 
   /* --- 結果を構築 --- */
+  /* matches配列レイアウト: matches[r * castsPerRotation + c] = ローテーション r のキャスト c */
   const tableSlots: TableSlot[] = [];
 
   for (let t = 0; t < tableCount; t++) {
     for (const user of tables[t]) {
       const matches: MatchedCast[] = [];
       for (let r = 0; r < ROUNDS; r++) {
-        const unitIdx = (chosenOffset + t + r) % unitCount;
+        const unitIdx = (chosenOffset - t + r + unitCount * ROUNDS) % unitCount; // テーブル1→2の順に巡回
         const unit = units[unitIdx];
         for (const cast of unit) {
           const rank = getPreferenceRank(user, cast.name);
           matches.push({
             cast,
-            rank: rank >= 1 && rank <= 3 ? rank : 0,
+            rank,
           });
         }
       }
       userMap.set(user.x_id, matches);
-      tableSlots.push({ user, matches });
+      tableSlots.push({
+        user,
+        matches,
+        tableIndex: t + 1, // 1-based テーブル番号
+      });
     }
   }
 

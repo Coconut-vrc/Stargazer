@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import type { CastBean, ContactLink } from '@/common/types/entities';
+import React, { useState, useEffect } from 'react';
+import type { CastBean } from '@/common/types/entities';
 import { Repository } from '@/stores/AppContext';
 import { ConfirmModal } from '@/components/ConfirmModal';
-import { CAST_PAGE_NOTICE } from '@/common/copy';
-import { parseXUsername, getXProfileUrl, isXUrl, isVrcUrl } from '@/common/xIdUtils';
+import { CAST_PAGE_NOTICE, EXTERNAL_LINK } from '@/common/copy';
 import { openInDefaultBrowser } from '@/common/openExternal';
-import { EXTERNAL_LINK } from '@/common/copy';
 
 type PersistCastsFn = (casts: CastBean[]) => void | Promise<void>;
 
@@ -16,11 +14,10 @@ export const CastManagementPage: React.FC<{
   const [casts, setCasts] = useState<CastBean[]>([]);
   const [selectedCastName, setSelectedCastName] = useState('');
   const [inputCastName, setInputCastName] = useState('');
+  const [castSearchQuery, setCastSearchQuery] = useState('');
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [confirmMessage, setConfirmMessage] = useState<{ message: string; onConfirm: () => void } | null>(null);
-  const [loadExternalError, setLoadExternalError] = useState<string | null>(null);
-  const [loadExternalLoading, setLoadExternalLoading] = useState(false);
-  const [pendingExternalUrl, setPendingExternalUrl] = useState<string | null>(null);
+  const [pendingOpenUrl, setPendingOpenUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const allCasts = repository.getAllCasts();
@@ -79,119 +76,58 @@ export const CastManagementPage: React.FC<{
     onPersistCasts?.(nextCasts);
   };
 
-  const handleUpdateCastField = (castName: string, field: 'x_id' | 'vrc_profile_url', value: string) => {
-    const trimmed = value.trim();
+  const handleRenameCast = (oldName: string, newName: string) => {
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === oldName) return;
+    if (casts.some((c) => c.name !== oldName && c.name === trimmed)) {
+      setAlertMessage('そのキャスト名は既に使われています');
+      return;
+    }
+    const nextCasts = casts.map((c) => (c.name === oldName ? { ...c, name: trimmed } : c));
+    repository.saveCasts(nextCasts);
+    setCasts(nextCasts);
+    if (selectedCastName === oldName) setSelectedCastName(trimmed);
+    onPersistCasts?.(nextCasts);
+  };
+
+  const contactUrlsList = (c: CastBean): string[] =>
+    (c.contact_urls && c.contact_urls.length > 0 ? c.contact_urls : ['']);
+
+  const handleContactUrlChange = (castName: string, index: number, value: string) => {
+    const nextCasts = casts.map((c) => {
+      if (c.name !== castName) return c;
+      const list = [...contactUrlsList(c)];
+      list[index] = value;
+      const contact_urls = list.filter((u) => u.trim()).length ? list.map((u) => u.trim()).filter(Boolean) : undefined;
+      return { ...c, contact_urls };
+    });
+    repository.saveCasts(nextCasts);
+    setCasts(nextCasts);
+    onPersistCasts?.(nextCasts);
+  };
+
+  const handleAddContactUrl = (castName: string) => {
     const nextCasts = casts.map((c) =>
-      c.name === castName ? { ...c, [field]: trimmed || undefined } : c
+      c.name === castName
+        ? { ...c, contact_urls: [...(c.contact_urls ?? []), ''] }
+        : c
     );
     repository.saveCasts(nextCasts);
     setCasts(nextCasts);
     onPersistCasts?.(nextCasts);
   };
 
-  /* ── 自由形式の連絡先 ── */
-  const handleAddContact = useCallback((castName: string) => {
-    const nextCasts = casts.map((c) => {
-      if (c.name !== castName) return c;
-      const contacts: ContactLink[] = [...(c.contacts ?? []), { label: '', value: '' }];
-      return { ...c, contacts };
-    });
-    repository.saveCasts(nextCasts);
-    setCasts(nextCasts);
-    onPersistCasts?.(nextCasts);
-  }, [casts, repository, onPersistCasts]);
-
-  const handleUpdateContact = useCallback((castName: string, index: number, field: 'label' | 'value', val: string) => {
-    const nextCasts = casts.map((c) => {
-      if (c.name !== castName) return c;
-      const contacts = [...(c.contacts ?? [])];
-      if (!contacts[index]) return c;
-      contacts[index] = { ...contacts[index], [field]: val };
-      return { ...c, contacts };
-    });
-    repository.saveCasts(nextCasts);
-    setCasts(nextCasts);
-    onPersistCasts?.(nextCasts);
-  }, [casts, repository, onPersistCasts]);
-
-  const handleRemoveContact = useCallback((castName: string, index: number) => {
-    const nextCasts = casts.map((c) => {
-      if (c.name !== castName) return c;
-      const contacts = (c.contacts ?? []).filter((_, i) => i !== index);
-      return { ...c, contacts: contacts.length > 0 ? contacts : undefined };
-    });
-    repository.saveCasts(nextCasts);
-    setCasts(nextCasts);
-    onPersistCasts?.(nextCasts);
-  }, [casts, repository, onPersistCasts]);
-
-  const handleRequestOpenExternal = (url: string) => {
-    if (!url || !url.trim()) return;
-    setPendingExternalUrl(url.trim());
-  };
-
-  const handleConfirmOpenExternal = async () => {
-    if (pendingExternalUrl) {
-      await openInDefaultBrowser(pendingExternalUrl);
-      setPendingExternalUrl(null);
+  const handleConfirmOpenUrl = async () => {
+    if (pendingOpenUrl) {
+      await openInDefaultBrowser(pendingOpenUrl);
+      setPendingOpenUrl(null);
     }
   };
 
-  /** アプリ外の sample-casts.json を取得して既存キャストにマージする */
-  const handleLoadSampleCasts = async () => {
-    setLoadExternalError(null);
-    setLoadExternalLoading(true);
-    try {
-      const base = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '';
-      const res = await fetch(`${base}/sample-casts.json`);
-      if (!res.ok) {
-        setLoadExternalError(`読み込みに失敗しました（${res.status}）`);
-        return;
-      }
-      const raw = await res.json();
-      if (!Array.isArray(raw)) {
-        setLoadExternalError('JSONの形式が不正です（配列である必要があります）');
-        return;
-      }
-      const existingNames = new Set(casts.map((c) => c.name));
-      const toAdd: CastBean[] = [];
-      for (const item of raw) {
-        if (item && typeof item.name === 'string' && item.name.trim() !== '' && !existingNames.has(item.name.trim())) {
-          const xId = typeof item.x_id === 'string' ? item.x_id.trim() || undefined : undefined;
-          const vrcUrl = typeof item.vrc_profile_url === 'string' ? item.vrc_profile_url.trim() || undefined : undefined;
-          const contacts: ContactLink[] | undefined = Array.isArray(item.contacts)
-            ? item.contacts
-                .filter((ct: unknown) => ct && typeof ct === 'object' && 'label' in (ct as Record<string, unknown>) && 'value' in (ct as Record<string, unknown>))
-                .map((ct: { label: string; value: string }) => ({ label: String(ct.label), value: String(ct.value) }))
-            : undefined;
-          toAdd.push({
-            name: item.name.trim(),
-            is_present: Boolean(item.is_present),
-            ng_users: Array.isArray(item.ng_users) ? item.ng_users : [],
-            x_id: xId,
-            vrc_profile_url: vrcUrl,
-            contacts: contacts && contacts.length > 0 ? contacts : undefined,
-          });
-          existingNames.add(item.name.trim());
-        }
-      }
-      if (toAdd.length === 0) {
-        setLoadExternalError('追加できるキャストがありません（既に登録済みか、有効な名前がありません）');
-        return;
-      }
-      const merged = [...casts, ...toAdd];
-      repository.saveCasts(merged);
-      setCasts(merged);
-      onPersistCasts?.(merged);
-      setAlertMessage(`${toAdd.length}件のキャストを追加しました。`);
-    } catch (e) {
-      const message = e instanceof Error ? e.message : '読み込み中にエラーが発生しました';
-      setLoadExternalError(message);
-    } finally {
-      setLoadExternalLoading(false);
-    }
-  };
-
+  const castSearchLower = castSearchQuery.trim().toLowerCase();
+  const filteredCasts = castSearchLower
+    ? casts.filter((c) => c.name.toLowerCase().includes(castSearchLower))
+    : casts;
   const presentCount = casts.filter((c) => c.is_present).length;
   const totalCount = casts.length;
   const presentCasts = casts.filter((c) => c.is_present);
@@ -290,12 +226,33 @@ export const CastManagementPage: React.FC<{
         </p>
       </div>
 
+      <div className="form-group" style={{ marginBottom: 16 }}>
+        <input
+          type="text"
+          className="form-input"
+          placeholder="キャスト名で検索..."
+          value={castSearchQuery}
+          onChange={(e) => setCastSearchQuery(e.target.value)}
+          style={{ maxWidth: 280 }}
+        />
+      </div>
+
       {/* カード一覧表示 */}
       <div className="cast-grid">
-        {casts.map((cast) => (
+        {filteredCasts.map((cast) => (
           <div key={cast.name} className="cast-card">
             <div className="cast-card__header">
-              <span className="cast-card__name">{cast.name}</span>
+              <input
+                type="text"
+                className="cast-card__name-input"
+                defaultValue={cast.name}
+                onBlur={(e) => {
+                  const v = e.target.value.trim();
+                  if (v && v !== cast.name) handleRenameCast(cast.name, v);
+                  else if (e.target.value !== cast.name) e.target.value = cast.name;
+                }}
+                style={{ width: '100%', maxWidth: 160, padding: '2px 6px', fontSize: 'inherit', fontWeight: 700 }}
+              />
               <div
                 className={
                   'cast-card__status-dot ' +
@@ -316,63 +273,42 @@ export const CastManagementPage: React.FC<{
               {cast.is_present ? '出席中' : '欠席'}
             </button>
 
-            {/* Lit.Link 風リンク設定 */}
-            <div className="litlink">
-
-              {/* 自由形式の連絡先 */}
-              {(cast.contacts ?? []).map((contact, ci) => {
-                const contactUrl = contact.value.trim();
-                const showXIcon = isXUrl(contactUrl);
-                const showVrcIcon = isVrcUrl(contactUrl);
-                
-                return (
-                  <div className="litlink__item" key={ci}>
-                    <div className="litlink__body litlink__body--dual">
+            <div className="form-group mt-8" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: 12 }}>連絡先</label>
+              <div className="litlink">
+                {contactUrlsList(cast).map((url, idx) => (
+                  <div key={idx} className="litlink__item">
+                    <span className="litlink__icon litlink__icon--custom" aria-hidden>🔗</span>
+                    <div className="litlink__body">
                       <input
                         type="text"
-                        placeholder="ID / URL / 連絡先..."
-                        className="litlink__input litlink__input--value"
-                        value={contact.value}
-                        onChange={(e) => handleUpdateContact(cast.name, ci, 'value', e.target.value)}
+                        className="litlink__input"
+                        placeholder="VRC・X・DiscordなどのURL（任意）"
+                        value={url}
+                        onChange={(e) => handleContactUrlChange(cast.name, idx, e.target.value)}
                       />
                     </div>
-                    {contact.value && /^https?:\/\//.test(contact.value.trim()) ? (
+                    {(url.startsWith('http://') || url.startsWith('https://')) && (
                       <button
                         type="button"
                         className="litlink__open"
-                        onClick={() => handleRequestOpenExternal(contact.value.trim())}
-                        title="リンクを開く"
+                        title="ブラウザで開く"
+                        onClick={() => setPendingOpenUrl(url)}
+                        aria-label="リンクを開く"
                       >
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                          <polyline points="15 3 21 3 21 9"/>
-                          <line x1="10" y1="14" x2="21" y2="3"/>
-                        </svg>
+                        →
                       </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      className="litlink__remove"
-                      onClick={() => handleRemoveContact(cast.name, ci)}
-                      title="この連絡先を削除"
-                    >
-                      ×
-                    </button>
+                    )}
                   </div>
-                );
-              })}
-
-              <button
-                type="button"
-                className="litlink__add"
-                onClick={() => handleAddContact(cast.name)}
-              >
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                連絡先を追加
-              </button>
+                ))}
+                <button
+                  type="button"
+                  className="litlink__add"
+                  onClick={() => handleAddContactUrl(cast.name)}
+                >
+                  ＋ 連絡先を追加
+                </button>
+              </div>
             </div>
 
             <button
@@ -403,15 +339,15 @@ export const CastManagementPage: React.FC<{
           type="confirm"
         />
       )}
-      {pendingExternalUrl && (
+      {pendingOpenUrl && (
         <ConfirmModal
-          type="confirm"
           title={EXTERNAL_LINK.MODAL_TITLE}
-          message={`${EXTERNAL_LINK.MODAL_MESSAGE}\n\n${pendingExternalUrl}`}
+          message={`${pendingOpenUrl}\n\n${EXTERNAL_LINK.MODAL_MESSAGE}`}
+          onConfirm={handleConfirmOpenUrl}
+          onCancel={() => setPendingOpenUrl(null)}
           confirmLabel={EXTERNAL_LINK.CONFIRM_LABEL}
           cancelLabel={EXTERNAL_LINK.CANCEL_LABEL}
-          onConfirm={handleConfirmOpenExternal}
-          onCancel={() => setPendingExternalUrl(null)}
+          type="confirm"
         />
       )}
     </div>

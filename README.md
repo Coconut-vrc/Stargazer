@@ -15,16 +15,19 @@ docs/            # 設計書・ドキュメント（仕様書、FUNCTIONAL_SPEC 
 
 ## Getting Started
 
+**リポジトリのルート（Stargazer）で実行する。** `tauri` はグローバルではなく `desktop/node_modules` に入っているため、必ず `npm run` で起動する。
+
 ```bash
+# 依存関係（ルートと desktop の両方）
+npm install
+cd desktop && npm install && cd ..
+
+# 開発起動（Tauri + React）
 npm run dev
-# または
-npm run tauri:dev
 ```
 
 ビルド:
 
 ```bash
 npm run build
-# または
-npm run tauri:build
 ```

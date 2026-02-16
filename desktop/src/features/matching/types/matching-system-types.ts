@@ -49,20 +49,11 @@ export interface NGExceptionSettings {
   exceptions: NGException[];
 }
 
-/** マッチング方式（UI用） */
+/** マッチング方式（UI用 — M000～M003） */
 export type MatchingAlgorithmId =
-  | 'complete-random'      // 1. 完全ランダム
-  | 'complete-rotation'    // 2. 完全ローテーション
-  | 'vacant-random'        // 3. 空席込みランダム
-  | 'vacant-rotation'      // 4. 空席込みローテーション
-  | 'group'                // 5. グループマッチング
-  | 'multiple';            // 6. 複数マッチング
-
-export interface GroupMatchingSettings {
-  groupCount: number;
-  usersPerGroup: number;
-  rotationCount: number;
-}
+  | 'random'               // M001: ランダムマッチング
+  | 'rotation'             // M002: ローテーションマッチング
+  | 'multiple';            // M003: 複数マッチング
 
 export interface MultipleMatchingSettings {
   usersPerTable: number;

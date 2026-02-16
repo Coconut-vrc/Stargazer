@@ -10,6 +10,12 @@ import { XLinkInline } from '@/components/XLinkCell';
 import { downloadCsv } from '@/common/downloadCsv';
 import { MATCHING_SHEET_PREFIX } from '@/common/sheetColumns';
 import { MATCHING_TYPE_LABELS } from '@/features/matching/types/matching-type-codes';
+import type { CautionUser } from '@/features/matching/types/matching-system-types';
+
+// ヘルパー関数: ユーザーが注意対象かどうかを判定
+function isCautionUser(user: UserBean, cautionUsers: CautionUser[]): boolean {
+  return cautionUsers.some((cu) => cu.accountId.toLowerCase() === user.x_id.toLowerCase());
+}
 
 interface MatchingPageProps {
   winners: UserBean[];
@@ -40,6 +46,7 @@ interface MatchingRow {
   tableIndex?: number;
   user: UserBean | null;
   matches: MatchedCast[];
+  tableUsers?: Array<{ user: UserBean | null; matches: MatchedCast[] }>; // M003用
 }
 
 const MatchingPageComponent: React.FC<MatchingPageProps> = ({
@@ -64,11 +71,11 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
 
   const runOptions = useMemo(() => ({
     rotationCount,
-    totalTables:  undefined,
+    totalTables: undefined,
     groupCount: undefined,
-    usersPerGroup:  undefined,
-    usersPerTable: matchingTypeCode === 'M006' ? usersPerTable : undefined,
-    castsPerRotation: matchingTypeCode === 'M006' ? castsPerRotation : undefined,
+    usersPerGroup: undefined,
+    usersPerTable: (matchingTypeCode === 'M003' || matchingTypeCode === 'M006') ? usersPerTable : undefined,
+    castsPerRotation: (matchingTypeCode === 'M003' || matchingTypeCode === 'M006') ? castsPerRotation : undefined,
   }), [matchingTypeCode, rotationCount, totalTables, groupCount, usersPerGroup, usersPerTable, castsPerRotation]);
 
   // ページ表示時、または当選者が変わった時にマッチングを再計算
@@ -109,6 +116,32 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
   // テーブル別（空含む）のときは tableSlots から、そうでないときは当選者＋matchingResult から行を構築
   const matchingRows: MatchingRow[] = useMemo(() => {
     if (tableSlots != null && tableSlots.length > 0) {
+      // M003の場合、テーブル内の全ユーザーをまとめる
+      if (matchingTypeCode === 'M003') {
+        const tableMap = new Map<number, Array<{ user: UserBean | null; matches: MatchedCast[] }>>();
+
+        tableSlots.forEach((slot, i) => {
+          const tableIndex = Math.floor(i / usersPerTable) + 1;
+          if (!tableMap.has(tableIndex)) {
+            tableMap.set(tableIndex, []);
+          }
+          tableMap.get(tableIndex)!.push({
+            user: slot.user,
+            matches: slot.matches,
+          });
+        });
+
+        return Array.from(tableMap.entries())
+          .sort((a, b) => a[0] - b[0]) // テーブルインデックスで昇順ソート
+          .map(([tableIndex, tableUsers]) => ({
+            tableIndex,
+            user: null,
+            matches: [],
+            tableUsers,
+          }));
+      }
+
+      // M001/M002の場合、従来通り
       return tableSlots.map((slot, i) => ({
         tableIndex: i + 1,
         user: slot.user,
@@ -119,7 +152,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
       user: u,
       matches: matchingResult.get(u.x_id) ?? [],
     }));
-  }, [tableSlots, winners, matchingResult]);
+  }, [tableSlots, winners, matchingResult, matchingTypeCode, usersPerTable]);
 
   const columns: DiscordTableColumn<MatchingRow>[] = useMemo(
     () => [
@@ -132,23 +165,56 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
           fontSize: '12px',
           textTransform: 'uppercase',
         },
-        renderCell: (row) => (
-          <td className="table-cell-padding">
-            {row.tableIndex != null && (
-              <div className="text-body-sm table-cell-table-index">
-                テーブル {row.tableIndex}
-              </div>
-            )}
-            {row.user ? (
-              <>
-                <div className="text-user-name">{row.user.name}</div>
-                <XLinkInline xId={row.user.x_id} />
-              </>
-            ) : (
-              <span className="text-unassigned">空</span>
-            )}
-          </td>
-        ),
+        renderCell: (row) => {
+          // M003: テーブル内の全ユーザーを縦に並べて表示
+          if (row.tableUsers && row.tableUsers.length > 0) {
+            return (
+              <td className="table-cell-padding">
+                {row.tableIndex != null && (
+                  <div className="text-body-sm table-cell-table-index" style={{ marginBottom: '8px' }}>
+                    テーブル {row.tableIndex}
+                  </div>
+                )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {row.tableUsers.map((userInfo, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {userInfo.user ? (
+                        <>
+                          <XLinkInline
+                            xId={userInfo.user.x_id}
+                            isCaution={isCautionUser(userInfo.user, matchingSettings.caution?.cautionUsers || [])}
+                          />
+                          <div className="text-user-name">{userInfo.user.name}</div>
+                        </>
+                      ) : (
+                        <span className="text-unassigned">空</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </td>
+            );
+          }
+
+          // M001/M002: 従来の表示
+          return (
+            <td className="table-cell-padding">
+              {row.tableIndex != null && (
+                <div className="text-body-sm table-cell-table-index">
+                  テーブル {row.tableIndex}
+                </div>
+              )}
+              {row.user ? (
+                <>
+                  <div className="text-user-name">{row.user.name}</div>
+                  <XLinkInline xId={row.user.x_id} />
+                </>
+              ) : (
+                <span className="text-unassigned">空</span>
+              )}
+            </td>
+          );
+        },
       },
       ...Array.from({ length: rotationCount }, (_, roundIdx) => ({
         header: `${roundIdx + 1}ローテ目`,
@@ -160,23 +226,68 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
           textTransform: 'uppercase',
         },
         renderCell: (row) => {
+          // M003: テーブル内の全ユーザーが同じキャストユニットを共有するため、1回だけ表示
+          if (row.tableUsers && row.tableUsers.length > 0) {
+            // 最初のユーザーのキャストを取得（全ユーザーが同じキャストユニットを共有）
+            const firstUser = row.tableUsers[0];
+            const startIdx = roundIdx * castsPerRotation;
+            const endIdx = startIdx + castsPerRotation;
+            const slots = firstUser.matches.slice(startIdx, endIdx);
+
+            // デバッグログ
+            if (row.tableIndex === 1) {
+              console.log(`[M003 Debug] Table ${row.tableIndex}, Round ${roundIdx + 1}:`, {
+                castsPerRotation,
+                startIdx,
+                endIdx,
+                totalMatches: firstUser.matches.length,
+                slots: slots.map(s => s?.cast?.name || 'null'),
+              });
+            }
+
+            return (
+              <td className="table-cell-padding">
+                <div style={{ display: 'flex', flexDirection: 'row', gap: '12px', alignItems: 'center' }}>
+                  {slots.map((slot, castIdx) => {
+                    const isNG = slot?.isNGWarning === true;
+                    return (
+                      <div key={castIdx} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {isNG && (
+                          <span className="matching-ng-icon" aria-label="NG警告" title={slot?.ngReason}>
+                            ⚠
+                          </span>
+                        )}
+                        {slot ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div className="text-body-sm">{slot.cast.name}</div>
+                            {renderRankBadge(slot.rank)}
+                          </div>
+                        ) : (
+                          <span className="text-unassigned">未配置</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </td>
+            );
+          }
+
+          // M001/M002: 従来の表示
           const slot = row.matches[roundIdx];
           const isNG = slot?.isNGWarning === true;
           return (
-            <td
-              className={`table-cell-padding ${isNG ? 'matching-cell-ng-warning' : ''}`}
-              title={isNG ? slot?.ngReason : undefined}
-            >
+            <td className="table-cell-padding">
+              {isNG && (
+                <span className="matching-ng-icon" aria-label="NG警告" title={slot?.ngReason}>
+                  ⚠
+                </span>
+              )}
               {slot ? (
-                <div className="stack-vertical-4">
-                  {isNG && (
-                    <span className="matching-ng-icon" aria-label="NG警告" title={slot.ngReason}>
-                      ⚠
-                    </span>
-                  )}
+                <>
                   <div className="text-body-sm">{slot.cast.name}</div>
                   <div>{renderRankBadge(slot.rank)}</div>
-                </div>
+                </>
               ) : (
                 <span className="text-unassigned">未配置</span>
               )}
@@ -185,7 +296,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
         },
       })) as DiscordTableColumn<MatchingRow>[],
     ],
-    [tableSlots, renderRankBadge, rotationCount],
+    [tableSlots, renderRankBadge, rotationCount, castsPerRotation],
   );
 
   // キャスト側から見た「各ローテで対応するユーザー」一覧を作る（テーブル別時は tableSlots から逆引き）
@@ -386,12 +497,12 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
     (node: HTMLElement, filename: string) => {
       // 要素とその子要素のスタイルを一時的に保存・変更
       const originalStyles: Array<{ element: HTMLElement; styles: { [key: string]: string } }> = [];
-      
+
       // 再帰的に要素と子要素の overflow を解除
       const collectAndModifyStyles = (el: HTMLElement) => {
         const computedStyle = window.getComputedStyle(el);
         const styles: { [key: string]: string } = {};
-        
+
         // overflow 関連のスタイルを保存して解除
         if (computedStyle.overflow !== 'visible' || computedStyle.overflowX !== 'visible' || computedStyle.overflowY !== 'visible') {
           styles.overflow = el.style.overflow;
@@ -399,16 +510,16 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
           styles.overflowY = el.style.overflowY;
           styles.maxHeight = el.style.maxHeight;
           styles.maxWidth = el.style.maxWidth;
-          
+
           el.style.overflow = 'visible';
           el.style.overflowX = 'visible';
           el.style.overflowY = 'visible';
           el.style.maxHeight = 'none';
           el.style.maxWidth = 'none';
-          
+
           originalStyles.push({ element: el, styles });
         }
-        
+
         // 子要素も再帰的に処理
         Array.from(el.children).forEach((child) => {
           if (child instanceof HTMLElement) {
@@ -416,22 +527,22 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
           }
         });
       };
-      
+
       collectAndModifyStyles(node);
-      
+
       // スクロール位置をリセット
       const originalScrollTop = node.scrollTop;
       const originalScrollLeft = node.scrollLeft;
       node.scrollTop = 0;
       node.scrollLeft = 0;
-      
+
       // 少し待ってからレンダリング（スタイル変更が反映されるまで）
       return new Promise<void>((resolve, reject) => {
         setTimeout(() => {
           // 要素の実際のサイズを取得
           const scrollWidth = node.scrollWidth;
           const scrollHeight = node.scrollHeight;
-          
+
           toPng(node, {
             backgroundColor: '#313338',
             pixelRatio: 2,
@@ -450,11 +561,11 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
                   }
                 });
               });
-              
+
               // スクロール位置を元に戻す
               node.scrollTop = originalScrollTop;
               node.scrollLeft = originalScrollLeft;
-              
+
               const link = document.createElement('a');
               link.download = filename;
               link.href = dataUrl;
@@ -472,7 +583,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
                   }
                 });
               });
-              
+
               node.scrollTop = originalScrollTop;
               node.scrollLeft = originalScrollLeft;
               reject(error);

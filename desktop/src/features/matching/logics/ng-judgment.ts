@@ -7,11 +7,11 @@
 import type { UserBean, CastBean, NGUserEntry } from '@/common/types/entities';
 import type { NGJudgmentType } from '@/features/matching/types/matching-system-types';
 
-function normalize(s: string): string {
-  return s.trim().toLowerCase();
+function normalize(s: string | undefined): string {
+  return (s ?? '').trim().toLowerCase();
 }
 
-function normalizeIdForCompare(s: string): string {
+function normalizeIdForCompare(s: string | undefined): string {
   const n = normalize(s);
   return n.startsWith('@') ? n.slice(1) : n;
 }

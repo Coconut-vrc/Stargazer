@@ -3,8 +3,8 @@ import { CAST_SHEET } from './sheetColumns';
 import type { ColumnMapping } from './importFormat';
 import { parseXUsername } from './xIdUtils';
 
-function getCell(row: unknown[], colIndex: number): string {
-  if (colIndex < 0 || colIndex >= row.length) return '';
+function getCell(row: unknown[] | null | undefined, colIndex: number): string {
+  if (row == null || !Array.isArray(row) || colIndex < 0 || colIndex >= row.length) return '';
   return (row[colIndex] ?? '').toString().trim();
 }
 
@@ -26,39 +26,41 @@ export function mapRowToUserBeanWithMapping(
     splitCol !== undefined && splitCol >= 0 && mapping.cast1 === splitCol;
   /** 希望キャストが1列（カンマ区切り or 単一列）のとき */
   const useSingleCastColumn =
-    mapping.cast2 < 0 && mapping.cast3 < 0 && mapping.cast1 >= 0;
+    mapping.cast2 < 0 && mapping.cast3 < 0 && mapping.cast4 < 0 && mapping.cast5 < 0 && mapping.cast1 >= 0;
 
+  /** 複数指定可（カンマ区切り）のときの最大希望数。DB確認で希望キャスト1〜Nとして表示 */
+  const MAX_CAST_COMMA = 20;
   if (useSplitComma) {
     const cast1Val = getCell(row, mapping.cast1);
     if (!cast1Val) {
-      casts = ['', '', ''];
+      casts = [];
     } else {
       casts = cast1Val
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean)
-        .slice(0, 3);
-      while (casts.length < 3) casts.push('');
+        .slice(0, MAX_CAST_COMMA);
     }
   } else if (useSingleCastColumn) {
     const cast1Val = getCell(row, mapping.cast1);
     if (!cast1Val || mapping.cast1 < 0) {
-      casts = ['', '', ''];
+      casts = [];
     } else {
       casts = cast1Val
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean)
-        .slice(0, 3);
+        .slice(0, MAX_CAST_COMMA);
       casts = Array.from(new Set(casts));
-      while (casts.length < 3) casts.push('');
     }
   } else {
     const c1 = mapping.cast1 >= 0 ? getCell(row, mapping.cast1) : '';
     const c2 = mapping.cast2 >= 0 ? getCell(row, mapping.cast2) : '';
     const c3 = mapping.cast3 >= 0 ? getCell(row, mapping.cast3) : '';
-    casts = [c1, c2, c3];
-    while (casts.length < 3) casts.push('');
+    const c4 = mapping.cast4 >= 0 ? getCell(row, mapping.cast4) : '';
+    const c5 = mapping.cast5 >= 0 ? getCell(row, mapping.cast5) : '';
+    casts = [c1, c2, c3, c4, c5];
+    while (casts.length < 5) casts.push('');
   }
 
   const namePrimary = mapping.name >= 0 ? getCell(row, mapping.name) : '';
@@ -89,7 +91,7 @@ export function mapRowToUserBeanWithMapping(
     x_id: normalizedXId,
     vrc_url: vrcUrl,
     first_flag: mapping.first_flag >= 0 ? getCell(row, mapping.first_flag) : '',
-    casts: casts.slice(0, 3),
+    casts,
     note: mapping.note >= 0 ? getCell(row, mapping.note) : '',
     is_pair_ticket: mapping.is_pair_ticket >= 0 && getCell(row, mapping.is_pair_ticket) === '1',
     raw_extra: rawExtra,

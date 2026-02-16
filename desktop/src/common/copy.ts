@@ -8,10 +8,10 @@ export const APP_NAME = 'Stargazer';
 export const DEFAULT_ROTATION_COUNT = 2;
 
 export const NAV = {
-  GUIDE: 'ガイド',
-  DATA_MANAGEMENT: 'データ管理',
+  GUIDE: 'ヘルプ',
+  DATA_MANAGEMENT: '応募データ管理',
   CAST_NG_MANAGEMENT: 'キャスト管理',
-  SETTINGS: '設定',
+  SETTINGS: 'テーマ',
   DEBUG: 'デバッグ',
   // 旧ナビゲーション（後方互換性のため残す）
   IMPORT: 'データ読取',
@@ -76,12 +76,14 @@ export const TEST_CSV_PATHS = {
 export const IMPORT_COLUMN_LABELS = {
   timestamp: 'タイムスタンプ',
   name: 'ユーザー名',
-  x_id: 'XID',
+  x_id: 'アカウントID(X)',
   vrc_url: 'VRCアカウントURL',
   first_flag: '初回フラグ',
   cast1: '希望キャスト1',
   cast2: '希望キャスト2',
   cast3: '希望キャスト3',
+  cast4: '希望キャスト4',
+  cast5: '希望キャスト5',
   note: '備考',
   is_pair_ticket: 'ペアチケット',
 } as const;
@@ -101,5 +103,5 @@ export const GUIDE = {
   FLOW_MATCHING_RESULT: 'マッチング結果',
   FLOW_MATCHING_RESULT_DESC: 'マッチング結果を確認・CSVダウンロード',
   /** よくある質問: 抽選・マッチング結果の保存先 */
-  EXPORT_DESCRIPTION: '抽選結果・マッチング結果は各画面の「CSVでダウンロード」からファイルで保存できます。',
+  EXPORT_DESCRIPTION: '抽選結果・マッチング結果は各画面の「TSVでダウンロード」からファイルで保存できます。',
 } as const;

@@ -1,35 +1,42 @@
 // Stargazer: 完全ローカル用 Tauri コマンド（LocalAppData / ファイル操作のみ）
 
-// --- LocalAppData/CosmoArtsStore: cast, import, app, backup ---
-fn cosmoarts_store_dir() -> Result<std::path::PathBuf, String> {
+// --- LocalAppData/CosmoArtsStore/Stargazer: src, backup/lottery, backup/matching, cast ---
+fn stargazer_dir() -> Result<std::path::PathBuf, String> {
     let local = std::env::var("LOCALAPPDATA").map_err(|_| "LOCALAPPDATA が取得できません".to_string())?;
-    Ok(std::path::PathBuf::from(local).join("CosmoArtsStore"))
+    Ok(std::path::PathBuf::from(local).join("CosmoArtsStore").join("Stargazer"))
 }
 
 #[tauri::command]
 fn get_app_data_dir() -> Result<String, String> {
-    let path = cosmoarts_store_dir()?;
+    let path = stargazer_dir()?;
     Ok(path.to_string_lossy().to_string())
 }
 
 #[tauri::command]
 fn ensure_app_dirs() -> Result<(), String> {
-    let base = cosmoarts_store_dir()?;
-    for name in ["cast", "import", "app", "backup"] {
-        let dir = base.join(name);
-        std::fs::create_dir_all(&dir).map_err(|e| format!("フォルダ作成失敗 {}: {}", dir.display(), e))?;
+    let base = stargazer_dir()?;
+    std::fs::create_dir_all(base.join("src")).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(base.join("backup").join("lottery")).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(base.join("backup").join("matching")).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(base.join("template").join("temp")).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(base.join("template").join("pref")).map_err(|e| e.to_string())?;
+    let cast_dir = base.join("cast");
+    std::fs::create_dir_all(&cast_dir).map_err(|e| e.to_string())?;
+    let cast_json = cast_dir.join("cast.json");
+    if !cast_json.exists() {
+        std::fs::write(&cast_json, r#"{"casts":[]}"#).map_err(|e| e.to_string())?;
     }
     Ok(())
 }
 
 #[tauri::command]
 fn check_app_dirs_exist() -> Result<bool, String> {
-    let base = cosmoarts_store_dir()?;
+    let base = stargazer_dir()?;
     if !base.exists() {
         return Ok(false);
     }
-    for name in ["cast", "import", "app", "backup"] {
-        let dir = base.join(name);
+    for sub in ["src", "backup/lottery", "backup/matching", "cast"] {
+        let dir = base.join(sub);
         if !dir.exists() {
             return Ok(false);
         }
@@ -39,7 +46,7 @@ fn check_app_dirs_exist() -> Result<bool, String> {
 
 // --- JSON ローカルDB（キャスト・NG） ---
 fn cast_db_path() -> Result<std::path::PathBuf, String> {
-    let base = cosmoarts_store_dir()?;
+    let base = stargazer_dir()?;
     Ok(base.join("cast").join("cast.json"))
 }
 
@@ -109,8 +116,8 @@ fn list_dir_recursive(path: &std::path::Path, base: &std::path::Path) -> Result<
 
 #[tauri::command]
 fn list_app_data_structure() -> Result<DirEntry, String> {
-    let base = cosmoarts_store_dir()?;
-    let name = base.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "CosmoArtsStore".to_string());
+    let base = stargazer_dir()?;
+    let name = base.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "Stargazer".to_string());
     let path_str = base.to_string_lossy().to_string();
     if !base.exists() {
         return Ok(DirEntry {
@@ -129,6 +136,30 @@ fn list_app_data_structure() -> Result<DirEntry, String> {
     })
 }
 
+/// 抽選結果を backup/lottery/lottery_YYYYMMDD_HHMMSS.tsv に保存（UTF-8 BOMなし）
+#[tauri::command]
+fn write_backup_lottery_tsv(content: String) -> Result<String, String> {
+    let base = stargazer_dir()?;
+    std::fs::create_dir_all(base.join("backup").join("lottery")).map_err(|e| e.to_string())?;
+    let now = chrono::Local::now();
+    let name = format!("lottery_{}.tsv", now.format("%Y%m%d_%H%M%S"));
+    let path = base.join("backup").join("lottery").join(&name);
+    std::fs::write(&path, content).map_err(|e| e.to_string())?;
+    Ok(path.to_string_lossy().to_string())
+}
+
+/// マッチング結果を backup/matching/matching_YYYYMMDD_HHMMSS.tsv に保存（UTF-8 BOMなし）
+#[tauri::command]
+fn write_backup_matching_tsv(content: String) -> Result<String, String> {
+    let base = stargazer_dir()?;
+    std::fs::create_dir_all(base.join("backup").join("matching")).map_err(|e| e.to_string())?;
+    let now = chrono::Local::now();
+    let name = format!("matching_{}.tsv", now.format("%Y%m%d_%H%M%S"));
+    let path = base.join("backup").join("matching").join(&name);
+    std::fs::write(&path, content).map_err(|e| e.to_string())?;
+    Ok(path.to_string_lossy().to_string())
+}
+
 /// ユーザーが選択したファイル（CSV 等）の内容を読み込む
 #[tauri::command]
 fn read_file(path: String) -> Result<String, String> {
@@ -137,6 +168,65 @@ fn read_file(path: String) -> Result<String, String> {
         return Err("ファイルが見つかりません".to_string());
     }
     std::fs::read_to_string(p).map_err(|e| format!("ファイル読み込み失敗: {}", e))
+}
+
+/// インポート用: ヘッダーテンプレートと設定を template/temp と template/pref に保存（日時秒付き）
+#[tauri::command]
+fn save_import_template(header_json: String, pref_json: String) -> Result<String, String> {
+    let base = stargazer_dir()?;
+    let temp_dir = base.join("template").join("temp");
+    let pref_dir = base.join("template").join("pref");
+    std::fs::create_dir_all(&temp_dir).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(&pref_dir).map_err(|e| e.to_string())?;
+    let now = chrono::Local::now();
+    let ts = now.format("%Y%m%d_%H%M%S").to_string();
+    let temp_name = format!("template_{}.json", ts);
+    let pref_name = format!("pref_{}.json", ts);
+    std::fs::write(temp_dir.join(&temp_name), &header_json).map_err(|e| e.to_string())?;
+    std::fs::write(pref_dir.join(&pref_name), &pref_json).map_err(|e| e.to_string())?;
+    Ok(ts)
+}
+
+/// インポート用: 現在のヘッダーと一致するテンプレートを temp から検索し、対応する pref を返す（新しい順）
+#[tauri::command]
+fn get_matching_import_pref(header_json: String) -> Result<Option<String>, String> {
+    let base = stargazer_dir()?;
+    let temp_dir = base.join("template").join("temp");
+    let pref_dir = base.join("template").join("pref");
+    if !temp_dir.exists() {
+        return Ok(None);
+    }
+    let current: Vec<String> = serde_json::from_str(&header_json).map_err(|e| e.to_string())?;
+    let current_norm: Vec<String> = current.iter().map(|s| s.trim().to_string()).collect();
+    let mut entries: Vec<_> = std::fs::read_dir(&temp_dir).map_err(|e| e.to_string())?.collect();
+    entries.sort_by(|a, b| {
+        let a = a.as_ref().ok().and_then(|e| e.file_name().into_string().ok());
+        let b = b.as_ref().ok().and_then(|e| e.file_name().into_string().ok());
+        b.cmp(&a)
+    });
+    for entry in entries {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let path = entry.path();
+        if path.extension().and_then(|e| e.to_str()) != Some("json") {
+            continue;
+        }
+        let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        let saved: Vec<String> = match serde_json::from_str(&content) {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
+        let saved_norm: Vec<String> = saved.iter().map(|s| s.trim().to_string()).collect();
+        if saved_norm.len() == current_norm.len() && saved_norm == current_norm {
+            let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+            let pref_ts = stem.strip_prefix("template_").unwrap_or(stem);
+            let pref_path = pref_dir.join(format!("pref_{}.json", pref_ts));
+            if pref_path.exists() {
+                let pref = std::fs::read_to_string(&pref_path).map_err(|e| e.to_string())?;
+                return Ok(Some(pref));
+            }
+        }
+    }
+    Ok(None)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -153,6 +243,10 @@ pub fn run() {
             write_cast_db_json,
             list_app_data_structure,
             read_file,
+            write_backup_lottery_tsv,
+            write_backup_matching_tsv,
+            save_import_template,
+            get_matching_import_pref,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

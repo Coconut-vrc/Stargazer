@@ -1,7 +1,6 @@
-/**
- * CSV 全文をパース（改行・ダブルクォート対応）
- */
-export function parseCSV(text: string): string[][] {
+const DEFAULT_DELIMITER = ',';
+
+function parseDelimited(text: string, delimiter: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let field = '';
@@ -13,7 +12,7 @@ export function parseCSV(text: string): string[][] {
     if (c === '"') {
       inQuotes = !inQuotes;
       i++;
-    } else if (c === ',' && !inQuotes) {
+    } else if (c === delimiter && !inQuotes) {
       row.push(field);
       field = '';
       i++;
@@ -45,4 +44,18 @@ export function parseCSV(text: string): string[][] {
     rows.push(row);
   }
   return rows;
+}
+
+/**
+ * CSV 全文をパース（改行・ダブルクォート対応）
+ */
+export function parseCSV(text: string): string[][] {
+  return parseDelimited(text, DEFAULT_DELIMITER);
+}
+
+/**
+ * TSV 全文をパース（タブ区切り・改行・ダブルクォート対応）
+ */
+export function parseTSV(text: string): string[][] {
+  return parseDelimited(text, '\t');
 }

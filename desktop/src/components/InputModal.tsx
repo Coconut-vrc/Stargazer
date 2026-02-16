@@ -12,6 +12,7 @@ interface InputModalProps {
   title: string;
   description?: string;
   fields: InputField[];
+  initialValues?: Record<string, string>;
   onSubmit: (values: Record<string, string>) => void;
   onCancel: () => void;
   submitLabel?: string;
@@ -27,6 +28,7 @@ export const InputModal: React.FC<InputModalProps> = ({
   title,
   description,
   fields,
+  initialValues,
   onSubmit,
   onCancel,
   submitLabel = '登録',
@@ -34,7 +36,7 @@ export const InputModal: React.FC<InputModalProps> = ({
 }) => {
   const [values, setValues] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
-    for (const f of fields) init[f.key] = '';
+    for (const f of fields) init[f.key] = (initialValues && initialValues[f.key]) ?? '';
     return init;
   });
 
@@ -52,7 +54,7 @@ export const InputModal: React.FC<InputModalProps> = ({
 
   const canSubmit = fields
     .filter((f) => f.required !== false)
-    .every((f) => values[f.key]?.trim());
+    .every((f) => (values[f.key] ?? '').trim().length > 0);
 
   const handleSubmit = useCallback(() => {
     if (!canSubmit) return;

@@ -13,6 +13,8 @@ export interface ColumnMapping {
   cast1: number;
   cast2: number;
   cast3: number;
+  cast4: number;
+  cast5: number;
   note: number;
   is_pair_ticket: number;
   /** カスタム用: 2列目ユーザー名(例: VRC名)。name が空のときのフォールバック */
@@ -37,6 +39,8 @@ export const CUSTOM_PRESET_VRC: ColumnMapping = {
   cast1: 3,
   cast2: -1,
   cast3: -1,
+  cast4: -1,
+  cast5: -1,
   note: 6,
   is_pair_ticket: -1,
   nameColumn2: 0,
@@ -57,16 +61,16 @@ export function createEmptyColumnMapping(): ColumnMapping {
     cast1: -1,
     cast2: -1,
     cast3: -1,
+    cast4: -1,
+    cast5: -1,
     note: -1,
     is_pair_ticket: -1,
   };
 }
 
-/** ユーザー名・VRCアカウントID・アカウントID(X)のいずれかが指定されていれば true */
+/** アカウントID(X)が指定されていれば true（必須） */
 export function hasRequiredIdentityColumn(m: ColumnMapping): boolean {
-  const hasName = m.name >= 0 || (m.nameColumn2 != null && m.nameColumn2 >= 0);
-  const hasXId = m.x_id >= 0;
-  return hasName || hasXId;
+  return m.x_id >= 0;
 }
 
 /** マッピングで参照する最大列インデックス＋1 ＝ 必要な最小列数 */
@@ -80,6 +84,8 @@ export function getMinColumnsFromMapping(m: ColumnMapping): number {
     m.cast1,
     m.cast2,
     m.cast3,
+    m.cast4,
+    m.cast5,
     m.note,
     m.is_pair_ticket,
   ];

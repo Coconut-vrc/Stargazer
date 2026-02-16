@@ -96,14 +96,14 @@ export const GuidePage: React.FC = () => {
         </div>
       </section>
 
-      {/* CSV準備（事前） */}
+      {/* TSV準備（事前） */}
       <section className="guide-section">
         <h2 className="page-header-title page-header-title--md guide-section-title">
           <Sheet size={22} />
-          CSVを用意する（事前準備）
+          TSVを用意する（事前準備）
         </h2>
         <p className="page-header-subtitle" style={{ marginBottom: 20, color: 'var(--discord-text-muted)' }}>
-          応募データがGoogleフォームで集まっている場合の、スプレッドシート化〜CSV出力までの手順です。
+          応募データがGoogleフォームで集まっている場合の、スプレッドシート化〜TSV出力までの手順です。
         </p>
 
         <div className="guide-stack-vertical">
@@ -189,7 +189,7 @@ export const GuidePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Step 0b: スプレッドシート → CSV */}
+          {/* Step 0b: スプレッドシート → TSV */}
           <div className="guide-card">
             <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
@@ -203,10 +203,10 @@ export const GuidePage: React.FC = () => {
                   gap: '8px'
                 }}>
                   <Download size={20} />
-                  Step B. スプレッドシートからCSVをダウンロードする
+                  Step B. スプレッドシートからTSVをダウンロードする
                 </h3>
                 <p style={{ color: 'var(--discord-text-normal)', marginBottom: '16px', lineHeight: '1.7' }}>
-                  スプレッドシートのUIを操作して、CSV形式で保存します。
+                  スプレッドシートのUIを操作して、タブ区切り形式（.tsv）で保存します。
                 </p>
                 <ul style={{
                   margin: 0,
@@ -217,8 +217,8 @@ export const GuidePage: React.FC = () => {
                 }}>
                   <li>① 画面上部のメニューから「ファイル」をクリック</li>
                   <li>② 出たメニューで「ダウンロード」にマウスを乗せる</li>
-                  <li>③ 右に出るサブメニューから「カンマ区切り形式 (.csv)」をクリック</li>
-                  <li>CSVファイルがPCに保存されます</li>
+                  <li>③ 右に出るサブメニューから「タブ区切り形式 (.tsv)」をクリック</li>
+                  <li>TSVファイルがPCに保存されます</li>
                 </ul>
               </div>
               <div className="guide-sample-preview" style={{
@@ -261,8 +261,8 @@ export const GuidePage: React.FC = () => {
                         <div style={{ fontSize: 11, color: '#5f6368', padding: '4px 0' }}>OpenDocument (.ods)</div>
                         <div style={{ fontSize: 11, color: '#5f6368', padding: '4px 0' }}>PDF (.pdf)</div>
                         <div style={{ fontSize: 11, color: '#5f6368', padding: '4px 0' }}>ウェブページ (.html)</div>
-                        <div style={{ fontSize: 11, color: '#1a73e8', fontWeight: 600, padding: '4px 0', backgroundColor: 'rgba(26,115,232,0.08)', margin: '2px -8px', paddingLeft: 8 }}>③ カンマ区切り形式 (.csv)</div>
-                        <div style={{ fontSize: 11, color: '#5f6368', padding: '4px 0' }}>タブ区切り形式 (.tsv)</div>
+                        <div style={{ fontSize: 11, color: '#5f6368', padding: '4px 0' }}>カンマ区切り形式 (.csv)</div>
+                        <div style={{ fontSize: 11, color: '#1a73e8', fontWeight: 600, padding: '4px 0', backgroundColor: 'rgba(26,115,232,0.08)', margin: '2px -8px', paddingLeft: 8 }}>③ タブ区切り形式 (.tsv)</div>
                       </div>
                     </div>
                     <div style={{ padding: '8px 16px', fontSize: 12, color: '#3c4043', borderTop: '1px solid #eee' }}>名前を変更</div>
@@ -271,11 +271,11 @@ export const GuidePage: React.FC = () => {
                   <div style={{ width: 120, marginLeft: 12, fontSize: 10, color: '#5f6368' }}>
                     <div style={{ marginBottom: 4 }}>① ここをクリック</div>
                     <div>→ ② ダウンロードにマウス</div>
-                    <div style={{ marginTop: 4 }}>→ ③ CSVを選択</div>
+                    <div style={{ marginTop: 4 }}>→ ③ TSVを選択</div>
                   </div>
                 </div>
                 <div style={{ marginTop: 12, padding: 8, backgroundColor: '#e8f0fe', borderRadius: 4, fontSize: 11, color: '#1967d2' }}>
-                  ファイル → ダウンロード → カンマ区切り形式 (.csv)
+                  ファイル → ダウンロード → タブ区切り形式 (.tsv)
                 </div>
               </div>
             </div>
@@ -308,10 +308,10 @@ export const GuidePage: React.FC = () => {
                   1. データ読取
                 </h3>
                 <p style={{ color: 'var(--discord-text-normal)', marginBottom: '16px', lineHeight: '1.7' }}>
-                  応募データはCSVファイルで取り込み、キャストはPC内のローカルデータから読み込みます。URLは使いません。
+                  応募データはTSVで取り込みます。共通項目はユーザー名・アカウントID(X)・希望キャストのみ。列の割り当てでこれらを指定し、それ以外の列はDBデータ確認で「全て表示」から確認できます。
                 </p>
                 <p style={{ color: 'var(--discord-text-muted)', fontSize: '12px', marginBottom: '12px', lineHeight: '1.6' }}>
-                  ※ 上記「CSVを用意する」でGoogleフォーム→スプレッドシート→CSVの手順を解説しています。
+                  ※ 同じヘッダー形式のTSVを過去に取り込んだことがあると、列割り当てと希望キャストの形式が自動で復元されます（%LOCALAPPDATA%\\CosmoArtsStore\\Stargazer\\template に保存）。
                 </p>
                 <div style={{ marginTop: '16px' }}>
                   <p style={{ color: 'var(--discord-text-muted)', fontSize: '13px', marginBottom: '10px', fontWeight: 600 }}>
@@ -324,11 +324,12 @@ export const GuidePage: React.FC = () => {
                     fontSize: '14px',
                     lineHeight: '1.9'
                   }}>
-                    <li>「CSVファイルを選択」からフォームの回答CSVを選ぶ</li>
-                    <li>取り込み後、DBデータ確認や抽選に進む</li>
+                    <li>「TSVファイルを選択」で応募TSVを選ぶ</li>
+                    <li>列の割り当てでユーザー名・アカウントID(X)・希望キャストを指定（複数指定可のときは希望キャストは1列のみ）</li>
+                    <li>「この割り当てで取り込む」で確定。取り込み時に設定がテンプレートとして保存され、次回同じヘッダーで自動反映されます</li>
                   </ul>
                   <p style={{ color: 'var(--discord-text-muted)', fontSize: '12px', marginTop: '10px', lineHeight: '1.6' }}>
-                    ※ キャスト一覧は起動時にローカル（%LOCALAPPDATA%\\CosmoArtsStore\\cast）から自動読み込みされます。編集は「キャスト管理」で行います。
+                    ※ キャスト一覧は %LOCALAPPDATA%\\CosmoArtsStore\\Stargazer\\cast から読み込み。編集は「キャスト管理」で行います。
                   </p>
                 </div>
               </div>
@@ -345,9 +346,9 @@ export const GuidePage: React.FC = () => {
                 </div>
                 <div style={{ marginBottom: '16px' }}>
                   <div style={{ fontSize: '11px', color: 'var(--discord-text-muted)', marginBottom: '8px', fontWeight: 600 }}>
-                    応募データCSV
+                    応募データTSV
                   </div>
-                  <TooltipElement id="csv-select" tooltip="フォームの回答CSVを選択して取り込み">
+                  <TooltipElement id="tsv-select" tooltip="フォームの回答TSVを選択して取り込み">
                     <button
                       style={{
                         width: '100%',
@@ -361,9 +362,12 @@ export const GuidePage: React.FC = () => {
                         cursor: 'default'
                       }}
                     >
-                      CSVファイルを選択
+                      TSVファイルを選択
                     </button>
                   </TooltipElement>
+                  <div style={{ fontSize: '10px', color: 'var(--discord-text-muted)', marginTop: '12px' }}>
+                    列の割り当て：ユーザー名・アカウントID(X)・希望キャストを対象キャストと同じプルダウンで指定
+                  </div>
                 </div>
               </div>
             </div>
@@ -386,7 +390,7 @@ export const GuidePage: React.FC = () => {
                   2. DBデータ確認
                 </h3>
                 <p style={{ color: 'var(--discord-text-normal)', marginBottom: '16px', lineHeight: '1.7' }}>
-                  読み込んだ応募者名簿のデータを一覧表示します。ユーザー情報と希望キャストを確認できます。
+                  読み込んだ応募者名簿を一覧表示します。初期表示はユーザー名・アカウントID(X)・希望キャストのみ。マッピングされなかった列は「全て表示」ボタンで元データの列名のまま表示でき、横スクロールで確認できます。
                 </p>
                 <div style={{ marginTop: '16px' }}>
                   <p style={{ color: 'var(--discord-text-muted)', fontSize: '13px', marginBottom: '10px', fontWeight: 600 }}>
@@ -399,9 +403,9 @@ export const GuidePage: React.FC = () => {
                     fontSize: '14px',
                     lineHeight: '1.9'
                   }}>
-                    <li>応募者の一覧を確認</li>
-                    <li>X IDをクリックしてユーザーページに遷移</li>
-                    <li>希望キャストの確認</li>
+                    <li>応募者一覧（ユーザー名・アカウントID(X)・希望キャスト1〜N）の確認</li>
+                    <li>X IDクリックでユーザーページに遷移</li>
+                    <li>「全て表示」で取り込み時の全列を表示・横スクロール</li>
                   </ul>
                 </div>
               </div>
@@ -584,7 +588,7 @@ export const GuidePage: React.FC = () => {
                     fontSize: '14px',
                     lineHeight: '1.9'
                   }}>
-                    <li>マッチング形式（M001～M006）を選択</li>
+                    <li>マッチング形式（M000～M003）を選択</li>
                     <li>ローテーション回数・当選人数（または当選者数・総テーブル数など）を入力</li>
                     <li>「抽選を開始する」をクリック</li>
                   </ul>
@@ -692,7 +696,7 @@ export const GuidePage: React.FC = () => {
                   5. マッチング構成確認
                 </h3>
                 <p style={{ color: 'var(--discord-text-normal)', marginBottom: '16px', lineHeight: '1.7' }}>
-                  抽選結果を確認し、CSVでダウンロードできます。
+                  抽選結果を確認し、TSVでダウンロードできます。
                 </p>
                 <div style={{ marginTop: '16px' }}>
                   <p style={{ color: 'var(--discord-text-muted)', fontSize: '13px', marginBottom: '10px', fontWeight: 600 }}>
@@ -706,7 +710,7 @@ export const GuidePage: React.FC = () => {
                     lineHeight: '1.9'
                   }}>
                     <li>当選者と希望キャストの確認</li>
-                    <li>抽選結果をCSVでダウンロード</li>
+                    <li>抽選結果をTSVでダウンロード</li>
                     <li>マッチング画面への遷移</li>
                   </ul>
                 </div>
@@ -743,7 +747,7 @@ export const GuidePage: React.FC = () => {
                   </table>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <TooltipElement id="export-result" tooltip="抽選結果をCSVでダウンロード">
+                  <TooltipElement id="export-result" tooltip="抽選結果をTSVでダウンロード">
                     <button
                       style={{
                         width: '100%',
@@ -757,7 +761,7 @@ export const GuidePage: React.FC = () => {
                         cursor: 'default'
                       }}
                     >
-                      抽選結果をCSVでダウンロード
+                      抽選結果をTSVでダウンロード
                     </button>
                   </TooltipElement>
                   <TooltipElement id="matching-start" tooltip="マッチング結果画面に遷移">
@@ -814,7 +818,7 @@ export const GuidePage: React.FC = () => {
                   }}>
                     <li>ユーザー別・キャスト別マッチング結果の確認</li>
                     <li>当選者別・キャスト別の表をPNG画像で保存（共有や撮影に便利）</li>
-                    <li>マッチング結果をCSVでダウンロード</li>
+                    <li>マッチング結果をTSVでダウンロード</li>
                   </ul>
                 </div>
               </div>
@@ -894,7 +898,7 @@ export const GuidePage: React.FC = () => {
                       PNGで保存（キャスト別）
                     </button>
                   </TooltipElement>
-                  <TooltipElement id="export-matching" tooltip="マッチング結果をCSVでダウンロード">
+                  <TooltipElement id="export-matching" tooltip="マッチング結果をTSVでダウンロード">
                     <button
                       style={{
                         width: '100%',
@@ -908,7 +912,7 @@ export const GuidePage: React.FC = () => {
                         cursor: 'default'
                       }}
                     >
-                      マッチング結果をCSVでダウンロード
+                      マッチング結果をTSVでダウンロード
                     </button>
                   </TooltipElement>
                 </div>
@@ -918,7 +922,7 @@ export const GuidePage: React.FC = () => {
         </div>
       </section>
 
-      {/* マッチング形式（M001～M006） */}
+      {/* マッチング形式（M000～M003） */}
       <section style={{ marginBottom: '48px' }}>
         <h2 className="page-header-title page-header-title--md" style={{ 
           marginBottom: '20px', 
@@ -932,15 +936,13 @@ export const GuidePage: React.FC = () => {
         </h2>
         <div className="guide-card">
           <p style={{ color: 'var(--discord-text-normal)', fontSize: '14px', marginBottom: '16px', lineHeight: '1.7' }}>
-            抽選条件画面で、マッチング形式を M001～M006 から選択します。共通でローテーション回数を設定し、形式に応じて当選人数・総テーブル数・グループ数などを入力します。
+            抽選条件画面で、マッチング形式を M000～M003 から選択します。共通でローテーション回数を設定し、形式に応じて総テーブル数・1テーブルあたりのユーザー数などを入力します。
           </p>
           <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--discord-text-normal)', fontSize: '14px', lineHeight: '2' }}>
-            <li>M001: 完全ランダムマッチング（空席なし・ランダム）</li>
-            <li>M002: 完全ローテーションマッチング（空席なし・順番に回る）</li>
-            <li>M003: 空席込みランダムマッチング</li>
-            <li>M004: 空席込みローテーションマッチング</li>
-            <li>M005: グループマッチング</li>
-            <li>M006: 複数マッチング</li>
+            <li>M000: マッチングは使用しない</li>
+            <li>M001: ランダムマッチング（総テーブル数指定・空席込み）</li>
+            <li>M002: ローテーションマッチング（総テーブル数指定・空席込み）</li>
+            <li>M003: 複数名マッチング（テーブル×キャストユニット）</li>
           </ul>
         </div>
       </section>
@@ -958,7 +960,7 @@ export const GuidePage: React.FC = () => {
           マッチング方式の違い
         </h2>
         <div className="guide-card">
-          <div className="guide-mode-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div className="guide-mode-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px' }}>
             <div style={{
               backgroundColor: 'var(--discord-bg-dark)',
               padding: '20px',
@@ -1005,6 +1007,29 @@ export const GuidePage: React.FC = () => {
                 循環ローテーション＋重み付きランダムです。全員が公平にローテーションするため、公平性を重視する場合に適しています。
               </p>
             </div>
+            <div style={{
+              backgroundColor: 'var(--discord-bg-dark)',
+              padding: '20px',
+              borderRadius: '8px',
+              border: '1px solid var(--discord-border)'
+            }}>
+              <h4 style={{ 
+                color: 'var(--discord-text-header)', 
+                fontSize: '16px', 
+                fontWeight: 600,
+                marginBottom: '12px'
+              }}>
+                複数マッチング（M006）
+              </h4>
+              <p style={{ 
+                color: 'var(--discord-text-normal)', 
+                fontSize: '14px',
+                lineHeight: '1.7',
+                margin: 0
+              }}>
+                1テーブルあたり複数名・1ローテあたり複数キャストを指定する形式です。当選者をテーブルごとにグループ分けし、各テーブルに複数のキャストがローテーションで入ります。イベントで「○名1テーブル・○キャストが順番に回る」運用に使えます。
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -1024,12 +1049,12 @@ export const GuidePage: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {[
             {
-              q: 'CSVの作り方が分かりません。Googleフォームの回答をどうCSVにすればいいですか？',
-              a: 'ガイド上部の「CSVを用意する（事前準備）」を参照してください。Googleフォームの回答をスプレッドシートに連携し、スプレッドシートから「ファイル → ダウンロード → カンマ区切り値」でCSVを保存する手順を説明しています。'
+              q: 'TSVの作り方が分かりません。Googleフォームの回答をどうTSVにすればいいですか？',
+              a: 'ガイド上部の「TSVを用意する（事前準備）」を参照してください。Googleフォームの回答をスプレッドシートに連携し、スプレッドシートから「ファイル → ダウンロード → タブ区切り形式」でTSVを保存する手順を説明しています。'
             },
             {
               q: '「列数が足りません」と出ます。',
-              a: 'テンプレート形式では必要な列数を満たしているか確認してください。カスタム形式では「列の割り当て」で各項目に十分な列を指定しているか確認してください。'
+              a: '列の割り当てでユーザー名・アカウントID(X)・希望キャストに、TSVの該当する列を指定してください。アカウントID(X)は必須です。'
             },
             {
               q: '抽選結果やマッチング結果はどこに保存されますか？',
@@ -1041,7 +1066,7 @@ export const GuidePage: React.FC = () => {
             },
             {
               q: '希望ランクのバッジの色は何を意味しますか？',
-              a: '第1希望は金色、第2希望は銀色、第3希望は銅色、希望外はグレーで表示されます。マッチング結果画面で確認できます。'
+              a: '第1希望は金色、第2希望は銀色、第3希望は銅色で表示されます。第4希望以降と希望外はグレーで表示されます。マッチング結果画面で確認できます。'
             },
             {
               q: '抽選をやり直したい場合はどうすればいいですか？',

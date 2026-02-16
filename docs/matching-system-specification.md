@@ -706,3 +706,586 @@ desktop/src/
 ---
 
 **このドキュメントについて質問や不明点がある場合は、実装前に必ず確認してください。**
+
+
+
+20260216 追加仕様
+
+# マッチングシステム仕様書 v2.3 更新内容（詳細版）
+
+## バージョン: 2.2 → 2.3（2026年2月16日）
+
+---
+
+## 1. マッチングロジックの削減
+
+### 変更前（6種類）
+
+1. **M001: 完全ランダムマッチング** → ❌ 削除
+2. **M002: 完全ローテーションマッチング** → ❌ 削除
+3. **M003: 空席込みランダムマッチング**
+4. **M004: 空席込みローテーションマッチング**
+5. **M005: グループマッチング** → ❌ 削除
+6. **M006: 複数マッチング**
+
+### 変更後（3種類）
+
+1. **M001: ランダムマッチング**（旧M003から改名・昇格）
+2. **M002: ローテーションマッチング**（旧M004から改名・昇格）
+3. **M003: 複数マッチング**（旧M006から区分コード変更）
+
+---
+
+## 2. 空席数計算ロジックの明確化
+
+### ランダムマッチング・ローテーションマッチング共通
+
+**新規追加: 空席数の計算式**
+
+```
+空席数 = 総テーブル数 - 当選者数
+```
+
+#### 設定項目の変更
+
+**追加項目:**
+- **総テーブル数**（数値入力）← 新規追加
+
+**既存項目:**
+- ローテーション回数（変更なし）
+
+#### 動作仕様の明確化
+
+**ランダムマッチング:**
+```typescript
+// 旧仕様（v2.2まで）: 空席数は暗黙的
+// 新仕様（v2.3）: 明示的に総テーブル数を指定
+
+設定例:
+- 総テーブル数: 20
+- 当選者数: 15
+→ 空席数 = 20 - 15 = 5
+
+処理:
+1. 当選者15名をランダムにテーブル1-15に配置
+2. テーブル16-20は空席として確保
+3. キャストは全20テーブル（空席含む）をランダムにローテーション
+```
+
+**ローテーションマッチング:**
+```typescript
+設定例:
+- 総テーブル数: 20
+- 当選者数: 15
+→ 空席数 = 20 - 15 = 5
+
+処理:
+1. 当選者15名を順番にテーブル1-15に配置
+2. テーブル16-20は空席として確保
+3. キャストは全20テーブル（空席含む）を順番にローテーション
+```
+
+#### 重要な仕様変更点
+
+**空席テーブルの扱い:**
+- ✅ 空席テーブルもローテーション対象に含める
+- ✅ キャストは空席テーブルも巡回する
+- ✅ 空席でもローテーション順は維持される
+
+**理由:**
+- キャストの公平性を保つため
+- ローテーション管理を簡素化するため
+
+---
+
+## 3. バリデーションの更新
+
+### ランダムマッチング・ローテーションマッチング
+
+**新規追加: 総テーブル数のバリデーション**
+
+```typescript
+// バリデーションルール
+if (totalTables < winnerCount) {
+  throw new Error('総テーブル数が当選者数より少なくなっています');
+}
+
+// 条件式
+totalTables >= winnerCount
+
+// 具体例
+総テーブル数: 15
+当選者数: 20
+→ エラー: 空席数がマイナスになる（-5席）
+```
+
+**エラーメッセージ:**
+- 「総テーブル数が当選者数より少なくなっています」
+- 「総テーブル数: {totalTables}, 当選者数: {winnerCount}, 不足: {winnerCount - totalTables}席」
+
+### 複数マッチング（変更なし）
+
+```typescript
+// 既存のバリデーション（v2.2と同じ）
+if (totalUsers % usersPerTable !== 0) {
+  throw new Error('ユーザー数がテーブル数で割り切れません');
+}
+
+if (totalCasts % castsPerRotation !== 0) {
+  throw new Error('キャスト数がローテーション単位で割り切れません');
+}
+```
+
+---
+
+## 4. データ構造の更新
+
+### ランダムマッチング
+
+**新規追加:**
+
+```typescript
+type RandomMatchingSettings = {
+  totalTables: number;      // 総テーブル数（新規追加）
+  rotationCount: number;    // ローテーション回数（既存）
+}
+```
+
+### ローテーションマッチング
+
+**新規追加:**
+
+```typescript
+type RotationMatchingSettings = {
+  totalTables: number;      // 総テーブル数（新規追加）
+  rotationCount: number;    // ローテーション回数（既存）
+}
+```
+
+### 複数マッチング（変更なし）
+
+```typescript
+type MultipleMatchingSettings = {
+  usersPerTable: number;        // 変更なし
+  castsPerRotation: number;     // 変更なし
+  rotationCount: number;        // 変更なし
+}
+```
+
+---
+
+## 5. ファイル構成の変更
+
+### 削除するファイル
+
+```
+desktop/src/features/matching/logics/
+  ❌ complete-random.ts          # M001完全ランダムマッチング
+  ❌ complete-rotation.ts        # M002完全ローテーションマッチング
+  ❌ group-matching.ts           # M005グループマッチング
+```
+
+**削除理由:**
+- M001/M002: 空席なしの需要がないため
+- M005: 複雑すぎて実用性が低いため
+
+### 改名するファイル
+
+```
+desktop/src/features/matching/logics/
+  旧: vacant-random.ts    → 新: random-matching.ts
+  旧: vacant-rotation.ts  → 新: rotation-matching.ts
+```
+
+**改名理由:**
+- 「空席込み」が標準になったため、プレフィックス不要
+- よりシンプルな命名
+
+### 変更なし
+
+```
+desktop/src/features/matching/logics/
+  ✅ multiple-matching.ts        # 区分コードのみM006→M003に変更
+  ✅ ng-judgment.ts              # 変更なし
+  ✅ caution-user.ts             # 変更なし
+  ✅ matching_service.ts         # 変更なし
+  ✅ matching-result-types.ts    # 変更なし
+```
+
+---
+
+## 6. 区分コードの変更
+
+### matching-type-codes.ts の更新
+
+**変更前:**
+
+```typescript
+export const MATCHING_TYPE_CODES = {
+  M001: 'complete-random',          // 完全ランダム
+  M002: 'complete-rotation',        // 完全ローテーション
+  M003: 'vacant-random',            // 空席込みランダム
+  M004: 'vacant-rotation',          // 空席込みローテーション
+  M005: 'group-matching',           // グループマッチング
+  M006: 'multiple-matching',        // 複数マッチング
+} as const;
+```
+
+**変更後:**
+
+```typescript
+export const MATCHING_TYPE_CODES = {
+  M001: 'random-matching',          // ランダムマッチング
+  M002: 'rotation-matching',        // ローテーションマッチング
+  M003: 'multiple-matching',        // 複数マッチング
+} as const;
+```
+
+### ロジック内部の区分コード変更
+
+**random-matching.ts:**
+
+```typescript
+// 変更前
+export const MATCHING_TYPE = 'M003';
+
+// 変更後
+export const MATCHING_TYPE = 'M001';
+```
+
+**rotation-matching.ts:**
+
+```typescript
+// 変更前
+export const MATCHING_TYPE = 'M004';
+
+// 変更後
+export const MATCHING_TYPE = 'M002';
+```
+
+**multiple-matching.ts:**
+
+```typescript
+// 変更前
+export const MATCHING_TYPE = 'M006';
+
+// 変更後
+export const MATCHING_TYPE = 'M003';
+```
+
+---
+
+## 7. UI設定の変更
+
+### プルダウン項目の更新
+
+**変更前:**
+
+```
+1. 完全ランダムマッチング
+2. 完全ローテーションマッチング
+3. 空席込みランダムマッチング
+4. 空席込みローテーションマッチング
+5. グループマッチング
+6. 複数マッチング
+```
+
+**変更後:**
+
+```
+1. ランダムマッチング
+2. ローテーションマッチング
+3. 複数マッチング
+```
+
+### 設定画面の入力項目
+
+**ランダム・ローテーションマッチング:**
+
+```tsx
+<FormGroup>
+  <Label>総テーブル数</Label>
+  <Input 
+    type="number" 
+    min="1"
+    value={totalTables}
+    onChange={(e) => setTotalTables(Number(e.target.value))}
+  />
+  {/* 新規追加項目 */}
+</FormGroup>
+
+<FormGroup>
+  <Label>ローテーション回数</Label>
+  <Input 
+    type="number" 
+    min="1"
+    value={rotationCount}
+    onChange={(e) => setRotationCount(Number(e.target.value))}
+  />
+  {/* 既存項目 */}
+</FormGroup>
+
+{/* バリデーションエラー表示 */}
+{totalTables < winnerCount && (
+  <ErrorMessage>
+    総テーブル数が当選者数より少なくなっています
+    （総テーブル: {totalTables}, 当選者: {winnerCount}）
+  </ErrorMessage>
+)}
+```
+
+**複数マッチング（変更なし）:**
+
+```tsx
+<FormGroup>
+  <Label>1テーブルあたりのユーザー数</Label>
+  <Input type="number" min="1" />
+</FormGroup>
+
+<FormGroup>
+  <Label>1ローテあたりのキャスト数</Label>
+  <Input type="number" min="1" />
+</FormGroup>
+
+<FormGroup>
+  <Label>ローテーション回数</Label>
+  <Input type="number" min="1" />
+</FormGroup>
+```
+
+---
+
+## 8. マッチング実行ロジックの変更
+
+### matching_service.ts の更新
+
+**変更前:**
+
+```typescript
+switch (matchingType) {
+  case 'M001':
+    return executeCompleteRandom(...);
+  case 'M002':
+    return executeCompleteRotation(...);
+  case 'M003':
+    return executeVacantRandom(...);
+  case 'M004':
+    return executeVacantRotation(...);
+  case 'M005':
+    return executeGroupMatching(...);
+  case 'M006':
+    return executeMultipleMatching(...);
+}
+```
+
+**変更後:**
+
+```typescript
+switch (matchingType) {
+  case 'M001':
+    return executeRandomMatching(users, casts, { 
+      totalTables, 
+      rotationCount 
+    });
+  case 'M002':
+    return executeRotationMatching(users, casts, { 
+      totalTables, 
+      rotationCount 
+    });
+  case 'M003':
+    return executeMultipleMatching(users, casts, { 
+      usersPerTable, 
+      castsPerRotation, 
+      rotationCount 
+    });
+  default:
+    throw new Error(`Unknown matching type: ${matchingType}`);
+}
+```
+
+---
+
+## 9. 実装手順（Phase 2詳細）
+
+### Step 1: ファイルの削除
+
+```bash
+cd desktop/src/features/matching/logics/
+rm complete-random.ts
+rm complete-rotation.ts
+rm group-matching.ts
+```
+
+### Step 2: ファイルの改名
+
+```bash
+mv vacant-random.ts random-matching.ts
+mv vacant-rotation.ts rotation-matching.ts
+```
+
+### Step 3: 区分コードの更新
+
+**random-matching.ts:**
+
+```typescript
+// ファイル冒頭で定義
+export const MATCHING_TYPE = 'M001'; // M003 → M001 に変更
+
+// 関数内で totalTables パラメータを追加
+export function executeRandomMatching(
+  users: UserBean[],
+  casts: CastBean[],
+  settings: { totalTables: number; rotationCount: number }
+): MatchingResult {
+  const { totalTables, rotationCount } = settings;
+  
+  // バリデーション追加
+  if (totalTables < users.length) {
+    throw new Error('総テーブル数が当選者数より少なくなっています');
+  }
+  
+  const vacantCount = totalTables - users.length;
+  
+  // 既存のロジック + 空席処理
+  // ...
+}
+```
+
+**rotation-matching.ts:**
+
+```typescript
+// ファイル冒頭で定義
+export const MATCHING_TYPE = 'M002'; // M004 → M002 に変更
+
+// 関数内で totalTables パラメータを追加
+export function executeRotationMatching(
+  users: UserBean[],
+  casts: CastBean[],
+  settings: { totalTables: number; rotationCount: number }
+): MatchingResult {
+  const { totalTables, rotationCount } = settings;
+  
+  // バリデーション追加
+  if (totalTables < users.length) {
+    throw new Error('総テーブル数が当選者数より少なくなっています');
+  }
+  
+  const vacantCount = totalTables - users.length;
+  
+  // 既存のロジック + 空席処理
+  // ...
+}
+```
+
+**multiple-matching.ts:**
+
+```typescript
+// ファイル冒頭で定義のみ変更
+export const MATCHING_TYPE = 'M003'; // M006 → M003 に変更
+
+// その他のロジックは変更なし
+```
+
+### Step 4: matching-type-codes.ts の更新
+
+```typescript
+export const MATCHING_TYPE_CODES = {
+  M001: 'random-matching',
+  M002: 'rotation-matching',
+  M003: 'multiple-matching',
+} as const;
+
+export type MatchingTypeCode = keyof typeof MATCHING_TYPE_CODES;
+```
+
+### Step 5: UI設定画面の更新
+
+プルダウン選択肢を3つに削減し、ランダム・ローテーションマッチングに「総テーブル数」入力フィールドを追加。
+
+---
+
+## 10. 移行時の注意事項
+
+### 既存データとの互換性
+
+**問題:**
+- 既存の保存データにM001, M002, M005, M006が含まれている可能性
+
+**対応:**
+
+```typescript
+// データ読み込み時にマイグレーション
+function migrateMatchingType(oldType: string): string {
+  const migration: Record<string, string> = {
+    'M001': 'M001', // 完全ランダム → ランダム（要手動調整）
+    'M002': 'M002', // 完全ローテ → ローテ（要手動調整）
+    'M003': 'M001', // 空席込みランダム → ランダム
+    'M004': 'M002', // 空席込みローテ → ローテ
+    'M005': 'M001', // グループ → ランダム（近似）
+    'M006': 'M003', // 複数 → 複数
+  };
+  
+  return migration[oldType] || 'M001';
+}
+```
+
+### バリデーションエラーの対応
+
+**ユーザーへの説明:**
+```
+「総テーブル数」を設定してください。
+推奨値: 当選者数 + 予備席数（例: 当選者20名の場合、25テーブル）
+```
+
+---
+
+## 11. テストケース
+
+### ランダムマッチング
+
+```typescript
+// テスト1: 空席なし
+totalTables: 10, winners: 10 → 空席0
+
+// テスト2: 空席あり
+totalTables: 15, winners: 10 → 空席5
+
+// テスト3: バリデーションエラー
+totalTables: 5, winners: 10 → エラー
+```
+
+### ローテーションマッチング
+
+```typescript
+// テスト1: 空席なし
+totalTables: 10, winners: 10 → 空席0
+
+// テスト2: 空席あり
+totalTables: 20, winners: 15 → 空席5
+
+// テスト3: バリデーションエラー
+totalTables: 10, winners: 15 → エラー
+```
+
+---
+
+## 12. ドキュメント更新箇所
+
+### README.md
+
+**削除:**
+- 完全ランダムマッチングの説明
+- 完全ローテーションマッチングの説明
+- グループマッチングの説明
+
+**追加:**
+- 総テーブル数の設定方法
+- 空席数の計算式
+
+### ユーザーガイド
+
+**更新:**
+- マッチング方式の選択画面（6種→3種）
+- 設定項目の説明（総テーブル数の追加）
+
+---

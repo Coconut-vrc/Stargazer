@@ -4,21 +4,10 @@ import { Repository } from '@/stores/AppContext';
 import { useAppContext } from '@/stores/AppContext';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { AppSelect, type AppSelectOption } from '@/components/AppSelect';
-import type { NGJudgmentType, NGMatchingBehavior, CautionUser } from '@/features/matching/types/matching-system-types';
+import type { CautionUser } from '@/features/matching/types/matching-system-types';
 import { parseXUsername } from '@/common/xIdUtils';
 
 type PersistCastsFn = (casts: CastBean[]) => void | Promise<void>;
-
-const NG_JUDGMENT_LABELS: Record<NGJudgmentType, string> = {
-  username: 'ユーザー名のみで判定',
-  accountId: 'アカウントID(X)のみで判定（推奨）',
-  either: 'ユーザー名 OR アカウントID（どちらか一致でNG）',
-};
-
-const NG_BEHAVIOR_LABELS: Record<NGMatchingBehavior, string> = {
-  warn: '警告モード（結果でハイライト・手動で入れ替え可能）',
-  exclude: '除外モード（マッチング時に自動除外）',
-};
 
 function getNgEntriesFromCast(cast: CastBean): NGUserEntry[] {
   const entries = cast.ng_entries;
@@ -53,23 +42,9 @@ export const NGUserManagementPage: React.FC<{
   }, [repository, selectedCastName]);
 
   const castOptions: AppSelectOption[] = casts.map((c) => ({ value: c.name, label: c.name }));
-  const selectedCast = casts.find((c) => c.name === selectedCastName);
-  const ngEntries = selectedCast ? getNgEntriesFromCast(selectedCast) : [];
   const selectValue = selectedCastName && castOptions.some((o) => o.value === selectedCastName)
     ? selectedCastName
     : castOptions[0]?.value ?? '';
-
-  const [cautionThreshold, setCautionThreshold] = useState(
-    () => matchingSettings.caution.autoRegisterThreshold,
-  );
-  const handleThresholdBlur = useCallback(() => {
-    const n = Math.max(1, Math.floor(Number(cautionThreshold)) || 1);
-    setCautionThreshold(n);
-    setMatchingSettings((prev) => ({
-      ...prev,
-      caution: { ...prev.caution, autoRegisterThreshold: n },
-    }));
-  }, [cautionThreshold, setMatchingSettings]);
 
   const isDuplicateNg = (cast: CastBean, newEntry: NGUserEntry): boolean => {
     const existing = getNgEntriesFromCast(cast);
@@ -89,11 +64,14 @@ export const NGUserManagementPage: React.FC<{
     if (!cast) return;
 
     // X ID が必須、名前はオプション
-    const accountId = parseXUsername(xIdRaw) ?? undefined;
-    if (!accountId) {
+    const parsedId = parseXUsername(xIdRaw);
+    if (!parsedId) {
       setAlertMessage('有効な X ID を入力してください（@username、ユーザー名、または x.com URL）。');
       return;
     }
+
+    // @マークを必ず付与
+    const accountId = parsedId.startsWith('@') ? parsedId : `@${parsedId}`;
 
     const newEntry: NGUserEntry = {
       username: nameToAdd || undefined,
@@ -185,9 +163,11 @@ export const NGUserManagementPage: React.FC<{
     cautionSelection.forEach((idx) => {
       const c = allNgUserCandidates[idx];
       if (c) {
+        // @マークを必ず付与
+        const accountId = c.accountId.startsWith('@') ? c.accountId : `@${c.accountId}`;
         newEntries.push({
           username: c.username,
-          accountId: c.accountId,
+          accountId,
           registrationType: 'manual',
           registeredAt: now,
         });
@@ -221,14 +201,17 @@ export const NGUserManagementPage: React.FC<{
   const castNgListByCast = useMemo(() => {
     return casts.map((cast) => {
       const entries = getNgEntriesFromCast(cast);
-      const userLabels = entries
-        .map((e) =>
-          e.username
-            ? (e.accountId ? `${e.username} / @${e.accountId}` : e.username)
-            : e.accountId ?? ''
-        )
-        .filter(Boolean);
-      return { castName: cast.name, userLabels };
+      return {
+        castName: cast.name,
+        entries,
+        userLabels: entries
+          .map((e) =>
+            e.username
+              ? (e.accountId ? `${e.username} / @${e.accountId}` : e.username)
+              : e.accountId ?? ''
+          )
+          .filter(Boolean),
+      };
     });
   }, [casts]);
 
@@ -316,38 +299,9 @@ export const NGUserManagementPage: React.FC<{
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">
-                {selectedCastName} のNGユーザー一覧（{ngEntries.length}名）
-              </label>
-              <div className="ng-list">
-                {ngEntries.length > 0 ? (
-                  ngEntries.map((entry, idx) => {
-                    const label = entry.username
-                      ? (entry.accountId ? `${entry.username} / @${entry.accountId}` : entry.username)
-                      : entry.accountId ?? '';
-                    return (
-                      <div key={`${entryToKey(entry)}-${idx}`} className="ng-list__chip">
-                        <span>{label}</span>
-                        <button
-                          type="button"
-                          className="ng-list__chip-remove"
-                          onClick={() => handleRemoveNg(selectedCastName, entry)}
-                          aria-label={`${label} を削除`}
-                        >
-                          ×
-                        </button>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <span className="text-muted-italic">なし</span>
-                )}
-              </div>
-            </div>
           </div>
 
-          {/* ── キャストごとのNG一覧 ── */}
+          {/* ── キャスト別 NG一覧（削除はここで行う） ── */}
           <div className="ng-page__section">
             <div className="ng-page__section-header">
               <h2 className="ng-page__section-title">キャスト別 NG一覧</h2>
@@ -355,19 +309,32 @@ export const NGUserManagementPage: React.FC<{
                 キャストごとにNG登録ユーザーを表示しています。
               </p>
             </div>
-            {castNgListByCast.some((r) => r.userLabels.length > 0) ? (
+            {castNgListByCast.some((r) => r.entries.length > 0) ? (
               <div className="ng-cast-summary">
                 {castNgListByCast
-                  .filter((row) => row.userLabels.length > 0)
+                  .filter((row) => row.entries.length > 0)
                   .map((row) => (
                     <div key={row.castName} className="ng-cast-summary__row">
                       <span className="ng-cast-summary__cast-name">{row.castName}</span>
                       <div className="ng-cast-summary__chips">
-                        {row.userLabels.map((label) => (
-                          <span key={label} className="ng-list__chip ng-list__chip--readonly">
-                            {label}
-                          </span>
-                        ))}
+                        {row.entries.map((entry, idx) => {
+                          const label = entry.username
+                            ? (entry.accountId ? `${entry.username} / @${entry.accountId}` : entry.username)
+                            : entry.accountId ?? '';
+                          return (
+                            <div key={`${entryToKey(entry)}-${idx}`} className="ng-list__chip">
+                              <span>{label}</span>
+                              <button
+                                type="button"
+                                className="ng-list__chip-remove"
+                                onClick={() => handleRemoveNg(row.castName, entry)}
+                                aria-label={`${label} を削除`}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   ))}

@@ -11,7 +11,7 @@ import { MATCHING_TYPE_CODES, type MatchingTypeCode } from '@/features/matching/
 import { DEFAULT_ROTATION_COUNT } from '@/common/copy';
 export type { UserBean, CastBean } from '@/common/types/entities';
 
-const VALID_PAGES: readonly string[] = ['guide', 'dataManagement', 'castNgManagement', 'settings', 'debug', 'import', 'db', 'cast', 'ngManagement', 'lotteryCondition', 'lottery', 'matching'];
+const VALID_PAGES: readonly string[] = ['guide', 'dataManagement', 'castNgManagement', 'settings', 'import', 'db', 'cast', 'ngManagement', 'lotteryCondition', 'lottery', 'matching'];
 
 const VALID_MATCHING_CODES: readonly string[] = [...MATCHING_TYPE_CODES];
 
@@ -24,9 +24,10 @@ function getInitialSession(): PersistedSession | null {
     if (!d || typeof d !== 'object') return null;
     const o = d as Record<string, unknown>;
     if (!Array.isArray(o.winners)) return null;
-    let matchingTypeCode: MatchingTypeCode = 'NONE';
+    let matchingTypeCode: MatchingTypeCode = 'M000';
     if (typeof o.matchingTypeCode === 'string' && VALID_MATCHING_CODES.includes(o.matchingTypeCode)) {
-      matchingTypeCode = o.matchingTypeCode as MatchingTypeCode;
+      const restored = o.matchingTypeCode as MatchingTypeCode;
+      matchingTypeCode = restored === 'M003' ? 'M000' : restored;
     }
     const rotationCount = typeof (o as { rotationCount?: number }).rotationCount === 'number' && (o as { rotationCount: number }).rotationCount >= 1
       ? (o as { rotationCount: number }).rotationCount
@@ -34,6 +35,9 @@ function getInitialSession(): PersistedSession | null {
     const activePage = typeof o.activePage === 'string' && VALID_PAGES.includes(o.activePage)
       ? (o.activePage as PageType)
       : 'dataManagement';
+    const totalTables = typeof (o as { totalTables?: number }).totalTables === 'number' && (o as { totalTables: number }).totalTables >= 1
+      ? (o as { totalTables: number }).totalTables
+      : 15;
     const usersPerTable = typeof (o as { usersPerTable?: number }).usersPerTable === 'number' && (o as { usersPerTable: number }).usersPerTable >= 1
       ? (o as { usersPerTable: number }).usersPerTable
       : 1;
@@ -44,6 +48,7 @@ function getInitialSession(): PersistedSession | null {
       winners: o.winners as UserBean[],
       matchingTypeCode,
       rotationCount,
+      totalTables,
       usersPerTable,
       castsPerRotation,
       activePage,
@@ -53,7 +58,7 @@ function getInitialSession(): PersistedSession | null {
   }
 }
 
-export type PageType = 'guide' | 'dataManagement' | 'castNgManagement' | 'settings' | 'debug' | 'import' | 'db' | 'cast' | 'ngManagement' | 'lotteryCondition' | 'lottery' | 'matching';
+export type PageType = 'guide' | 'dataManagement' | 'castNgManagement' | 'settings' | 'import' | 'db' | 'cast' | 'ngManagement' | 'lotteryCondition' | 'lottery' | 'matching';
 export type { MatchingTypeCode } from '@/features/matching/types/matching-type-codes';
 export type { ThemeId } from '@/common/themes';
 
@@ -73,9 +78,11 @@ export interface PersistedSession {
   winners: UserBean[];
   matchingTypeCode: MatchingTypeCode;
   rotationCount: number;
-  /** M006用: 1テーブルあたりのユーザー数 */
+  /** M001/M002用: 総テーブル数（空席込み） */
+  totalTables: number;
+  /** M003用: 1テーブルあたりのユーザー数 */
   usersPerTable: number;
-  /** M006用: 1ローテあたりのキャスト数 */
+  /** M003用: 1ローテあたりのキャスト数 */
   castsPerRotation: number;
   activePage: PageType;
 }
@@ -112,6 +119,8 @@ interface AppContextType {
   setRotationCount: (n: number) => void;
   themeId: ThemeId;
   setThemeId: (id: ThemeId) => void;
+  totalTables: number;
+  setTotalTables: (n: number) => void;
   usersPerTable: number;
   setUsersPerTable: (n: number) => void;
   castsPerRotation: number;
@@ -123,10 +132,9 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 const repositoryInstance = new Repository();
 
+/** 起動時は毎回応募データ管理ページを表示する（前回のページは復元しない） */
 function getInitialActivePage(): PageType {
-  const session = getInitialSession();
-  const lastPage = session?.activePage;
-  return lastPage ?? 'dataManagement';
+  return 'dataManagement';
 }
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -134,9 +142,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [activePage, setActivePage] = useState<PageType>(getInitialActivePage);
   const [currentWinners, setCurrentWinners] = useState<UserBean[]>(initialSession?.winners ?? []);
   const [guaranteedWinners, setGuaranteedWinners] = useState<UserBean[]>([]);
-  const [matchingTypeCode, setMatchingTypeCode] = useState<MatchingTypeCode>(initialSession?.matchingTypeCode ?? 'NONE');
+  const [matchingTypeCode, setMatchingTypeCode] = useState<MatchingTypeCode>(initialSession?.matchingTypeCode ?? 'M000');
   const [rotationCount, setRotationCount] = useState<number>(initialSession?.rotationCount ?? DEFAULT_ROTATION_COUNT);
   const [themeId, setThemeId] = useState<ThemeId>(() => getInitialThemeId());
+  const [totalTables, setTotalTables] = useState<number>(initialSession?.totalTables ?? 15);
   const [usersPerTable, setUsersPerTable] = useState<number>(initialSession?.usersPerTable ?? 1);
   const [castsPerRotation, setCastsPerRotation] = useState<number>(initialSession?.castsPerRotation ?? 1);
   const [matchingSettings, setMatchingSettingsState] = useState<MatchingSettingsState>(() => getInitialMatchingSettings());
@@ -155,12 +164,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       winners: currentWinners,
       matchingTypeCode,
       rotationCount,
+      totalTables,
       usersPerTable,
       castsPerRotation,
       activePage,
     };
     localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(session));
-  }, [currentWinners, matchingTypeCode, rotationCount, usersPerTable, castsPerRotation, activePage]);
+  }, [currentWinners, matchingTypeCode, rotationCount, totalTables, usersPerTable, castsPerRotation, activePage]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -182,6 +192,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setRotationCount,
       themeId,
       setThemeId,
+      totalTables,
+      setTotalTables,
       usersPerTable,
       setUsersPerTable,
       castsPerRotation,

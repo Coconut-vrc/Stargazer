@@ -11,11 +11,11 @@ import { EXTERNAL_LINK } from '@/common/copy';
  * X IDセル専用コンポーネント
  */
 const XLinkCell: React.FC<{
-  xId: string;
+  xId: string | undefined;
   isCaution: boolean;
   onConfirmOpen: (url: string) => void;
 }> = ({ xId, isCaution, onConfirmOpen }) => {
-  const handle = xId ? xId.replace(/^@/, '') : '';
+  const handle = (xId != null && xId !== '') ? String(xId).replace(/^@/, '') : '';
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -40,19 +40,12 @@ const XLinkCell: React.FC<{
 
 const DBViewPageComponent: React.FC = () => {
   const { repository, setActivePage, matchingSettings } = useAppContext();
-  const userData = repository.getAllApplyUsers();
+  const rawUsers = repository.getAllApplyUsers();
+  const userData = Array.isArray(rawUsers) ? rawUsers : [];
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
   const [confirmRemoveUser, setConfirmRemoveUser] = useState<UserBean | null>(null);
-  const [showOtherData, setShowOtherData] = useState(false);
-  // 各列の表示/非表示設定
-  const [columnVisibility, setColumnVisibility] = useState({
-    name: true,
-    vrcUrl: true,
-    xId: true,
-    cast1: true,
-    cast2: true,
-    cast3: true,
-  });
+  /** true = その他列も含め全列を表示（元データの通り）、false = 共通列のみ（ユーザー名・アカウントID(X)・希望キャスト） */
+  const [showAllColumns, setShowAllColumns] = useState(false);
 
   const casts = repository.getAllCasts();
   const cautionList = useMemo(() => {
@@ -105,12 +98,13 @@ const DBViewPageComponent: React.FC = () => {
     setPendingUrl(null);
   }, []);
 
-  /** カスタム列のキー一覧（全ユーザーの raw_extra から出現順でユニーク化） */
+  /** カスタム列のキー一覧（全ユーザーの raw_extra から出現順でユニーク化）。元データの列名のまま */
   const customColumnKeys = useMemo(() => {
     const keys: string[] = [];
     const seen = new Set<string>();
     for (const user of userData) {
-      const extras = (user.raw_extra ?? []) as { key?: string; value?: string }[];
+      const raw = user.raw_extra;
+      const extras = Array.isArray(raw) ? (raw as { key?: string; value?: string }[]) : [];
       for (const e of extras) {
         const k = e?.key != null ? String(e.key).trim() : '';
         if (k && !seen.has(k)) {
@@ -122,13 +116,19 @@ const DBViewPageComponent: React.FC = () => {
     return keys;
   }, [userData]);
 
-  const visibleFixedColumnsCount = Object.values(columnVisibility).filter(Boolean).length + 1; // +1 は操作列
-  const totalColumns = visibleFixedColumnsCount + (showOtherData ? customColumnKeys.length : 0);
+  /** 希望キャスト列数：データ内の最大長（複数指定可・カンマ区切りで6件来たら1〜6を表示） */
+  const maxCastCount = useMemo(
+    () => Math.max(1, ...userData.map((u) => (Array.isArray(u.casts) ? u.casts.length : 0))),
+    [userData],
+  );
+
+  const totalColumns =
+    (showAllColumns ? 2 + maxCastCount + customColumnKeys.length : 2 + maxCastCount) + 1; // +1 は操作列
   const emptyRow = useMemo(
     () => (
       <tr>
         <td colSpan={totalColumns} className="db-table__cell db-table__cell--empty">
-          データがありません。左メニューの「データ読取」からCSVファイルを取り込んでください。
+          データがありません。左メニューの「データ読取」からTSVファイルを取り込んでください。
         </td>
       </tr>
     ),
@@ -143,102 +143,54 @@ const DBViewPageComponent: React.FC = () => {
 
   const columns: DiscordTableColumn<(typeof userData)[number]>[] = useMemo(() => {
     const base: DiscordTableColumn<(typeof userData)[number]>[] = [];
-    
-    if (columnVisibility.name) {
+    base.push({
+      header: 'ユーザー名',
+      headerClassName: 'db-table__th',
+      renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.name ?? '—'}</td>,
+    });
+    base.push({
+      header: (
+        <>
+          アカウントID(X)
+          <span className="db-table__th-hint">（クリックでユーザーページに遷移）</span>
+        </>
+      ),
+      headerClassName: 'db-table__th',
+      renderCell: (user) => (
+        <XLinkCell xId={user.x_id} isCaution={isCautionRow(user)} onConfirmOpen={handleConfirmOpen} />
+      ),
+    });
+    for (let i = 0; i < maxCastCount; i++) {
+      const idx = i;
       base.push({
-        header: 'アカウント名',
-        headerClassName: 'db-table__th',
-        renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.name}</td>,
-      });
-    }
-    
-    if (columnVisibility.vrcUrl) {
-      base.push({
-        header: (
-          <>
-            VRCアカウントURL
-            <span className="db-table__th-hint">（クリックでVRCプロフィールに遷移）</span>
-          </>
-        ),
-        headerClassName: 'db-table__th',
-        renderCell: (user) => {
-          const vrcUrl = user.vrc_url?.trim();
-          const handleClick = (e: React.MouseEvent) => {
-            e.stopPropagation();
-            if (!vrcUrl) return;
-            handleConfirmOpen(vrcUrl);
-          };
-          const cls = [
-            'db-table__cell',
-            isCautionRow(user) ? 'db-table__cell--caution' : '',
-            vrcUrl ? 'db-table__cell--link' : '',
-          ]
-            .filter(Boolean)
-            .join(' ');
-          return (
-            <td className={cls} onClick={handleClick}>
-              {vrcUrl ? 'VRCプロフィール' : '—'}
-            </td>
-          );
-        },
-      });
-    }
-    
-    if (columnVisibility.xId) {
-      base.push({
-        header: (
-          <>
-            アカウントID(X)
-            <span className="db-table__th-hint">（クリックでユーザーページに遷移）</span>
-          </>
-        ),
+        header: `希望キャスト${idx + 1}`,
         headerClassName: 'db-table__th',
         renderCell: (user) => (
-          <XLinkCell xId={user.x_id} isCaution={isCautionRow(user)} onConfirmOpen={handleConfirmOpen} />
+          <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>
+            {Array.isArray(user.casts) ? (user.casts[idx] ?? '—') : '—'}
+          </td>
         ),
       });
     }
-    
-    if (columnVisibility.cast1) {
-      base.push({
-        header: '希望キャスト1',
-        headerClassName: 'db-table__th',
-        renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.casts[0] || '—'}</td>,
-      });
+    if (showAllColumns && customColumnKeys.length > 0) {
+      for (const k of customColumnKeys) {
+        base.push({
+          header: k,
+          headerClassName: 'db-table__th db-table__th--custom',
+          renderCell: (user: UserBean) => {
+            const raw = user.raw_extra;
+            const extras = Array.isArray(raw) ? (raw as { key?: string; value?: string }[]) : [];
+            const entry = extras.find((e) => (e?.key ?? '').trim() === k);
+            const val = entry?.value ?? '—';
+            return (
+              <td className={`db-table__cell db-table__cell--note${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>
+                {val}
+              </td>
+            );
+          },
+        });
+      }
     }
-    
-    if (columnVisibility.cast2) {
-      base.push({
-        header: '希望キャスト2',
-        headerClassName: 'db-table__th',
-        renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.casts[1] || '—'}</td>,
-      });
-    }
-    
-    if (columnVisibility.cast3) {
-      base.push({
-        header: '希望キャスト3',
-        headerClassName: 'db-table__th',
-        renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.casts[2] || '—'}</td>,
-      });
-    }
-    const extra = showOtherData ? customColumnKeys.map((key) => {
-      const k = key;
-      return {
-        header: k,
-        headerClassName: 'db-table__th db-table__th--custom',
-        renderCell: (user: UserBean) => {
-          const extras = (user.raw_extra ?? []) as { key?: string; value?: string }[];
-          const entry = extras.find((e) => (e?.key ?? '').trim() === k);
-          const val = entry?.value ?? '—';
-          return (
-            <td className={`db-table__cell db-table__cell--note${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>
-              {val}
-            </td>
-          );
-        },
-      };
-    }) : [];
     const operationCol: DiscordTableColumn<(typeof userData)[number]> = {
       header: '',
       headerClassName: 'db-table__th',
@@ -263,11 +215,11 @@ const DBViewPageComponent: React.FC = () => {
         );
       },
     };
-    return [...base, ...extra, operationCol];
-  }, [isCautionRow, handleConfirmOpen, customColumnKeys, showOtherData, columnVisibility]);
+    return [...base, operationCol];
+  }, [isCautionRow, handleConfirmOpen, customColumnKeys, showAllColumns, maxCastCount]);
 
   return (
-    <div className="page-wrapper">
+    <div className="page-wrapper page-wrapper--flex">
       <div className="page-header-row">
         <h1 className="page-header-title page-header-title--md">名簿データベース</h1>
         <button
@@ -288,75 +240,35 @@ const DBViewPageComponent: React.FC = () => {
       )}
 
       {customColumnKeys.length > 0 && (
-        <button
-          type="button"
-          onClick={() => setShowOtherData((prev) => !prev)}
-          className="btn-secondary btn-full-width"
-          style={{ marginTop: 20, marginBottom: 20 }}
-        >
-          {showOtherData ? '他データ列を隠す' : '他データ列を見る'}
-        </button>
+        <div style={{ marginTop: 20, marginBottom: 12 }}>
+          <button
+            type="button"
+            onClick={() => setShowAllColumns((prev) => !prev)}
+            className="btn-secondary"
+          >
+            {showAllColumns ? '共通列のみに戻す' : '全て表示'}
+          </button>
+          <p className="form-inline-note" style={{ marginTop: 8, fontSize: 13 }}>
+            {showAllColumns
+              ? 'マッピングされなかった列を元データの列名のまま表示しています。横にスクロールできます。'
+              : '「全て表示」で取り込み時の全列を元データの通り表示します。'}
+          </p>
+        </div>
       )}
 
-      <div style={{ marginTop: 20, marginBottom: 20 }}>
-        <label className="form-label" style={{ marginBottom: 8 }}>表示する列を選択</label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <input
-              type="checkbox"
-              checked={columnVisibility.name}
-              onChange={(e) => setColumnVisibility((prev) => ({ ...prev, name: e.target.checked }))}
-            />
-            <span style={{ fontSize: 14 }}>アカウント名</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <input
-              type="checkbox"
-              checked={columnVisibility.vrcUrl}
-              onChange={(e) => setColumnVisibility((prev) => ({ ...prev, vrcUrl: e.target.checked }))}
-            />
-            <span style={{ fontSize: 14 }}>VRCアカウントURL</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <input
-              type="checkbox"
-              checked={columnVisibility.xId}
-              onChange={(e) => setColumnVisibility((prev) => ({ ...prev, xId: e.target.checked }))}
-            />
-            <span style={{ fontSize: 14 }}>アカウントID(X)</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <input
-              type="checkbox"
-              checked={columnVisibility.cast1}
-              onChange={(e) => setColumnVisibility((prev) => ({ ...prev, cast1: e.target.checked }))}
-            />
-            <span style={{ fontSize: 14 }}>希望キャスト1</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <input
-              type="checkbox"
-              checked={columnVisibility.cast2}
-              onChange={(e) => setColumnVisibility((prev) => ({ ...prev, cast2: e.target.checked }))}
-            />
-            <span style={{ fontSize: 14 }}>希望キャスト2</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <input
-              type="checkbox"
-              checked={columnVisibility.cast3}
-              onChange={(e) => setColumnVisibility((prev) => ({ ...prev, cast3: e.target.checked }))}
-            />
-            <span style={{ fontSize: 14 }}>希望キャスト3</span>
-          </label>
-        </div>
-      </div>
-
-      <div className="table-container">
+      <div
+        className="table-container db-view-table-wrapper db-view-table-scroll"
+        style={{
+          overflow: 'auto',
+          maxWidth: '100%',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
         <DiscordTable
           columns={columns}
           rows={userData}
           tableClassName="db-table"
+          tableStyle={{ minWidth: Math.max(700, totalColumns * 130) }}
           emptyRow={emptyRow}
         />
       </div>

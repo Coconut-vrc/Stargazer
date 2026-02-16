@@ -15,6 +15,7 @@ export interface MatchedCast {
 export interface TableSlot {
   user: UserBean | null;
   matches: MatchedCast[];
+  tableIndex?: number; // M003用: 1-based テーブル番号
 }
 
 export type MatchingResult = {

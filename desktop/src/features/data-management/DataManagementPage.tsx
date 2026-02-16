@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useAppContext } from '@/stores/AppContext';
+import React, { useState, useEffect } from 'react';
+import { useAppContext, type PageType } from '@/stores/AppContext';
 import { ImportPage } from '@/features/import/ImportPage';
 import { DBViewPage } from '@/features/db/DBViewPage';
 import { LotteryPage } from '@/features/lottery/LotteryPage';
@@ -7,6 +7,7 @@ import { LotteryResultPage } from '@/features/lottery/LotteryResultPage';
 import { MatchingPage } from '@/features/matching/MatchingPage';
 
 type DataManagementTab = 'import' | 'db' | 'lotteryCondition' | 'lottery' | 'matching';
+const DATA_MANAGEMENT_TABS: DataManagementTab[] = ['import', 'db', 'lotteryCondition', 'lottery', 'matching'];
 
 interface DataManagementPageProps {
   onImportUserRows: (
@@ -16,18 +17,37 @@ interface DataManagementPageProps {
   ) => void;
 }
 
+function toTabOrDefault(page: PageType): DataManagementTab {
+  return DATA_MANAGEMENT_TABS.includes(page as DataManagementTab)
+    ? (page as DataManagementTab)
+    : 'import';
+}
+
 export const DataManagementPage: React.FC<DataManagementPageProps> = ({ onImportUserRows }) => {
   const {
+    activePage,
     repository,
     currentWinners,
     matchingTypeCode,
     rotationCount,
+    totalTables: contextTotalTables,
     usersPerTable,
     castsPerRotation,
     matchingSettings,
   } = useAppContext();
 
-  const [activeTab, setActiveTab] = useState<DataManagementTab>('import');
+  const totalTables = matchingTypeCode === 'M003' && usersPerTable > 0
+    ? Math.floor(currentWinners.length / usersPerTable)
+    : contextTotalTables;
+
+  const [activeTab, setActiveTab] = useState<DataManagementTab>(() => toTabOrDefault(activePage));
+
+  useEffect(() => {
+    const mapped = toTabOrDefault(activePage);
+    if (mapped !== 'import' || activePage === 'import') {
+      setActiveTab(mapped);
+    }
+  }, [activePage]);
 
   const tabs: { id: DataManagementTab; label: string }[] = [
     { id: 'import', label: 'データ読取' },
@@ -55,8 +75,6 @@ export const DataManagementPage: React.FC<DataManagementPageProps> = ({ onImport
             matchingTypeCode={matchingTypeCode}
             rotationCount={rotationCount}
             totalTables={totalTables}
-            groupCount={groupCount}
-            usersPerGroup={usersPerGroup}
             usersPerTable={usersPerTable}
             castsPerRotation={castsPerRotation}
             matchingSettings={matchingSettings}
