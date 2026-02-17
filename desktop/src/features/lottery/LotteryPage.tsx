@@ -155,11 +155,23 @@ export const LotteryPage: React.FC = () => {
 
   const handleToggleGuaranteed = (user: import('@/common/types/entities').UserBean) => {
     const isSelected = guaranteedWinners.some(w => w.x_id === user.x_id);
+    let newGuaranteed: typeof guaranteedWinners;
     if (isSelected) {
-      setGuaranteedWinners(guaranteedWinners.filter(w => w.x_id !== user.x_id));
+      newGuaranteed = guaranteedWinners.filter(w => w.x_id !== user.x_id);
     } else {
-      setGuaranteedWinners([...guaranteedWinners, user]);
+      newGuaranteed = [...guaranteedWinners, user];
     }
+
+    // M003の場合、確定当選者数がusersPerTableの倍数になるように調整
+    if (matchingTypeCode === 'M003' && usersPerTable > 1) {
+      const totalWinners = newGuaranteed.length + count;
+      if (totalWinners % usersPerTable !== 0) {
+        setAlertMessage(`確定当選者数と抽選枠の合計は${usersPerTable}の倍数である必要があります。現在の合計: ${totalWinners}名`);
+        return;
+      }
+    }
+
+    setGuaranteedWinners(newGuaranteed);
   };
 
   const allUsers = repository.getAllApplyUsers();
@@ -247,7 +259,7 @@ export const LotteryPage: React.FC = () => {
           />
         )}
 
-        {showCountInput && countLabel !== null && (
+        {showCountInput && countLabel !== null && matchingTypeCode !== 'M003' && (
           <div className="form-group">
             <label className="form-label">{countLabel}</label>
             <div className="form-inline-group">
@@ -265,67 +277,81 @@ export const LotteryPage: React.FC = () => {
           </div>
         )}
 
-        {isTableBasedMatching(matchingTypeCode) && (
-          <div className="form-group">
-            <label className="form-label">総テーブル数</label>
-            <input
-              type="number"
-              value={totalTables}
-              min={1}
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                setTotalTables(Number.isFinite(v) && v >= 1 ? v : totalTables);
-              }}
-              className="form-number-input"
-            />
-            <p className="form-inline-note">※ 空席数 = 総テーブル数 − 当選者数</p>
-          </div>
-        )}
+        {/* M001/M002用: 総テーブル数 */}
+        <div className="form-group">
+          <label className="form-label">総テーブル数</label>
+          <input
+            type="number"
+            value={totalTables}
+            min={1}
+            disabled={matchingTypeCode === 'M003'}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setTotalTables(Number.isFinite(v) && v >= 1 ? v : totalTables);
+            }}
+            className="form-number-input"
+            style={{ opacity: matchingTypeCode === 'M003' ? 0.5 : 1, cursor: matchingTypeCode === 'M003' ? 'not-allowed' : 'text' }}
+          />
+          <p className="form-inline-note" style={{ marginTop: 4 }}>※ M001/M002で使用</p>
+        </div>
 
-        {matchingTypeCode === 'M003' && (
-          <>
-            <div className="form-group">
-              <label className="form-label">当選者数</label>
-              <input
-                type="number"
-                value={count}
-                min={1}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setCount(Number.isFinite(v) && v >= 1 ? v : count);
-                }}
-                className="form-number-input"
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">1テーブルあたりのユーザー数</label>
-              <input
-                type="number"
-                value={usersPerTable}
-                min={1}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setUsersPerTable(Number.isFinite(v) && v >= 1 ? v : usersPerTable);
-                }}
-                className="form-number-input"
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">1ローテあたりのキャスト数</label>
-              <input
-                type="number"
-                value={castsPerRotation}
-                min={1}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setCastsPerRotation(Number.isFinite(v) && v >= 1 ? v : castsPerRotation);
-                }}
-                className="form-number-input"
-              />
-              <p className="form-inline-note">※ キャスト総数がこの値で割り切れる必要があります</p>
-            </div>
-          </>
-        )}
+        {/* M003用の設定 */}
+        <div className="form-group">
+          <label className="form-label">当選者数（抽選枠）</label>
+          <input
+            type="number"
+            value={count}
+            min={1}
+            step={usersPerTable}
+            disabled={matchingTypeCode !== 'M003'}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              if (Number.isFinite(v) && v >= 1) {
+                // usersPerTableの倍数に丸める（最小値は1）
+                const rounded = Math.max(1, Math.round(v / usersPerTable) * usersPerTable);
+                setCount(rounded);
+              }
+            }}
+            className="form-number-input"
+            style={{ opacity: matchingTypeCode !== 'M003' ? 0.5 : 1, cursor: matchingTypeCode !== 'M003' ? 'not-allowed' : 'text' }}
+          />
+          {matchingTypeCode === 'M003' && (
+            <p className="form-inline-note" style={{ marginTop: 4 }}>※ {usersPerTable}の倍数で設定されます</p>
+          )}
+          <p className="form-inline-note" style={{ marginTop: 4 }}>※ M003で使用</p>
+        </div>
+        <div className="form-group">
+          <label className="form-label">1テーブルあたりのユーザー数</label>
+          <input
+            type="number"
+            value={usersPerTable}
+            min={1}
+            disabled={matchingTypeCode !== 'M003'}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setUsersPerTable(Number.isFinite(v) && v >= 1 ? v : usersPerTable);
+            }}
+            className="form-number-input"
+            style={{ opacity: matchingTypeCode !== 'M003' ? 0.5 : 1, cursor: matchingTypeCode !== 'M003' ? 'not-allowed' : 'text' }}
+          />
+          <p className="form-inline-note" style={{ marginTop: 4 }}>※ M003で使用</p>
+        </div>
+        <div className="form-group">
+          <label className="form-label">1ローテあたりのキャスト数</label>
+          <input
+            type="number"
+            value={castsPerRotation}
+            min={1}
+            disabled={matchingTypeCode !== 'M003'}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setCastsPerRotation(Number.isFinite(v) && v >= 1 ? v : castsPerRotation);
+            }}
+            className="form-number-input"
+            style={{ opacity: matchingTypeCode !== 'M003' ? 0.5 : 1, cursor: matchingTypeCode !== 'M003' ? 'not-allowed' : 'text' }}
+          />
+          <p className="form-inline-note" style={{ marginTop: 4 }}>※ M003で使用。キャスト総数がこの倍数でないと警告されます</p>
+        </div>
 
         {/* 隠しファイル入力 */}
         <input
@@ -341,7 +367,7 @@ export const LotteryPage: React.FC = () => {
             抽選結果TSVをインポート
           </button>
           <button onClick={run} className="btn-primary btn-primary--full">
-            抽選を開始する
+            抽選開始
           </button>
         </div>
       </div>

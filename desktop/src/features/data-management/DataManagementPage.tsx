@@ -51,7 +51,7 @@ export const DataManagementPage: React.FC<DataManagementPageProps> = ({ onImport
 
   const tabs: { id: DataManagementTab; label: string }[] = [
     { id: 'import', label: 'データ読取' },
-    { id: 'db', label: 'DBデータ確認' },
+    { id: 'db', label: '応募データ一覧' },
     { id: 'lotteryCondition', label: '抽選条件' },
     { id: 'lottery', label: '抽選' },
     { id: 'matching', label: 'マッチング' },

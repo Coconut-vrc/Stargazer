@@ -25,7 +25,7 @@ export const MATCHING_TYPE_LABELS: Record<MatchingTypeCode, string> = {
   M000: 'マッチングは使用しない',
   M001: 'ランダムマッチング',
   M002: 'ローテーションマッチング',
-  M003: '複数名マッチング',
+  M003: '多対多ローテーションマッチング',
 };
 
 /** ランダム or ローテーション（テーブル数指定型）= M001, M002 */

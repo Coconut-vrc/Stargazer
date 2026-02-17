@@ -6,6 +6,7 @@ import type { MatchingSettingsState } from '@/features/matching/stores/matching-
 import { MatchingService, MatchedCast, type TableSlot } from '@/features/matching/logics/matching_service';
 import { DiscordTable, DiscordTableColumn } from '@/components/DiscordTable';
 import { ConfirmModal } from '@/components/ConfirmModal';
+import { InputModal } from '@/components/InputModal';
 import { XLinkInline } from '@/components/XLinkCell';
 import { downloadCsv } from '@/common/downloadCsv';
 import { MATCHING_SHEET_PREFIX } from '@/common/sheetColumns';
@@ -65,6 +66,9 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
   const [tableSlots, setTableSlots] = useState<TableSlot[] | undefined>(undefined);
   const [isExportingPngUser, setIsExportingPngUser] = useState(false);
   const [isExportingPngCast, setIsExportingPngCast] = useState(false);
+  const [showPngUserModal, setShowPngUserModal] = useState(false);
+  const [showPngCastModal, setShowPngCastModal] = useState(false);
+  const [showCsvModal, setShowCsvModal] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const userTableRef = useRef<HTMLDivElement>(null);
   const castTableRef = useRef<HTMLDivElement>(null);
@@ -405,7 +409,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
     [rotationCount],
   );
 
-  const handleExportCsv = useCallback(() => {
+  const handleExportCsv = useCallback((filename: string) => {
     if (winners.length === 0) {
       setAlertMessage('当選者がいないため、マッチング結果をエクスポートできません。');
       return;
@@ -414,15 +418,6 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
       setAlertMessage('マッチング結果がまだ計算されていません。');
       return;
     }
-
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mi = String(now.getMinutes()).padStart(2, '0');
-    const ss = String(now.getSeconds()).padStart(2, '0');
-    const filename = `マッチング結果_${yyyy}${mm}${dd}_${hh}${mi}${ss}.csv`;
 
     const values: (string | number)[][] = [];
 
@@ -489,7 +484,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
       values.push(line);
     }
 
-    downloadCsv(values, filename);
+    downloadCsv(values, `${filename}.csv`);
     setAlertMessage('CSV をダウンロードしました。');
   }, [winners, matchingResult, tableSlots, rotationCount, castViewRows]);
 
@@ -594,16 +589,14 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
     [],
   );
 
-  const handleExportPngUser = useCallback(async () => {
+  const handleExportPngUser = useCallback(async (filename: string) => {
     if (!userTableRef.current || winners.length === 0 || matchingResult.size === 0) {
       if (winners.length === 0 || matchingResult.size === 0) setAlertMessage('当選者またはマッチング結果がありません。');
       return;
     }
     setIsExportingPngUser(true);
     try {
-      const now = new Date();
-      const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
-      await downloadPng(userTableRef.current, `${MATCHING_SHEET_PREFIX}当選者別_${ts}.png`);
+      await downloadPng(userTableRef.current, `${filename}.png`);
       setAlertMessage('当選者別のPNGをダウンロードしました。');
     } catch (e) {
       console.error('PNG出力失敗:', e);
@@ -613,16 +606,14 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
     }
   }, [winners.length, matchingResult.size, downloadPng]);
 
-  const handleExportPngCast = useCallback(async () => {
+  const handleExportPngCast = useCallback(async (filename: string) => {
     if (!castTableRef.current || winners.length === 0 || matchingResult.size === 0) {
       if (winners.length === 0 || matchingResult.size === 0) setAlertMessage('当選者またはマッチング結果がありません。');
       return;
     }
     setIsExportingPngCast(true);
     try {
-      const now = new Date();
-      const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
-      await downloadPng(castTableRef.current, `${MATCHING_SHEET_PREFIX}キャスト別_${ts}.png`);
+      await downloadPng(castTableRef.current, `${filename}.png`);
       setAlertMessage('キャスト別のPNGをダウンロードしました。');
     } catch (e) {
       console.error('PNG出力失敗:', e);
@@ -654,7 +645,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
         <button
           type="button"
           className="btn-export-secondary"
-          onClick={handleExportPngUser}
+          onClick={() => setShowPngUserModal(true)}
           disabled={isExportingPngUser || winners.length === 0}
         >
           {isExportingPngUser ? '出力中...' : tableSlots?.length ? 'PNGで保存（テーブル別）' : 'PNGで保存（当選者別）'}
@@ -662,7 +653,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
         <button
           type="button"
           className="btn-export-secondary"
-          onClick={handleExportPngCast}
+          onClick={() => setShowPngCastModal(true)}
           disabled={isExportingPngCast || winners.length === 0}
         >
           {isExportingPngCast ? '出力中...' : 'PNGで保存（キャスト別）'}
@@ -670,7 +661,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
         <button
           type="button"
           className="btn-export-primary"
-          onClick={handleExportCsv}
+          onClick={() => setShowCsvModal(true)}
           disabled={winners.length === 0}
         >
           マッチング結果をCSVでダウンロード
@@ -728,6 +719,72 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
           onConfirm={() => setAlertMessage(null)}
           confirmLabel="OK"
           type="alert"
+        />
+      )}
+
+      {showPngUserModal && (
+        <InputModal
+          title="PNG保存（当選者別）"
+          description="保存するPNGファイル名を入力してください。"
+          fields={[
+            {
+              key: 'filename',
+              label: 'ファイル名',
+              placeholder: '例: マッチング結果_当選者別',
+              required: true,
+            },
+          ]}
+          onSubmit={(values) => {
+            setShowPngUserModal(false);
+            handleExportPngUser(values.filename);
+          }}
+          onCancel={() => setShowPngUserModal(false)}
+          submitLabel="保存"
+          cancelLabel="キャンセル"
+        />
+      )}
+
+      {showPngCastModal && (
+        <InputModal
+          title="PNG保存（キャスト別）"
+          description="保存するPNGファイル名を入力してください。"
+          fields={[
+            {
+              key: 'filename',
+              label: 'ファイル名',
+              placeholder: '例: マッチング結果_キャスト別',
+              required: true,
+            },
+          ]}
+          onSubmit={(values) => {
+            setShowPngCastModal(false);
+            handleExportPngCast(values.filename);
+          }}
+          onCancel={() => setShowPngCastModal(false)}
+          submitLabel="保存"
+          cancelLabel="キャンセル"
+        />
+      )}
+
+      {showCsvModal && (
+        <InputModal
+          title="CSVダウンロード"
+          description="保存するCSVファイル名を入力してください。"
+          fields={[
+            {
+              key: 'filename',
+              label: 'ファイル名',
+              placeholder: '例: マッチング結果',
+              required: true,
+            },
+          ]}
+          onSubmit={(values) => {
+            setShowCsvModal(false);
+            handleExportCsv(values.filename);
+          }}
+          onCancel={() => setShowCsvModal(false)}
+          submitLabel="ダウンロード"
+          cancelLabel="キャンセル"
         />
       )}
     </div>

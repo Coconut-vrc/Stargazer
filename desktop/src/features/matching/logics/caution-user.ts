@@ -16,8 +16,8 @@ function normalize(s: string | undefined): string {
 
 /**
  * 応募ユーザーが要注意リストの誰かと一致するか。
- * 仕様 2-1: ユーザー名 AND アカウントID の両方が一致（厳密）。
- * どちらか片方だけが一致しても別人として扱う。
+ * 仕様 2-1: アカウントIDが一致すれば要注意と判定。
+ * ユーザー名が両方存在する場合は、ユーザー名も一致する必要がある。
  */
 export function isCautionUser(
   user: UserBean,
@@ -25,9 +25,25 @@ export function isCautionUser(
 ): boolean {
   const nameNorm = normalize(user.name);
   const idNorm = normalize(user.x_id);
-  return cautionUsers.some(
-    (c) => normalize(c.username) === nameNorm && normalize(c.accountId) === idNorm,
-  );
+
+  // アカウントIDが空の場合は判定不可
+  if (!idNorm) return false;
+
+  return cautionUsers.some((c) => {
+    const cNameNorm = normalize(c.username);
+    const cIdNorm = normalize(c.accountId);
+
+    // アカウントIDが一致しない場合は別人
+    if (cIdNorm !== idNorm) return false;
+
+    // アカウントIDが一致した場合、ユーザー名が両方存在するなら名前も一致する必要がある
+    if (nameNorm && cNameNorm) {
+      return nameNorm === cNameNorm;
+    }
+
+    // どちらか片方でもユーザー名が空なら、アカウントIDの一致だけで判定
+    return true;
+  });
 }
 
 /**

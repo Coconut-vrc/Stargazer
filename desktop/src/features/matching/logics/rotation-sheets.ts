@@ -50,6 +50,7 @@ export function runRotationMatching(
 
   const ROUNDS = Math.max(1, rotationCount || 1);
   const slotCount = totalTables;
+  const shuffledWinners = [...winners].sort(() => Math.random() - 0.5);
   const shuffledCasts = [...activeCasts].sort(() => Math.random() - 0.5);
   const baseCasts = shuffledCasts.slice(0, Math.min(slotCount, shuffledCasts.length));
 
@@ -69,13 +70,13 @@ export function runRotationMatching(
 
   type OffsetCandidate = { offset: number; weight: number };
   const offsetCandidates: OffsetCandidate[] = [];
-  const scoringRows = Math.min(winners.length, baseCasts.length);
+  const scoringRows = Math.min(shuffledWinners.length, baseCasts.length);
 
   for (let offset = 0; offset < baseCasts.length; offset++) {
     let totalScore = 0;
     let valid = true;
     for (let row = 0; row < scoringRows; row++) {
-      const user = winners[row];
+      const user = shuffledWinners[row];
       for (let r = 0; r < ROUNDS; r++) {
         const idx = (offset + row - r + baseCasts.length) % baseCasts.length;
         const cast = baseCasts[idx];
@@ -98,7 +99,7 @@ export function runRotationMatching(
   /* --- 結果構築 --- */
   const tableSlots: TableSlot[] = [];
   for (let row = 0; row < slotCount; row++) {
-    const user = row < winners.length ? winners[row] : null;
+    const user = row < shuffledWinners.length ? shuffledWinners[row] : null;
     const history: MatchedCast[] = [];
     for (let r = 0; r < ROUNDS; r++) {
       const idx = (chosenOffset + row - r + baseCasts.length) % baseCasts.length;

@@ -56,7 +56,7 @@ export const NGUserManagementPage: React.FC<{
     const nameToAdd = inputNgName.trim();
     const xIdRaw = inputXId.trim();
     if (!xIdRaw || !selectedCastName) {
-      setAlertMessage('XアカウントIDを入力してください。');
+      setAlertMessage('XアカウントIDを入力してください');
       return;
     }
 
@@ -384,7 +384,7 @@ export const NGUserManagementPage: React.FC<{
                 {cautionWithCasts.map((c, i) => (
                   <tr key={`${c.username}-${c.accountId}-${i}`}>
                     <td>{c.username}</td>
-                    <td>@{c.accountId}</td>
+                    <td>{c.accountId}</td>
                     <td>{c.ngCastNames.length > 0 ? c.ngCastNames.join('、') : (c.ngCastCount != null ? `${c.ngCastCount}名` : '—')}</td>
                     <td>
                       {c.registrationType === 'manual' && (

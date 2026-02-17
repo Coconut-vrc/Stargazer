@@ -15,7 +15,7 @@ export const NAV = {
   DEBUG: 'デバッグ',
   // 旧ナビゲーション（後方互換性のため残す）
   IMPORT: 'データ読取',
-  DB: 'DBデータ確認',
+  DB: '応募データ一覧',
   LOTTERY_CONDITION: '抽選条件',
   LOTTERY: '抽選',
   MATCHING: 'マッチング',
@@ -92,7 +92,7 @@ export const GUIDE = {
   SUBTITLE: `${APP_NAME}の基本的な使い方を説明します`,
   FLOW_DATA_READ: 'データ読取',
   FLOW_DATA_READ_DESC: 'CSVで応募データを取り込み、キャストはローカルから読み込み',
-  FLOW_DB: 'DBデータ確認',
+  FLOW_DB: '応募データ一覧',
   FLOW_DB_DESC: '読み込んだデータを確認',
   FLOW_CAST: 'キャスト管理',
   FLOW_CAST_DESC: '出席状態を設定',

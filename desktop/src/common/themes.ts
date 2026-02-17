@@ -34,7 +34,7 @@ export const THEMES: readonly ThemeEntry[] = [
   },
   {
     id: 'skyblue',
-    preview: { bg: '#e4f2ff', sidebar: '#f2f6fa', card: '#f8fbff', accent: '#4a8ec8', text: '#1e3a5f' },
+    preview: { bg: '#92D7E7', sidebar: '#f2f6fa', card: '#f8fbff', accent: '#4a8ec8', text: '#1e3a5f' },
   },
 ];
 
