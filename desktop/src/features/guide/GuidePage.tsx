@@ -295,9 +295,9 @@ export const GuidePage: React.FC = () => {
           <div className="guide-card">
             <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
-                <h3 style={{ 
-                  color: 'var(--discord-text-header)', 
-                  fontSize: '18px', 
+                <h3 style={{
+                  color: 'var(--discord-text-header)',
+                  fontSize: '18px',
                   fontWeight: 600,
                   marginBottom: '12px',
                   display: 'flex',
@@ -317,8 +317,8 @@ export const GuidePage: React.FC = () => {
                   <p style={{ color: 'var(--discord-text-muted)', fontSize: '13px', marginBottom: '10px', fontWeight: 600 }}>
                     必要な操作：
                   </p>
-                  <ul style={{ 
-                    margin: 0, 
+                  <ul style={{
+                    margin: 0,
                     paddingLeft: '20px',
                     color: 'var(--discord-text-normal)',
                     fontSize: '14px',
@@ -333,7 +333,7 @@ export const GuidePage: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="guide-sample-preview" style={{ 
+              <div className="guide-sample-preview" style={{
                 backgroundColor: 'var(--discord-bg-dark)',
                 padding: '20px',
                 borderRadius: '8px',
@@ -377,9 +377,9 @@ export const GuidePage: React.FC = () => {
           <div className="guide-card">
             <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
-                <h3 style={{ 
-                  color: 'var(--discord-text-header)', 
-                  fontSize: '18px', 
+                <h3 style={{
+                  color: 'var(--discord-text-header)',
+                  fontSize: '18px',
                   fontWeight: 600,
                   marginBottom: '12px',
                   display: 'flex',
@@ -396,8 +396,8 @@ export const GuidePage: React.FC = () => {
                   <p style={{ color: 'var(--discord-text-muted)', fontSize: '13px', marginBottom: '10px', fontWeight: 600 }}>
                     できること：
                   </p>
-                  <ul style={{ 
-                    margin: 0, 
+                  <ul style={{
+                    margin: 0,
                     paddingLeft: '20px',
                     color: 'var(--discord-text-normal)',
                     fontSize: '14px',
@@ -409,7 +409,7 @@ export const GuidePage: React.FC = () => {
                   </ul>
                 </div>
               </div>
-              <div className="guide-sample-preview" style={{ 
+              <div className="guide-sample-preview" style={{
                 backgroundColor: 'var(--discord-bg-dark)',
                 padding: '16px',
                 borderRadius: '8px',
@@ -455,9 +455,9 @@ export const GuidePage: React.FC = () => {
           <div className="guide-card">
             <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
-                <h3 style={{ 
-                  color: 'var(--discord-text-header)', 
-                  fontSize: '18px', 
+                <h3 style={{
+                  color: 'var(--discord-text-header)',
+                  fontSize: '18px',
                   fontWeight: 600,
                   marginBottom: '12px',
                   display: 'flex',
@@ -474,8 +474,8 @@ export const GuidePage: React.FC = () => {
                   <p style={{ color: 'var(--discord-text-muted)', fontSize: '13px', marginBottom: '10px', fontWeight: 600 }}>
                     できること：
                   </p>
-                  <ul style={{ 
-                    margin: 0, 
+                  <ul style={{
+                    margin: 0,
                     paddingLeft: '20px',
                     color: 'var(--discord-text-normal)',
                     fontSize: '14px',
@@ -488,7 +488,7 @@ export const GuidePage: React.FC = () => {
                   </ul>
                 </div>
               </div>
-              <div className="guide-sample-preview" style={{ 
+              <div className="guide-sample-preview" style={{
                 backgroundColor: 'var(--discord-bg-dark)',
                 padding: '16px',
                 borderRadius: '8px',
@@ -499,7 +499,7 @@ export const GuidePage: React.FC = () => {
                 <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px', color: 'var(--discord-text-header)' }}>
                   キャスト・NG管理
                 </div>
-                <div style={{ 
+                <div style={{
                   backgroundColor: 'var(--discord-bg-secondary)',
                   padding: '12px',
                   borderRadius: '6px',
@@ -509,11 +509,11 @@ export const GuidePage: React.FC = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                     <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--discord-text-normal)' }}>キャストA</div>
                     <TooltipElement id="presence-dot" tooltip="緑=出席中、グレー=欠席">
-                      <div style={{ 
-                        width: '8px', 
-                        height: '8px', 
-                        borderRadius: '50%', 
-                        backgroundColor: 'var(--discord-accent-green)' 
+                      <div style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--discord-accent-green)'
                       }} />
                     </TooltipElement>
                   </div>
@@ -562,9 +562,9 @@ export const GuidePage: React.FC = () => {
           <div className="guide-card">
             <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
-                <h3 style={{ 
-                  color: 'var(--discord-text-header)', 
-                  fontSize: '18px', 
+                <h3 style={{
+                  color: 'var(--discord-text-header)',
+                  fontSize: '18px',
                   fontWeight: 600,
                   marginBottom: '12px',
                   display: 'flex',
@@ -581,8 +581,8 @@ export const GuidePage: React.FC = () => {
                   <p style={{ color: 'var(--discord-text-muted)', fontSize: '13px', marginBottom: '10px', fontWeight: 600 }}>
                     必要な操作：
                   </p>
-                  <ul style={{ 
-                    margin: 0, 
+                  <ul style={{
+                    margin: 0,
                     paddingLeft: '20px',
                     color: 'var(--discord-text-normal)',
                     fontSize: '14px',
@@ -594,7 +594,7 @@ export const GuidePage: React.FC = () => {
                   </ul>
                 </div>
               </div>
-              <div className="guide-sample-preview" style={{ 
+              <div className="guide-sample-preview" style={{
                 backgroundColor: 'var(--discord-bg-dark)',
                 padding: '20px',
                 borderRadius: '8px',
@@ -683,9 +683,9 @@ export const GuidePage: React.FC = () => {
           <div className="guide-card">
             <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
-                <h3 style={{ 
-                  color: 'var(--discord-text-header)', 
-                  fontSize: '18px', 
+                <h3 style={{
+                  color: 'var(--discord-text-header)',
+                  fontSize: '18px',
                   fontWeight: 600,
                   marginBottom: '12px',
                   display: 'flex',
@@ -702,8 +702,8 @@ export const GuidePage: React.FC = () => {
                   <p style={{ color: 'var(--discord-text-muted)', fontSize: '13px', marginBottom: '10px', fontWeight: 600 }}>
                     できること：
                   </p>
-                  <ul style={{ 
-                    margin: 0, 
+                  <ul style={{
+                    margin: 0,
                     paddingLeft: '20px',
                     color: 'var(--discord-text-normal)',
                     fontSize: '14px',
@@ -715,7 +715,7 @@ export const GuidePage: React.FC = () => {
                   </ul>
                 </div>
               </div>
-              <div className="guide-sample-preview" style={{ 
+              <div className="guide-sample-preview" style={{
                 backgroundColor: 'var(--discord-bg-dark)',
                 padding: '16px',
                 borderRadius: '8px',
@@ -790,9 +790,9 @@ export const GuidePage: React.FC = () => {
           <div className="guide-card">
             <div className="guide-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
               <div>
-                <h3 style={{ 
-                  color: 'var(--discord-text-header)', 
-                  fontSize: '18px', 
+                <h3 style={{
+                  color: 'var(--discord-text-header)',
+                  fontSize: '18px',
                   fontWeight: 600,
                   marginBottom: '12px',
                   display: 'flex',
@@ -809,8 +809,8 @@ export const GuidePage: React.FC = () => {
                   <p style={{ color: 'var(--discord-text-muted)', fontSize: '13px', marginBottom: '10px', fontWeight: 600 }}>
                     できること：
                   </p>
-                  <ul style={{ 
-                    margin: 0, 
+                  <ul style={{
+                    margin: 0,
                     paddingLeft: '20px',
                     color: 'var(--discord-text-normal)',
                     fontSize: '14px',
@@ -822,7 +822,7 @@ export const GuidePage: React.FC = () => {
                   </ul>
                 </div>
               </div>
-              <div className="guide-sample-preview" style={{ 
+              <div className="guide-sample-preview" style={{
                 backgroundColor: 'var(--discord-bg-dark)',
                 padding: '16px',
                 borderRadius: '8px',
@@ -924,8 +924,8 @@ export const GuidePage: React.FC = () => {
 
       {/* マッチング形式（M000～M003） */}
       <section style={{ marginBottom: '48px' }}>
-        <h2 className="page-header-title page-header-title--md" style={{ 
-          marginBottom: '20px', 
+        <h2 className="page-header-title page-header-title--md" style={{
+          marginBottom: '20px',
           fontSize: '22px',
           display: 'flex',
           alignItems: 'center',
@@ -949,8 +949,8 @@ export const GuidePage: React.FC = () => {
 
       {/* マッチング方式の違い */}
       <section style={{ marginBottom: '48px' }}>
-        <h2 className="page-header-title page-header-title--md" style={{ 
-          marginBottom: '20px', 
+        <h2 className="page-header-title page-header-title--md" style={{
+          marginBottom: '20px',
           fontSize: '22px',
           display: 'flex',
           alignItems: 'center',
@@ -967,16 +967,16 @@ export const GuidePage: React.FC = () => {
               borderRadius: '8px',
               border: '1px solid var(--discord-border)'
             }}>
-              <h4 style={{ 
-                color: 'var(--discord-text-header)', 
-                fontSize: '16px', 
+              <h4 style={{
+                color: 'var(--discord-text-header)',
+                fontSize: '16px',
                 fontWeight: 600,
                 marginBottom: '12px'
               }}>
                 ランダムマッチング（希望優先）
               </h4>
-              <p style={{ 
-                color: 'var(--discord-text-normal)', 
+              <p style={{
+                color: 'var(--discord-text-normal)',
                 fontSize: '14px',
                 lineHeight: '1.7',
                 margin: 0
@@ -990,16 +990,16 @@ export const GuidePage: React.FC = () => {
               borderRadius: '8px',
               border: '1px solid var(--discord-border)'
             }}>
-              <h4 style={{ 
-                color: 'var(--discord-text-header)', 
-                fontSize: '16px', 
+              <h4 style={{
+                color: 'var(--discord-text-header)',
+                fontSize: '16px',
                 fontWeight: 600,
                 marginBottom: '12px'
               }}>
                 循環方式マッチング（ローテーション）
               </h4>
-              <p style={{ 
-                color: 'var(--discord-text-normal)', 
+              <p style={{
+                color: 'var(--discord-text-normal)',
                 fontSize: '14px',
                 lineHeight: '1.7',
                 margin: 0
@@ -1013,16 +1013,16 @@ export const GuidePage: React.FC = () => {
               borderRadius: '8px',
               border: '1px solid var(--discord-border)'
             }}>
-              <h4 style={{ 
-                color: 'var(--discord-text-header)', 
-                fontSize: '16px', 
+              <h4 style={{
+                color: 'var(--discord-text-header)',
+                fontSize: '16px',
                 fontWeight: 600,
                 marginBottom: '12px'
               }}>
-                複数マッチング（M006）
+                複数マッチング（M003）
               </h4>
-              <p style={{ 
-                color: 'var(--discord-text-normal)', 
+              <p style={{
+                color: 'var(--discord-text-normal)',
                 fontSize: '14px',
                 lineHeight: '1.7',
                 margin: 0
@@ -1036,8 +1036,8 @@ export const GuidePage: React.FC = () => {
 
       {/* よくある質問 */}
       <section style={{ marginBottom: '40px' }}>
-        <h2 className="page-header-title page-header-title--md" style={{ 
-          marginBottom: '20px', 
+        <h2 className="page-header-title page-header-title--md" style={{
+          marginBottom: '20px',
           fontSize: '22px',
           display: 'flex',
           alignItems: 'center',
@@ -1074,9 +1074,9 @@ export const GuidePage: React.FC = () => {
             },
           ].map((item, idx) => (
             <div key={idx} className="guide-card guide-card--compact">
-              <h4 style={{ 
-                color: 'var(--discord-text-header)', 
-                fontSize: '15px', 
+              <h4 style={{
+                color: 'var(--discord-text-header)',
+                fontSize: '15px',
                 fontWeight: 600,
                 marginBottom: '10px',
                 display: 'flex',
@@ -1099,8 +1099,8 @@ export const GuidePage: React.FC = () => {
                 </div>
                 {item.q}
               </h4>
-              <p style={{ 
-                color: 'var(--discord-text-normal)', 
+              <p style={{
+                color: 'var(--discord-text-normal)',
                 fontSize: '14px',
                 lineHeight: '1.7',
                 margin: 0,

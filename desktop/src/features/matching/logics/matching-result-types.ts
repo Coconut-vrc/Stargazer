@@ -21,4 +21,6 @@ export interface TableSlot {
 export type MatchingResult = {
   userMap: Map<string, MatchedCast[]>;
   tableSlots?: TableSlot[];
+  /** NG排除が不可能な組み合わせが検出された場合 true（UIで警告表示用） */
+  ngConflict?: boolean;
 };

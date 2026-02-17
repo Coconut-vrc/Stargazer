@@ -1,13 +1,14 @@
 /**
- * ロジック6: 複数マッチング（仕様 4-4）
+ * M003: 多対多マッチング
  * ユーザーをテーブルに固定（着席）、キャストをユニット（固定編成）で巡回。
  * 区分コードで完全分離。他ロジックと共通化しない。
  *
- * 配置ロジック（仕様 4-4）:
+ * 配置ロジック:
  *   - テーブル内の各キャストへの希望数をカウント
  *   - キャストユニットごとにスコアリング（ユニット内の全キャスト希望数を合算）
  *   - スコアが高いユニットを優先的に配置
  *   - NGユーザーチェック（除外モード: 自動排除、警告モード: ハイライト）
+ *   - 空席対応: 当選者数がusersPerTableの倍数でない場合、最後のテーブルに空席を配置
  */
 
 import type { UserBean, CastBean } from '@/common/types/entities';
@@ -59,12 +60,6 @@ export function runMultipleMatching(
   if (winners.length === 0 || activeCasts.length === 0) return { userMap };
 
   /* --- バリデーション --- */
-  if (winners.length % usersPerTable !== 0) {
-    console.error(
-      `[M003] ユーザー数不整合: ${winners.length} は ${usersPerTable} で割り切れません`,
-    );
-    return { userMap };
-  }
   if (activeCasts.length % castsPerRotation !== 0) {
     console.error(
       `[M003] キャスト数不整合: ${activeCasts.length} は ${castsPerRotation} で割り切れません`,
@@ -73,7 +68,8 @@ export function runMultipleMatching(
   }
 
   const ROUNDS = Math.max(1, rotationCount);
-  const tableCount = winners.length / usersPerTable;
+  /* 空席対応: 端数が出る場合はテーブル数を切り上げ */
+  const tableCount = Math.ceil(winners.length / usersPerTable);
   const unitCount = activeCasts.length / castsPerRotation;
 
   /* --- 重複配置防止バリデーション --- */
@@ -84,11 +80,13 @@ export function runMultipleMatching(
     return { userMap };
   }
 
-  /* --- ユーザーをシャッフルしてテーブルに分割 --- */
+  /* --- ユーザーをシャッフルしてテーブルに分割（端数テーブル対応） --- */
   const shuffledUsers = [...winners].sort(() => Math.random() - 0.5);
   const tables: UserBean[][] = [];
   for (let t = 0; t < tableCount; t++) {
-    tables.push(shuffledUsers.slice(t * usersPerTable, (t + 1) * usersPerTable));
+    const start = t * usersPerTable;
+    const end = Math.min(start + usersPerTable, shuffledUsers.length);
+    tables.push(shuffledUsers.slice(start, end));
   }
 
   /* --- キャストをシャッフルしてユニットに編成（固定パターン） --- */
@@ -142,40 +140,34 @@ export function runMultipleMatching(
     }
   }
 
-  /* フォールバック: 有効なオフセットがない場合はスコアで妥協 */
-  let chosenOffset: number;
-  if (offsetCandidates.length > 0) {
-    chosenOffset = offsetCandidates[weightedRandomIndex(offsetCandidates)].offset;
-  } else {
-    let bestOffset = 0;
-    let bestScore = -1;
-    for (let base = 0; base < unitCount; base++) {
-      let score = 0;
-      for (let t = 0; t < tableCount; t++) {
-        for (let r = 0; r < ROUNDS; r++) {
-          const unitIdx = (base - t + r + unitCount * ROUNDS) % unitCount; // テーブル1→2の順に巡回
-          const unit = units[unitIdx];
-          for (const cast of unit) {
-            for (const user of tables[t]) {
-              const rank = getPreferenceRank(user, cast.name);
-              score += RANK_WEIGHTS[rank] ?? DEFAULT_WEIGHT;
-            }
-          }
-        }
-      }
-      if (score > bestScore) {
-        bestScore = score;
-        bestOffset = base;
-      }
-    }
-    chosenOffset = bestOffset;
+  /* 有効なオフセットがない場合 = 全てのオフセットにNGペアが含まれる
+     → NGは絶対排除とし、マッチング不成立として警告を返す */
+  if (offsetCandidates.length === 0) {
+    console.error(
+      `[M003] NG排除不可: 全${unitCount}オフセットにNGペアが含まれています。キャストの欠席設定または当選者の変更が必要です。`,
+    );
+    return { userMap, ngConflict: true };
   }
+
+  const chosenOffset = offsetCandidates[weightedRandomIndex(offsetCandidates)].offset;
 
   /* --- 結果を構築 --- */
   /* matches配列レイアウト: matches[r * castsPerRotation + c] = ローテーション r のキャスト c */
   const tableSlots: TableSlot[] = [];
 
   for (let t = 0; t < tableCount; t++) {
+    /* テーブル t のローテーション別キャストユニットを事前計算（空席にも同じmatches を割り当てるため） */
+    const tableMatches: MatchedCast[] = [];
+    for (let r = 0; r < ROUNDS; r++) {
+      const unitIdx = (chosenOffset - t + r + unitCount * ROUNDS) % unitCount;
+      const unit = units[unitIdx];
+      for (const cast of unit) {
+        // 空席ユーザー用のmatchesにはrank:0をセット
+        tableMatches.push({ cast, rank: 0 });
+      }
+    }
+
+    /* 実ユーザーのスロットを生成 */
     for (const user of tables[t]) {
       const matches: MatchedCast[] = [];
       for (let r = 0; r < ROUNDS; r++) {
@@ -196,7 +188,18 @@ export function runMultipleMatching(
         tableIndex: t + 1, // 1-based テーブル番号
       });
     }
+
+    /* 空席スロットを生成（端数テーブルの場合のみ） */
+    const vacantCount = usersPerTable - tables[t].length;
+    for (let v = 0; v < vacantCount; v++) {
+      tableSlots.push({
+        user: null,
+        matches: tableMatches.map((m) => ({ ...m })), // 各空席に独立コピー
+        tableIndex: t + 1,
+      });
+    }
   }
 
   return { userMap, tableSlots };
 }
+

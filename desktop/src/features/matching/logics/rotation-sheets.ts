@@ -92,9 +92,16 @@ export function runRotationMatching(
     if (valid) offsetCandidates.push({ offset, weight: totalScore });
   }
 
-  const chosenOffset = offsetCandidates.length > 0
-    ? offsetCandidates[weightedRandomIndex(offsetCandidates)].offset
-    : 0;
+  /* 有効なオフセットがない場合 = 全てのオフセットにNGペアが含まれる
+     → NGは絶対排除とし、マッチング不成立として警告を返す */
+  if (offsetCandidates.length === 0) {
+    console.error(
+      `[M002] NG排除不可: 全${baseCasts.length}オフセットにNGペアが含まれています。キャストの欠席設定または当選者の変更が必要です。`,
+    );
+    return { userMap, ngConflict: true };
+  }
+
+  const chosenOffset = offsetCandidates[weightedRandomIndex(offsetCandidates)].offset;
 
   /* --- 結果構築 --- */
   const tableSlots: TableSlot[] = [];

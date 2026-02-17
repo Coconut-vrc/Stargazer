@@ -24,8 +24,6 @@ interface MatchingPageProps {
   matchingTypeCode: MatchingTypeCode;
   rotationCount: number;
   totalTables: number;
-  groupCount: number;
-  usersPerGroup: number;
   usersPerTable: number;
   castsPerRotation: number;
   matchingSettings: MatchingSettingsState;
@@ -56,8 +54,6 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
   matchingTypeCode,
   rotationCount,
   totalTables,
-  groupCount,
-  usersPerGroup,
   usersPerTable,
   castsPerRotation,
   matchingSettings,
@@ -75,17 +71,15 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
 
   const runOptions = useMemo(() => ({
     rotationCount,
-    totalTables: undefined,
-    groupCount: undefined,
-    usersPerGroup: undefined,
-    usersPerTable: (matchingTypeCode === 'M003' || matchingTypeCode === 'M006') ? usersPerTable : undefined,
-    castsPerRotation: (matchingTypeCode === 'M003' || matchingTypeCode === 'M006') ? castsPerRotation : undefined,
-  }), [matchingTypeCode, rotationCount, totalTables, groupCount, usersPerGroup, usersPerTable, castsPerRotation]);
+    totalTables: (matchingTypeCode === 'M001' || matchingTypeCode === 'M002') ? totalTables : undefined,
+    usersPerTable: matchingTypeCode === 'M003' ? usersPerTable : undefined,
+    castsPerRotation: matchingTypeCode === 'M003' ? castsPerRotation : undefined,
+  }), [matchingTypeCode, rotationCount, totalTables, usersPerTable, castsPerRotation]);
 
   // ページ表示時、または当選者が変わった時にマッチングを再計算
   useEffect(() => {
     if (winners.length > 0) {
-      const { userMap, tableSlots: slots } = MatchingService.runMatching(
+      const result = MatchingService.runMatching(
         winners,
         repository.getAllCasts(),
         matchingTypeCode,
@@ -93,8 +87,20 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
         matchingSettings.ngJudgmentType,
         matchingSettings.ngMatchingBehavior,
       );
-      setMatchingResult(userMap);
-      setTableSlots(slots);
+      if (result.ngConflict) {
+        setMatchingResult(new Map());
+        setTableSlots(undefined);
+        setAlertMessage(
+          'NGユーザーを排除できる組み合わせが見つかりませんでした。\n\n' +
+          '以下のいずれかの対応を行ってください:\n' +
+          '・抽選をやり直す\n' +
+          '・NGの原因となるキャストを欠席にする\n' +
+          '・NGユーザー設定を見直す',
+        );
+        return;
+      }
+      setMatchingResult(result.userMap);
+      setTableSlots(result.tableSlots);
     } else {
       setMatchingResult(new Map());
       setTableSlots(undefined);

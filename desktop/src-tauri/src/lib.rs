@@ -20,6 +20,7 @@ fn ensure_app_dirs() -> Result<(), String> {
     std::fs::create_dir_all(base.join("backup").join("matching")).map_err(|e| e.to_string())?;
     std::fs::create_dir_all(base.join("template").join("temp")).map_err(|e| e.to_string())?;
     std::fs::create_dir_all(base.join("template").join("pref")).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(base.join("pref")).map_err(|e| e.to_string())?;
     let cast_dir = base.join("cast");
     std::fs::create_dir_all(&cast_dir).map_err(|e| e.to_string())?;
     let cast_json = cast_dir.join("cast.json");
@@ -229,6 +230,29 @@ fn get_matching_import_pref(header_json: String) -> Result<Option<String>, Strin
     Ok(None)
 }
 
+/// pref ディレクトリに JSON を保存（ファイル名の拡張子はフロント側で付与しない前提）
+#[tauri::command]
+fn write_pref_json(name: String, content: String) -> Result<(), String> {
+    let base = stargazer_dir()?;
+    let pref_dir = base.join("pref");
+    std::fs::create_dir_all(&pref_dir).map_err(|e| e.to_string())?;
+    let path = pref_dir.join(format!("{}.json", name));
+    std::fs::write(&path, content).map_err(|e| format!("pref 保存失敗: {}", e))
+}
+
+/// pref ディレクトリから JSON を読み込む（存在しなければ None）
+#[tauri::command]
+fn read_pref_json(name: String) -> Result<Option<String>, String> {
+    let base = stargazer_dir()?;
+    let path = base.join("pref").join(format!("{}.json", name));
+    if path.exists() {
+        let content = std::fs::read_to_string(&path).map_err(|e| format!("pref 読み込み失敗: {}", e))?;
+        Ok(Some(content))
+    } else {
+        Ok(None)
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -247,6 +271,8 @@ pub fn run() {
             write_backup_matching_tsv,
             save_import_template,
             get_matching_import_pref,
+            write_pref_json,
+            read_pref_json,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

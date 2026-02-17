@@ -63,14 +63,6 @@ export const STUB_IMPORT_CHECKBOX_PATH = '/stub-import-checkbox.csv';
 export const TEST_CSV_PATHS = {
   /** NG/要注意人物テスト（NG一致10名 + 通常190名） */
   ng: '/test-200-ng.csv',
-  /** M005 グループマッチング（10グループ×20名） */
-  group10x20: '/test-200-group-10x20.csv',
-  /** M005 グループマッチング小規模（6グループ×20名） */
-  group6x20: '/test-120-group-6x20.csv',
-  /** M006 複数マッチング（5名/テーブル, 3キャスト/ローテ） */
-  multiple5x3: '/test-200-multiple-5x3.csv',
-  /** M006 複数マッチング小規模（4名/テーブル, 5キャスト/ローテ） */
-  multiple4x3: '/test-60-multiple-4x3.csv',
 } as const;
 
 export const IMPORT_COLUMN_LABELS = {
