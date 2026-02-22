@@ -6,29 +6,7 @@ desktop プロジェクト構成 整合性チェック結果
 check_app_dirs_exist (lib.rs L39): src, backup/lottery, backup/matching, cast の4つを確認。
 ensure_app_dirs (lib.rs L18-28): 上記に加えて template/temp, template/pref, pref の3ディレクトリも作成。
 template/temp, template/pref, pref は存在チェックの対象外のため、これらが削除されても「初回起動」モーダルは表示されず、必要なディレクトリが存在しない状態で動作する可能性がある。
-6. matching-system-types.ts のコメントと仕様書参照の不整合
-コメントで 仕様書: docs/matching-system-specification.md を参照しているが、docs/ フォルダにこのファイルは存在しない（docs/ には matching_logic_specification.md がある）。
 8. isCautionUser のロジック不整合（MatchingPage vs caution-user.ts）
 MatchingPage.tsx L17-18: cu.accountId.toLowerCase() === user.x_id.toLowerCase() で accountIdのみ で比較。
 caution-user.ts L22-46: より複雑なロジック（@ 除去、username + accountId の AND 判定）。
 画面上のハイライト表示と内部ロジックで判定基準が異なる。
-🟢 重要度: 低
-9. 空ディレクトリ
-src/pages/ — 空ディレクトリ。PageType や旧ナビゲーション定義が残っているが、使われていない。
-src/features/settings/ — 空ディレクトリ。
-src/assets/ — 空ディレクトリ。
-10. ゴミファイル
-src/features/cast/Untitled — 内容は rotationCount のみ。不要なファイル。
-プロジェクトルート Stargazer/Untitled — 内容 95 bytes。不要なファイル。
-12. index.html のファビコン参照
-index.html L5: href="/vite.svg" だが、 public/ には logo-black.png と logo-white.png のみ。vite.svg は存在しない（ブラウザでのファビコン表示に影響）。
-13. デバッグログの残存
-MatchingPage.tsx L254-262: テーブル1のときに M003 デバッグログを console.log で出力するコードが残っている。
-14. Cargo.toml のメタデータ
-description = "A Tauri App", authors = ["you"] — テンプレートのデフォルト値のまま。
-✅ 問題なし（確認済み）
-Tauri コマンド登録 12 コマンドすべてが invoke_handler に登録されており、フロントエンドの invoke() 呼び出しと整合。
-型定義の整合性: UserBean, CastBean, NGUserEntry, MatchedCast, TableSlot, MatchingResult はすべて正しくimport/re-exportされている。
-マッチングロジック (M001-M003): MatchingService → 各ロジック関数への分岐は正常。NG判定（ng-judgment.ts）の統一的な利用も問題なし。
-localStorage 永続化: セッション保存・テーマ保存・マッチング設定保存は正常に連携。
-CastNgManagementPage → CastManagementPage / NGUserManagementPage のタブ統合は正常。
