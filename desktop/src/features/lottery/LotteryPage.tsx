@@ -125,6 +125,8 @@ export const LotteryPage: React.FC = () => {
 
       // 当選者を設定
       setCurrentWinners(users);
+      const importedGuaranteed = users.filter(u => u.is_guaranteed);
+      setGuaranteedWinners(importedGuaranteed);
       setActivePage('lottery');
     };
 
@@ -138,7 +140,7 @@ export const LotteryPage: React.FC = () => {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  }, [setCurrentWinners, setActivePage]);
+  }, [setCurrentWinners, setGuaranteedWinners, setActivePage]);
 
   const doRun = useCallback(() => {
     const all = repository.getAllApplyUsers();
@@ -146,16 +148,27 @@ export const LotteryPage: React.FC = () => {
     const eligible = all.filter(u => !guaranteedIds.has(u.x_id));
     const shuffled = [...eligible].sort(() => 0.5 - Math.random());
     const lotteryWinners = shuffled.slice(0, count);
-    const winners = [...guaranteedWinners, ...lotteryWinners];
+    const winners = [...guaranteedWinners.map(w => ({ ...w, is_guaranteed: true })), ...lotteryWinners];
     setCurrentWinners(winners);
     setActivePage('lottery');
     if (isTauri() && winners.length > 0) {
-      const header = ['timestamp', 'name', 'x_id', 'first_flag', '希望1', '希望2', '希望3', '意気込み', 'is_pair_ticket'];
-      const rows = winners.map((u) => [
-        u.timestamp || '', u.name || '', u.x_id || '', u.first_flag || '',
-        u.casts[0] || '', u.casts[1] || '', u.casts[2] || '', u.note || '',
-        u.is_pair_ticket ? '1' : '0',
-      ]);
+      // 現在の表の形に合わせたヘッダーを作成
+      const maxCastCols = winners.reduce((max, u) => {
+        const c = u.casts.filter(x => x && x.trim() !== '').length;
+        return c > max ? c : max;
+      }, 3);
+
+      const header = ['ユーザー', 'X ID'];
+      for (let i = 0; i < maxCastCols; i++) header.push(`希望${i + 1}`);
+      header.push('区分');
+
+      const rows = winners.map((u) => {
+        const r = [u.name || '', u.x_id || ''];
+        for (let i = 0; i < maxCastCols; i++) r.push(u.casts[i] || '');
+        r.push(u.is_guaranteed ? '確定' : '抽選');
+        return r;
+      });
+
       const content = buildTsvContent([header, ...rows]);
       invoke('write_backup_lottery_tsv', { content }).catch(() => { });
     }

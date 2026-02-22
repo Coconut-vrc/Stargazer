@@ -7,10 +7,6 @@ import { downloadTsv } from '@/common/downloadCsv';
 import { openInDefaultBrowser } from '@/common/openExternal';
 import { isUserNGForCast } from '@/features/matching/logics/ng-judgment';
 
-const LOTTERY_EXPORT_HEADER = [
-  'timestamp', 'name', 'x_id', 'first_flag', '希望1', '希望2', '希望3', '意気込み', 'is_pair_ticket',
-];
-
 function defaultLotteryFilename(): string {
   const now = new Date();
   const yyyy = now.getFullYear();
@@ -41,16 +37,37 @@ export const LotteryResultPage: React.FC = () => {
   }, [currentWinners, casts, matchingSettings.ngJudgmentType]);
   const hasAnyNg = ngCastByWinner.size > 0;
 
+  // 動的な希望列の数を算出（全員の中で最も多く希望を書いている人の数）
+  const maxCastCols = useMemo(() => {
+    if (currentWinners.length === 0) return 3; // デフォルトは3列
+    let max = 0;
+    for (const user of currentWinners) {
+      // 実際の入力がある要素数のみカウント
+      const actualCount = user.casts.filter(c => c && c.trim() !== '').length;
+      if (actualCount > max) max = actualCount;
+    }
+    return Math.max(3, max); // 最低でも「希望1」「希望2」「希望3」は表示する（単一項目時の想定通り）
+  }, [currentWinners]);
+
   const doExport = useCallback((filename: string) => {
     const name = filename.trim().endsWith('.tsv') ? filename.trim() : `${filename.trim()}.tsv`;
-    const rows = currentWinners.map((user) => [
-      user.timestamp || '', user.name || '', user.x_id || '', user.first_flag || '',
-      user.casts[0] || '', user.casts[1] || '', user.casts[2] || '', user.note || '',
-      user.is_pair_ticket ? '1' : '0',
-    ]);
-    downloadTsv([LOTTERY_EXPORT_HEADER, ...rows], name || defaultLotteryFilename());
+
+    // 現在の表の形に合わせたヘッダーを作成
+    const header = ['ユーザー', 'X ID'];
+    for (let i = 0; i < maxCastCols; i++) header.push(`希望${i + 1}`);
+    header.push('区分');
+
+    const rows = currentWinners.map((user) => {
+      const isGuaranteed = guaranteedIds.has(user.x_id) || !!user.is_guaranteed;
+      const row = [user.name || '', user.x_id || ''];
+      for (let i = 0; i < maxCastCols; i++) row.push(user.casts[i] || '');
+      row.push(isGuaranteed ? '確定' : '抽選');
+      return row;
+    });
+
+    downloadTsv([header, ...rows], name || defaultLotteryFilename());
     setAlertMessage('TSV をダウンロードしました。');
-  }, [currentWinners]);
+  }, [currentWinners, maxCastCols]);
 
   const handleExportClick = () => {
     if (currentWinners.length === 0) {
@@ -76,40 +93,38 @@ export const LotteryResultPage: React.FC = () => {
         <table style={{ minWidth: '800px' }}>
           <thead>
             <tr style={{ backgroundColor: 'var(--discord-bg-secondary)' }}>
-              <th className="table-header-cell" style={{ width: '60px' }}>#</th>
-              <th className="table-header-cell" style={{ width: '80px' }}>区分</th>
               <th className="table-header-cell">ユーザー</th>
               <th className="table-header-cell">X ID</th>
-              <th className="table-header-cell">希望1</th>
-              <th className="table-header-cell">希望2</th>
-              <th className="table-header-cell">希望3</th>
-              <th className="table-header-cell">意気込み</th>
+              {Array.from({ length: maxCastCols }).map((_, i) => (
+                <th key={i} className="table-header-cell">希望{i + 1}</th>
+              ))}
               {showNgCast && <th className="table-header-cell">NGキャスト</th>}
             </tr>
           </thead>
           <tbody>
             {currentWinners.length === 0 ? (
               <tr>
-                <td colSpan={showNgCast ? 9 : 8} className="table-cell" style={{ padding: '32px', textAlign: 'center', color: 'var(--discord-text-muted)' }}>
+                <td colSpan={showNgCast ? 2 + maxCastCols + 1 : 2 + maxCastCols} className="table-cell" style={{ padding: '32px', textAlign: 'center', color: 'var(--discord-text-muted)' }}>
                   まだ抽選が行われていません。左メニューの「抽選条件」から抽選を実行してください。
                 </td>
               </tr>
             ) : (
               currentWinners.map((user, index) => {
-                const isGuaranteed = guaranteedIds.has(user.x_id);
+                const isGuaranteed = guaranteedIds.has(user.x_id) || !!user.is_guaranteed;
                 const ngCasts = showNgCast ? (ngCastByWinner.get(user.x_id) ?? []) : [];
                 return (
-                  <tr key={`${user.x_id ?? user.name ?? ''}-${index}`}>
-                    <td className="table-cell" style={{ fontSize: '12px', color: 'var(--discord-text-muted)' }}>
-                      #{index + 1}
+                  <tr
+                    key={`${user.x_id ?? user.name ?? ''}-${index}`}
+                    style={{
+                      color: isGuaranteed ? 'var(--discord-accent-gold)' : undefined
+                    }}
+                  >
+                    <td className="table-cell" style={{ fontSize: '14px', fontWeight: isGuaranteed ? 'bold' : 'normal' }}>
+                      {user.name}
                     </td>
-                    <td className="table-cell" style={{ fontSize: '12px', fontWeight: isGuaranteed ? 'bold' : 'normal', color: isGuaranteed ? 'var(--discord-accent-green)' : 'var(--discord-text-muted)' }}>
-                      {isGuaranteed ? '確定' : '抽選'}
-                    </td>
-                    <td className="table-cell" style={{ fontSize: '14px' }}>{user.name}</td>
                     <td
                       className="table-cell text-x-id--clickable"
-                      style={{ fontSize: '13px', color: 'var(--discord-text-link)', cursor: user.x_id ? 'pointer' : 'default' }}
+                      style={{ fontSize: '13px', color: isGuaranteed ? 'var(--discord-accent-gold)' : 'var(--discord-text-link)', cursor: user.x_id ? 'pointer' : 'default' }}
                       onClick={() => {
                         const handle = user.x_id?.replace(/^@/, '');
                         if (handle) setPendingUrl(`https://x.com/${handle}`);
@@ -117,12 +132,11 @@ export const LotteryResultPage: React.FC = () => {
                     >
                       {user.x_id ? `@${user.x_id.replace(/^@/, '')}` : '—'}
                     </td>
-                    <td className="table-cell" style={{ fontSize: '13px' }}>{user.casts[0] || '—'}</td>
-                    <td className="table-cell" style={{ fontSize: '13px' }}>{user.casts[1] || '—'}</td>
-                    <td className="table-cell" style={{ fontSize: '13px' }}>{user.casts[2] || '—'}</td>
-                    <td className="table-cell" style={{ fontSize: '12px', color: 'var(--discord-text-muted)' }}>
-                      {user.note || '—'}
-                    </td>
+                    {Array.from({ length: maxCastCols }).map((_, i) => (
+                      <td key={i} className="table-header-cell" style={{ fontSize: '13px', fontWeight: 'normal' }}>
+                        {user.casts[i] || '—'}
+                      </td>
+                    ))}
                     {showNgCast && (
                       <td className="table-cell" style={{ fontSize: '12px', color: 'var(--discord-accent-red)' }}>
                         {ngCasts.length > 0 ? ngCasts.join(', ') : '—'}

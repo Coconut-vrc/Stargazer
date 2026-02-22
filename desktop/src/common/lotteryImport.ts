@@ -1,192 +1,100 @@
-/**
- * 抽選結果TSVインポート用パーサーとバリデーション
- */
-
 import type { UserBean } from '@/common/types/entities';
 
-/**
- * 抽選結果TSVの期待されるヘッダー
- */
-export const LOTTERY_RESULT_HEADERS = [
-    'timestamp',
-    'name',
-    'x_id',
-    'first_flag',
-    '希望1',
-    '希望2',
-    '希望3',
-    '意気込み',
-    'is_pair_ticket',
-] as const;
-
-/**
- * 抽選結果TSVのバリデーション結果
- */
 export interface LotteryImportValidation {
     isValid: boolean;
     errors: string[];
     warnings: string[];
 }
 
-/**
- * 抽選結果TSVのヘッダーを検証
- */
-export function validateLotteryHeaders(headers: string[]): LotteryImportValidation {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    // ヘッダー数チェック
-    if (headers.length !== LOTTERY_RESULT_HEADERS.length) {
-        errors.push(
-            `ヘッダー列数が不正です。期待: ${LOTTERY_RESULT_HEADERS.length}列, 実際: ${headers.length}列`
-        );
-    }
-
-    // 各ヘッダーの一致チェック
-    for (let i = 0; i < LOTTERY_RESULT_HEADERS.length; i++) {
-        const expected = LOTTERY_RESULT_HEADERS[i];
-        const actual = headers[i];
-
-        if (actual !== expected) {
-            errors.push(
-                `列${i + 1}のヘッダーが不正です。期待: "${expected}", 実際: "${actual}"`
-            );
-        }
-    }
-
-    return {
-        isValid: errors.length === 0,
-        errors,
-        warnings,
-    };
-}
-
-/**
- * 抽選結果TSVの行データを検証
- */
-export function validateLotteryRow(
-    row: string[],
-    rowIndex: number
-): LotteryImportValidation {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    // 列数チェック
-    if (row.length !== LOTTERY_RESULT_HEADERS.length) {
-        errors.push(
-            `行${rowIndex + 1}: 列数が不正です。期待: ${LOTTERY_RESULT_HEADERS.length}列, 実際: ${row.length}列`
-        );
-        return { isValid: false, errors, warnings };
-    }
-
-    const name = row[1];
-    const x_id = row[2];
-    const is_pair_ticket = row[8];
-
-    // 必須フィールドチェック
-    if (!name || name.trim() === '') {
-        errors.push(`行${rowIndex + 1}: 名前が空です`);
-    }
-
-    if (!x_id || x_id.trim() === '') {
-        errors.push(`行${rowIndex + 1}: X IDが空です`);
-    }
-
-    // is_pair_ticketの値チェック（0 or 1）
-    if (is_pair_ticket && is_pair_ticket !== '0' && is_pair_ticket !== '1') {
-        warnings.push(
-            `行${rowIndex + 1}: is_pair_ticketの値が不正です（"${is_pair_ticket}"）。0または1である必要があります`
-        );
-    }
-
-    return {
-        isValid: errors.length === 0,
-        errors,
-        warnings,
-    };
-}
-
-/**
- * 抽選結果TSVの行をUserBeanに変換
- */
-export function parseLotteryRow(row: string[]): UserBean {
-    const [timestamp, name, x_id, first_flag, cast1, cast2, cast3, note, is_pair_ticket] = row;
-
-    const casts: string[] = [];
-    if (cast1 && cast1.trim()) casts.push(cast1.trim());
-    if (cast2 && cast2.trim()) casts.push(cast2.trim());
-    if (cast3 && cast3.trim()) casts.push(cast3.trim());
-
-    return {
-        timestamp: timestamp?.trim() || '',
-        name: name?.trim() || '',
-        x_id: x_id?.trim() || '',
-        first_flag: first_flag?.trim() || '',
-        casts,
-        note: note?.trim() || '',
-        is_pair_ticket: is_pair_ticket === '1',
-        raw_extra: [],
-    };
-}
-
-/**
- * 抽選結果TSV全体を検証してパース
- */
 export function parseLotteryResultTsv(
     content: string
 ): {
     users: UserBean[];
     validation: LotteryImportValidation;
 } {
-    const lines = content.split(/\r?\n/).filter((line) => line.trim() !== '');
+    // UTF-8 BOM を除去 (Excelなどからの出力を考慮)
+    const sanitizedContent = content.startsWith('\uFEFF') ? content.slice(1) : content;
+    const lines = sanitizedContent.split(/\r?\n/).filter((line) => line.trim() !== '');
 
     if (lines.length === 0) {
         return {
             users: [],
-            validation: {
-                isValid: false,
-                errors: ['ファイルが空です'],
-                warnings: [],
-            },
+            validation: { isValid: false, errors: ['ファイルが空です'], warnings: [] },
         };
     }
 
-    // ヘッダー行を取得
-    const headerLine = lines[0];
-    const headers = headerLine.split('\t');
+    const headers = lines[0].split('\t').map(h => h.trim());
+    const errors: string[] = [];
+    const warnings: string[] = [];
 
-    // ヘッダー検証
-    const headerValidation = validateLotteryHeaders(headers);
-    if (!headerValidation.isValid) {
-        return {
-            users: [],
-            validation: headerValidation,
-        };
+    // ヘッダー要素のインデックスをマッピング
+    const colMap: Record<string, number> = {};
+    headers.forEach((h, i) => { colMap[h] = i; });
+
+    // 旧フォーマット名または新フォーマット名の両方を探索
+    const nameIdx = colMap['ユーザー'] ?? colMap['name'] ?? -1;
+    const xidIdx = colMap['X ID'] ?? colMap['x_id'] ?? -1;
+    const timestampIdx = colMap['timestamp'] ?? -1;
+    const firstFlagIdx = colMap['first_flag'] ?? -1;
+    const noteIdx = colMap['意気込み'] ?? colMap['note'] ?? -1;
+    const pairTicketIdx = colMap['is_pair_ticket'] ?? -1;
+    const guaranteedIdx = colMap['区分'] ?? colMap['確定'] ?? -1;
+
+    // 「希望1」「希望2」などの列インデックスを収集
+    const castIndices: number[] = [];
+    for (let i = 1; i <= 20; i++) {
+        const idx = colMap[`希望${i}`];
+        if (idx !== undefined && idx >= 0) {
+            castIndices.push(idx);
+        }
     }
 
-    // データ行を検証してパース
+    if (nameIdx === -1 && xidIdx === -1) {
+        errors.push('ヘッダーに「ユーザー」(または name)、「X ID」(または x_id)が見つかりません。');
+        return { users: [], validation: { isValid: false, errors, warnings } };
+    }
+
     const users: UserBean[] = [];
-    const allErrors: string[] = [];
-    const allWarnings: string[] = [...headerValidation.warnings];
 
     for (let i = 1; i < lines.length; i++) {
         const row = lines[i].split('\t');
-        const rowValidation = validateLotteryRow(row, i);
+        const name = nameIdx >= 0 ? (row[nameIdx] || '').trim() : '';
+        const x_id = xidIdx >= 0 ? (row[xidIdx] || '').trim() : '';
 
-        allErrors.push(...rowValidation.errors);
-        allWarnings.push(...rowValidation.warnings);
-
-        if (rowValidation.isValid) {
-            users.push(parseLotteryRow(row));
+        // 必須フィールドチェック（警告にとどめず名前がない場合はスキップするか、エラーとして追加）
+        if (!name && !x_id) {
+            warnings.push(`行${i + 1}: ユーザーとX IDが両方空のためスキップしました。`);
+            continue;
         }
+
+        const casts: string[] = [];
+        for (const cIdx of castIndices) {
+            const val = row[cIdx]?.trim();
+            if (val) casts.push(val);
+        }
+
+        const is_pair_ticket = pairTicketIdx >= 0 ? row[pairTicketIdx]?.trim() === '1' : false;
+        const is_guaranteed = guaranteedIdx >= 0 ? (row[guaranteedIdx]?.trim() === '確定' || row[guaranteedIdx]?.trim() === '1') : false;
+
+        users.push({
+            timestamp: timestampIdx >= 0 ? (row[timestampIdx] || '').trim() : '',
+            name,
+            x_id,
+            first_flag: firstFlagIdx >= 0 ? (row[firstFlagIdx] || '').trim() : '',
+            casts,
+            note: noteIdx >= 0 ? (row[noteIdx] || '').trim() : '',
+            is_pair_ticket,
+            is_guaranteed,
+            raw_extra: [],
+        });
     }
 
     return {
         users,
         validation: {
-            isValid: allErrors.length === 0,
-            errors: allErrors,
-            warnings: allWarnings,
+            isValid: errors.length === 0,
+            errors,
+            warnings,
         },
     };
 }

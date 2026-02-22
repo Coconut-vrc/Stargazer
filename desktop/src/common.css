@@ -11,9 +11,9 @@
   --line-color: rgba(255, 255, 255, 0.1);
 
   /* sticky elements */
-  --db-sticky-bg: #1e1f22;
-  --db-sticky-bg-alt: #2b2d31;
-  --db-sticky-bg-caution: #3c2427;
+  --db-sticky-bg: #0a050e;
+  --db-sticky-bg-alt: #0a050e;
+  --db-sticky-bg-caution: #2a0808;
   --db-sticky-shadow-right: 4px 0 12px rgba(0, 0, 0, 0.4);
   --db-sticky-shadow-bottom: 0 4px 12px rgba(0, 0, 0, 0.4);
 
@@ -38,6 +38,7 @@
   --discord-accent-blue: #5865f2;
   --discord-accent-green: #23a559;
   --discord-accent-yellow: #f0b232;
+  --discord-accent-gold: #ffd700;
   --discord-accent-red: #ed4245;
 
   --discord-border: rgba(255, 255, 255, 0.1);
@@ -1168,6 +1169,8 @@ select.form-input {
 .app-container[data-theme="skyblue"] {
   --cast-present-bg: #2e9d6e;
   --cast-absent-bg: #8db4c9;
+  --discord-accent-gold: #c5a000;
+  /* 水色テーマでは少し濃いめの金 */
   --discord-bg-dark: rgba(255, 255, 255, 0.96);
   --discord-bg-main: transparent;
   --discord-bg-secondary: rgba(255, 255, 255, 0.92);
@@ -1187,8 +1190,8 @@ select.form-input {
   --discord-button-secondary-hover: rgba(70, 140, 210, 0.2);
 
   /* sticky elements */
-  --db-sticky-bg: #ffffff;
-  --db-sticky-bg-alt: #ffffff;
+  --db-sticky-bg: #f6faff;
+  --db-sticky-bg-alt: #f6faff;
   --db-sticky-bg-caution: #ffe6e8;
   --db-sticky-shadow-right: 4px 0 12px rgba(30, 58, 95, 0.12);
   --db-sticky-shadow-bottom: 0 4px 12px rgba(30, 58, 95, 0.12);
@@ -1241,7 +1244,7 @@ select.form-input {
 }
 
 .app-container[data-theme="skyblue"] .main-content {
-  background-color: rgba(255, 255, 255, 0.88);
+  background-color: rgba(255, 255, 255, 0.60);
 }
 
 .app-container[data-theme="skyblue"] .page-card-narrow {

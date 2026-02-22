@@ -7,6 +7,7 @@ export interface UserBean {
   casts: string[];
   note: string;
   is_pair_ticket: boolean;
+  is_guaranteed?: boolean; // 確定枠フラグ
   raw_extra: unknown[];
 }
 
