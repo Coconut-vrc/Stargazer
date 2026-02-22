@@ -39,6 +39,7 @@ export const XLinkCell: React.FC<XLinkProps & {
   };
 
   const cls = [
+    'db-table__cell',
     className,
     isCaution ? 'db-table__cell--caution' : '',
     handle ? 'db-table__cell--link' : '',

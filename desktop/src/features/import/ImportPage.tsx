@@ -130,11 +130,11 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
             }
             if (pref.castInputType != null) setCastInputType(pref.castInputType);
             if (pref.castUseWeight != null) setCastUseWeight(pref.castUseWeight);
-            if (pref.castColumnCount != null) setCastColumnCount(Math.min(5, Math.max(1, pref.castColumnCount)));
+            if (pref.castColumnCount != null) setCastColumnCount(Math.min(3, Math.max(1, pref.castColumnCount)));
             if (pref.splitCommaColumnIndex != null) setSplitCommaColumnIndex(pref.splitCommaColumnIndex >= 0 && pref.splitCommaColumnIndex <= maxCol ? pref.splitCommaColumnIndex : -1);
             appliedPref = true;
           }
-        } catch (_) {}
+        } catch (_) { }
       }
       if (!appliedPref) {
         setCustomMapping((prev) => {
@@ -169,6 +169,13 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
     if (!hasRequiredIdentityColumn(customMapping)) {
       setError('アカウントID(X)は必ず指定してください。');
       return;
+    }
+    if (castInputType === 'single') {
+      const mappedCasts = [customMapping.cast1, customMapping.cast2, customMapping.cast3, customMapping.cast4, customMapping.cast5].filter(c => c >= 0);
+      if (mappedCasts.length >= 4) {
+        setError('「希望キャスト」は最大3つまでしか指定できません。');
+        return;
+      }
     }
     const options: MapRowOptions | undefined =
       splitCommaColumnIndex >= 0
@@ -207,7 +214,7 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
         invoke('save_import_template', {
           headerJson: JSON.stringify(customHeaderRow),
           prefJson: JSON.stringify(pref),
-        }).catch(() => {});
+        }).catch(() => { });
       });
     }
   };
@@ -250,7 +257,7 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
       <div className="page-card-narrow">
         <h2 className="page-header-title page-header-title--md">データ読取</h2>
         <p className="page-header-subtitle form-subtitle-mb">
-          応募データ（TSV・タブ区切り）をファイルで取り込みます。TSVを選択後、列の割り当てと希望キャスト列内のカンマ区切り分割の有無を指定できます。アカウントID(X)は必ず指定してください。
+          応募データ（TSV・タブ区切り）をファイルで取り込みます。TSVを選択後、列の割り当てと希望キャスト列内のカンマ区切り分割の有無を指定できます。
         </p>
 
         {/* インポート形式の選択は不要になったため削除 */}
@@ -271,7 +278,7 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
           <div className="form-group form-group-spacing" style={{ marginTop: 24 }}>
             <label className="form-label">列の割り当て</label>
             <p className="form-inline-note form-note-mt" style={{ marginBottom: 8 }}>
-              {customRows.length} 行読み込みました。共通項目はユーザー名・アカウントID(X)・希望キャストのみ。同じヘッダー形式で取り込んだ過去の設定は自動で復元されます。
+              {customRows.length} 行読み込みました。アカウントID(X)は必須指定です。その他の項目（応募者名、VRCリンク、希望キャスト）は任意（オプション）です。同じヘッダー形式で取り込んだ過去の設定は自動で復元されます。
             </p>
             <div className="form-group" style={{ marginBottom: 12 }}>
               <label className="form-label" style={{ fontSize: 14, marginBottom: 4 }}>
@@ -343,11 +350,28 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
               </div>
             )}
             <p className="form-inline-note" style={{ marginBottom: 8 }}>
-              共通項目はユーザー名・アカウントID(X)・希望キャストのみです。それ以外の列は取り込み後、DBデータ確認で列ごとに表示のオン/オフができます。
+              割り当てなかった列は、取り込み後、DBデータ確認画面で「全て表示」をオンにすることで確認できます。
             </p>
             <div className="import-column-mapping">
               <div className="import-column-mapping__row">
-                <label className="import-column-mapping__label">{IMPORT_COLUMN_LABELS.name}</label>
+                <label className="import-column-mapping__label">
+                  {IMPORT_COLUMN_LABELS.x_id} <span style={{ color: 'var(--discord-accent-red)', fontSize: '10px' }}>必須</span>
+                </label>
+                <div className="import-column-mapping__select-wrap">
+                  <AppSelect
+                    value={safeColumnValue(customMapping.x_id)}
+                    onValueChange={(v) =>
+                      setCustomMapping((prev) => ({ ...prev, x_id: v === NONE_VALUE ? -1 : parseInt(v, 10) }))
+                    }
+                    options={columnSelectOptions}
+                    placeholder="列を選択"
+                  />
+                </div>
+              </div>
+              <div className="import-column-mapping__row">
+                <label className="import-column-mapping__label">
+                  {IMPORT_COLUMN_LABELS.name} <span style={{ color: 'var(--discord-text-muted)', fontSize: '10px' }}>任意</span>
+                </label>
                 <div className="import-column-mapping__select-wrap">
                   <AppSelect
                     value={safeColumnValue(customMapping.name)}
@@ -360,12 +384,14 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
                 </div>
               </div>
               <div className="import-column-mapping__row">
-                <label className="import-column-mapping__label">{IMPORT_COLUMN_LABELS.x_id}</label>
+                <label className="import-column-mapping__label">
+                  VRCアカウントリンク <span style={{ color: 'var(--discord-text-muted)', fontSize: '10px' }}>任意</span>
+                </label>
                 <div className="import-column-mapping__select-wrap">
                   <AppSelect
-                    value={safeColumnValue(customMapping.x_id)}
+                    value={safeColumnValue(customMapping.vrc_url)}
                     onValueChange={(v) =>
-                      setCustomMapping((prev) => ({ ...prev, x_id: v === NONE_VALUE ? -1 : parseInt(v, 10) }))
+                      setCustomMapping((prev) => ({ ...prev, vrc_url: v === NONE_VALUE ? -1 : parseInt(v, 10) }))
                     }
                     options={columnSelectOptions}
                     placeholder="列を選択"
@@ -395,15 +421,15 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
                 </div>
               ) : (
                 <>
-                  {([1, 2, 3, 4, 5] as const).slice(0, castColumnCount).map((n) => (
+                  {([1, 2, 3] as const).slice(0, castColumnCount).map((n) => (
                     <div key={n} className="import-column-mapping__row">
                       <label className="import-column-mapping__label">
-                        {IMPORT_COLUMN_LABELS[`cast${n}` as keyof typeof IMPORT_COLUMN_LABELS]}
+                        {IMPORT_COLUMN_LABELS[`cast${n}` as keyof typeof IMPORT_COLUMN_LABELS]} <span style={{ color: 'var(--discord-text-muted)', fontSize: '10px' }}>任意</span>
                       </label>
                       <div className="import-column-mapping__select-wrap">
                         <AppSelect
                           value={safeColumnValue(
-                            n === 1 ? customMapping.cast1 : n === 2 ? customMapping.cast2 : n === 3 ? customMapping.cast3 : n === 4 ? customMapping.cast4 : customMapping.cast5,
+                            n === 1 ? customMapping.cast1 : n === 2 ? customMapping.cast2 : customMapping.cast3,
                           )}
                           onValueChange={(v) => {
                             const num = v === NONE_VALUE ? -1 : parseInt(v, 10);
@@ -412,8 +438,6 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
                               if (n === 1) next.cast1 = num;
                               else if (n === 2) next.cast2 = num;
                               else if (n === 3) next.cast3 = num;
-                              else if (n === 4) next.cast4 = num;
-                              else if (n === 5) next.cast5 = num;
                               return next;
                             });
                           }}
@@ -423,12 +447,12 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
                       </div>
                     </div>
                   ))}
-                  {castColumnCount < 5 && (
+                  {castColumnCount < 3 && (
                     <div className="import-column-mapping__row">
                       <button
                         type="button"
                         className="btn-secondary"
-                        onClick={() => setCastColumnCount((c) => Math.min(5, c + 1))}
+                        onClick={() => setCastColumnCount((c) => Math.min(3, c + 1))}
                       >
                         + 希望キャスト列を追加
                       </button>

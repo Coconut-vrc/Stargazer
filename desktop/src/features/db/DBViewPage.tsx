@@ -14,7 +14,8 @@ const XLinkCell: React.FC<{
   xId: string | undefined;
   isCaution: boolean;
   onConfirmOpen: (url: string) => void;
-}> = ({ xId, isCaution, onConfirmOpen }) => {
+  className?: string;
+}> = ({ xId, isCaution, onConfirmOpen, className }) => {
   const handle = (xId != null && xId !== '') ? String(xId).replace(/^@/, '') : '';
 
   const handleClick = (e: React.MouseEvent) => {
@@ -27,6 +28,7 @@ const XLinkCell: React.FC<{
     'db-table__cell',
     isCaution ? 'db-table__cell--caution' : '',
     handle ? 'db-table__cell--link' : '',
+    className || ''
   ]
     .filter(Boolean)
     .join(' ');
@@ -116,11 +118,11 @@ const DBViewPageComponent: React.FC = () => {
     return keys;
   }, [userData]);
 
-  /** 希望キャスト列数：データ内の最大長（複数指定可・カンマ区切りで6件来たら1〜6を表示） */
-  const maxCastCount = useMemo(
-    () => Math.max(1, ...userData.map((u) => (Array.isArray(u.casts) ? u.casts.length : 0))),
-    [userData],
-  );
+  /** 希望キャスト列数：デフォルトは最大3、全て表示時は全件（最大長） */
+  const maxCastCount = useMemo(() => {
+    const actualMax = Math.max(1, ...userData.map((u) => (Array.isArray(u.casts) ? u.casts.length : 0)));
+    return showAllColumns ? actualMax : Math.min(3, actualMax);
+  }, [userData, showAllColumns]);
 
   const totalColumns =
     (showAllColumns ? 2 + maxCastCount + customColumnKeys.length : 2 + maxCastCount) + 1; // +1 は操作列
@@ -144,20 +146,46 @@ const DBViewPageComponent: React.FC = () => {
   const columns: DiscordTableColumn<(typeof userData)[number]>[] = useMemo(() => {
     const base: DiscordTableColumn<(typeof userData)[number]>[] = [];
     base.push({
-      header: 'ユーザー名',
+      header: (
+        <>
+          アカウントID(X)
+          <span className="db-table__th-hint">（クリックで遷移）</span>
+        </>
+      ),
+      headerClassName: 'db-table__th db-table__th--sticky-left',
+      renderCell: (user) => (
+        <XLinkCell xId={user.x_id} isCaution={isCautionRow(user)} onConfirmOpen={handleConfirmOpen} className="db-table__cell--sticky-left" />
+      ),
+    });
+    base.push({
+      header: '応募者名',
       headerClassName: 'db-table__th',
       renderCell: (user) => <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>{user.name ?? '—'}</td>,
     });
     base.push({
-      header: (
-        <>
-          アカウントID(X)
-          <span className="db-table__th-hint">（クリックでユーザーページに遷移）</span>
-        </>
-      ),
+      header: 'VRCアカウント',
       headerClassName: 'db-table__th',
       renderCell: (user) => (
-        <XLinkCell xId={user.x_id} isCaution={isCautionRow(user)} onConfirmOpen={handleConfirmOpen} />
+        <td className={`db-table__cell${isCautionRow(user) ? ' db-table__cell--caution' : ''}`}>
+          {user.vrc_url ? (
+            <span
+              className="db-table__cell--link"
+              onClick={(e) => { e.stopPropagation(); handleConfirmOpen(user.vrc_url!); }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault(); e.stopPropagation();
+                  handleConfirmOpen(user.vrc_url!);
+                }
+              }}
+            >
+              リンクを開く
+            </span>
+          ) : (
+            '—'
+          )}
+        </td>
       ),
     });
     for (let i = 0; i < maxCastCount; i++) {
@@ -191,6 +219,7 @@ const DBViewPageComponent: React.FC = () => {
         });
       }
     }
+
     const operationCol: DiscordTableColumn<(typeof userData)[number]> = {
       header: '',
       headerClassName: 'db-table__th',
@@ -219,7 +248,7 @@ const DBViewPageComponent: React.FC = () => {
   }, [isCautionRow, handleConfirmOpen, customColumnKeys, showAllColumns, maxCastCount]);
 
   return (
-    <div className="page-wrapper page-wrapper--flex">
+    <div className="page-wrapper page-wrapper--flex" style={{ maxWidth: '1200px', margin: '0 auto' }}>
       <div className="page-header-row">
         <h1 className="page-header-title page-header-title--md">名簿データベース</h1>
         <button
@@ -256,22 +285,18 @@ const DBViewPageComponent: React.FC = () => {
         </div>
       )}
 
-      <div
-        className="table-container db-view-table-wrapper db-view-table-scroll"
-        style={{
+      <DiscordTable
+        columns={columns}
+        rows={userData}
+        containerClassName="table-container db-view-table-wrapper db-view-table-scroll"
+        containerStyle={{
           overflow: 'auto',
-          maxWidth: '100%',
-          WebkitOverflowScrolling: 'touch',
+          width: '100%',
+          maxHeight: 'calc(100vh - 280px)'
         }}
-      >
-        <DiscordTable
-          columns={columns}
-          rows={userData}
-          tableClassName="db-table"
-          tableStyle={{ minWidth: Math.max(700, totalColumns * 130) }}
-          emptyRow={emptyRow}
-        />
-      </div>
+        tableClassName="db-table db-table--fixed"
+        emptyRow={emptyRow}
+      />
 
       {pendingUrl && (
         <ConfirmModal

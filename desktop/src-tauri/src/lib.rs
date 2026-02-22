@@ -36,7 +36,7 @@ fn check_app_dirs_exist() -> Result<bool, String> {
     if !base.exists() {
         return Ok(false);
     }
-    for sub in ["src", "backup/lottery", "backup/matching", "cast"] {
+    for sub in ["src", "backup/lottery", "backup/matching", "cast", "template/temp", "template/pref", "pref"] {
         let dir = base.join(sub);
         if !dir.exists() {
             return Ok(false);

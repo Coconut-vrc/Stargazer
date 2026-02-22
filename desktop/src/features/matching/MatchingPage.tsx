@@ -9,14 +9,10 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { InputModal } from '@/components/InputModal';
 import { XLinkInline } from '@/components/XLinkCell';
 import { downloadCsv } from '@/common/downloadCsv';
-import { MATCHING_SHEET_PREFIX } from '@/common/sheetColumns';
 import { MATCHING_TYPE_LABELS } from '@/features/matching/types/matching-type-codes';
-import type { CautionUser } from '@/features/matching/types/matching-system-types';
+import { isCautionUser } from '@/features/matching/logics/caution-user';
 
-// ヘルパー関数: ユーザーが注意対象かどうかを判定
-function isCautionUser(user: UserBean, cautionUsers: CautionUser[]): boolean {
-  return cautionUsers.some((cu) => cu.accountId.toLowerCase() === user.x_id.toLowerCase());
-}
+
 
 interface MatchingPageProps {
   winners: UserBean[];
