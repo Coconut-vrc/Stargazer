@@ -4,7 +4,7 @@
  */
 
 export const STORAGE_KEYS = {
-  SESSION: 'chocomelapp_session',
+  SESSION: 'stargazer_session',
   THEME: 'stargazer_theme_id',
   MATCHING_SETTINGS: 'stargazer_matching_settings',
 } as const;

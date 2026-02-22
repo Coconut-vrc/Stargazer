@@ -244,17 +244,6 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
             const endIdx = startIdx + castsPerRotation;
             const slots = firstUser.matches.slice(startIdx, endIdx);
 
-            // デバッグログ
-            if (row.tableIndex === 1) {
-              console.log(`[M003 Debug] Table ${row.tableIndex}, Round ${roundIdx + 1}:`, {
-                castsPerRotation,
-                startIdx,
-                endIdx,
-                totalMatches: firstUser.matches.length,
-                slots: slots.map(s => s?.cast?.name || 'null'),
-              });
-            }
-
             return (
               <td className="table-cell-padding">
                 <div style={{ display: 'flex', flexDirection: 'row', gap: '12px', alignItems: 'center' }}>

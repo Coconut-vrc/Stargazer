@@ -324,105 +324,107 @@ export const LotteryPage: React.FC = () => {
                     setCount(v);
                   }
                 }}
-                {matchingTypeCode === 'M003' && usersPerTable > 1 && (count + guaranteedWinners.length) % usersPerTable !== 0 && (
-                  <p className="form-inline-note" style={{ marginTop: 4, color: 'var(--discord-accent-yellow, #f0b232)' }}>※ 最後のテーブルに{usersPerTable - ((count + guaranteedWinners.length) % usersPerTable)}名分の空席が発生します</p>
-                )}
-          </div>
-
-            {/* 右列: 総テーブル数 */}
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">総テーブル数</label>
-              <input
-                type="number"
-                value={totalTables}
-                min={1}
-                disabled={matchingTypeCode === 'M003'}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setTotalTables(Number.isFinite(v) && v >= 1 ? v : totalTables);
-                }}
-                className="form-number-input"
-                style={{ opacity: matchingTypeCode === 'M003' ? 0.5 : 1, cursor: matchingTypeCode === 'M003' ? 'not-allowed' : 'text' }}
               />
-              <p className="form-inline-note" style={{ marginTop: 4 }}>※ M001/M002で使用</p>
+              {matchingTypeCode === 'M003' && usersPerTable > 1 && (count + guaranteedWinners.length) % usersPerTable !== 0 && (
+                <p className="form-inline-note" style={{ marginTop: 4, color: 'var(--discord-accent-yellow, #f0b232)' }}>※ 最後のテーブルに{usersPerTable - ((count + guaranteedWinners.length) % usersPerTable)}名分の空席が発生します</p>
+              )}
             </div>
           </div>
 
-          {/* 1テーブルあたりのユーザー数＋1ローテあたりのキャスト数（2列グリッド） */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
-            {/* 左列: 1テーブルあたりのユーザー数 */}
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">1テーブルあたりのユーザー数</label>
-              <input
-                type="number"
-                value={usersPerTable}
-                min={1}
-                disabled={matchingTypeCode !== 'M003'}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setUsersPerTable(Number.isFinite(v) && v >= 1 ? v : usersPerTable);
-                }}
-                className="form-number-input"
-                style={{ opacity: matchingTypeCode !== 'M003' ? 0.5 : 1, cursor: matchingTypeCode !== 'M003' ? 'not-allowed' : 'text' }}
-              />
-              <p className="form-inline-note" style={{ marginTop: 4 }}>※ M003で使用</p>
-            </div>
-
-            {/* 右列: 1ローテあたりのキャスト数 */}
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">1ローテあたりのキャスト数</label>
-              <input
-                type="number"
-                value={castsPerRotation}
-                min={1}
-                disabled={matchingTypeCode !== 'M003'}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setCastsPerRotation(Number.isFinite(v) && v >= 1 ? v : castsPerRotation);
-                }}
-                className="form-number-input"
-                style={{ opacity: matchingTypeCode !== 'M003' ? 0.5 : 1, cursor: matchingTypeCode !== 'M003' ? 'not-allowed' : 'text' }}
-              />
-              <p className="form-inline-note" style={{ marginTop: 4 }}>※ M003で使用。キャスト総数がこの倍数でないと警告されます</p>
-            </div>
-          </div>
-
-          {/* 隠しファイル入力 */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".tsv"
-            style={{ display: 'none' }}
-            onChange={handleFileChange}
-          />
-
-          <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
-            <button onClick={handleImportTsv} className="btn-secondary btn-secondary--full">
-              抽選結果TSVをインポート
-            </button>
-            <button onClick={run} className="btn-primary btn-primary--full">
-              抽選開始
-            </button>
+          {/* 右列: 総テーブル数 */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label className="form-label">総テーブル数</label>
+            <input
+              type="number"
+              value={totalTables}
+              min={1}
+              disabled={matchingTypeCode === 'M003'}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                setTotalTables(Number.isFinite(v) && v >= 1 ? v : totalTables);
+              }}
+              className="form-number-input"
+              style={{ opacity: matchingTypeCode === 'M003' ? 0.5 : 1, cursor: matchingTypeCode === 'M003' ? 'not-allowed' : 'text' }}
+            />
+            <p className="form-inline-note" style={{ marginTop: 4 }}>※ M001/M002で使用</p>
           </div>
         </div>
 
-        {confirmMessage && (
-          <ConfirmModal
-            message={confirmMessage}
-            onConfirm={handleConfirmOk}
-            onCancel={handleConfirmCancel}
-            confirmLabel="OK"
-            type="confirm"
-          />
-        )}
-        {alertMessage && (
-          <ConfirmModal
-            message={alertMessage}
-            onConfirm={() => setAlertMessage(null)}
-            confirmLabel="OK"
-            type="alert"
-          />
-        )}
+        {/* 1テーブルあたりのユーザー数＋1ローテあたりのキャスト数（2列グリッド） */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+          {/* 左列: 1テーブルあたりのユーザー数 */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label className="form-label">1テーブルあたりのユーザー数</label>
+            <input
+              type="number"
+              value={usersPerTable}
+              min={1}
+              disabled={matchingTypeCode !== 'M003'}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                setUsersPerTable(Number.isFinite(v) && v >= 1 ? v : usersPerTable);
+              }}
+              className="form-number-input"
+              style={{ opacity: matchingTypeCode !== 'M003' ? 0.5 : 1, cursor: matchingTypeCode !== 'M003' ? 'not-allowed' : 'text' }}
+            />
+            <p className="form-inline-note" style={{ marginTop: 4 }}>※ M003で使用</p>
+          </div>
+
+          {/* 右列: 1ローテあたりのキャスト数 */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label className="form-label">1ローテあたりのキャスト数</label>
+            <input
+              type="number"
+              value={castsPerRotation}
+              min={1}
+              disabled={matchingTypeCode !== 'M003'}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                setCastsPerRotation(Number.isFinite(v) && v >= 1 ? v : castsPerRotation);
+              }}
+              className="form-number-input"
+              style={{ opacity: matchingTypeCode !== 'M003' ? 0.5 : 1, cursor: matchingTypeCode !== 'M003' ? 'not-allowed' : 'text' }}
+            />
+            <p className="form-inline-note" style={{ marginTop: 4 }}>※ M003で使用。キャスト総数がこの倍数でないと警告されます</p>
+          </div>
+        </div>
+
+        {/* 隠しファイル入力 */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".tsv"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
+
+        <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
+          <button onClick={handleImportTsv} className="btn-secondary btn-secondary--full">
+            抽選結果TSVをインポート
+          </button>
+          <button onClick={run} className="btn-primary btn-primary--full">
+            抽選開始
+          </button>
+        </div>
       </div>
-      );
+
+      {confirmMessage && (
+        <ConfirmModal
+          message={confirmMessage}
+          onConfirm={handleConfirmOk}
+          onCancel={handleConfirmCancel}
+          confirmLabel="OK"
+          type="confirm"
+        />
+      )}
+      {alertMessage && (
+        <ConfirmModal
+          message={alertMessage}
+          onConfirm={() => setAlertMessage(null)}
+          confirmLabel="OK"
+          type="alert"
+        />
+      )}
+    </div>
+  );
 };
