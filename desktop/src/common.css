@@ -1257,10 +1257,6 @@ select.form-input {
   color: rgba(30, 58, 95, 0.6);
 }
 
-.app-container[data-theme="skyblue"] .main-content {
-  background-color: rgba(255, 255, 255, 0.60);
-}
-
 .app-container[data-theme="skyblue"] .page-card-narrow {
   background-color: rgba(255, 255, 255, 0.96);
   border-color: rgba(70, 140, 210, 0.22);
@@ -3991,4 +3987,59 @@ select.app-select-native option {
 
 .text-x-id--caution:hover {
   background-color: rgba(237, 66, 69, 0.2);
+}
+
+/* ========================================
+   Lottery Split Pane Layout
+   ======================================== */
+
+.lottery-split-pane {
+  display: flex;
+  gap: 24px;
+  flex: 1;
+  min-height: 0;
+  padding-bottom: 8px;
+}
+
+.lottery-split-left {
+  flex: 1 1 55%;
+  min-width: 380px;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.lottery-split-right {
+  flex: 1 1 45%;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  padding-left: 8px;
+}
+
+@media (max-width: 1050px) {
+  .lottery-page-container {
+    height: auto !important;
+    overflow-y: visible !important;
+  }
+
+  .lottery-split-pane {
+    flex-direction: column;
+    height: auto;
+    overflow-y: visible;
+  }
+
+  .lottery-split-left {
+    min-width: 100%;
+    max-width: 100%;
+    overflow-y: visible;
+  }
+
+  .lottery-split-right {
+    min-width: 100%;
+    max-width: 100%;
+    padding-left: 0;
+  }
 }

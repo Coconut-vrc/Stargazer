@@ -364,9 +364,9 @@ export const LotteryPage: React.FC = () => {
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: '24px', flex: 1, minHeight: 0, paddingBottom: '8px' }}>
+      <div className="lottery-split-pane">
         {/* 左カラム：入力フォーム */}
-        <div style={{ flex: '1 1 55%', minWidth: '380px', maxWidth: '600px', display: 'flex', flexDirection: 'column', overflowY: 'auto', paddingRight: '4px' }} className="custom-scrollbar">
+        <div className="lottery-split-left custom-scrollbar">
           <div className="page-card-narrow" style={{ margin: 0, width: '100%', maxWidth: '100%', flex: '1 0 auto', padding: '20px' }}>
 
             {/* テンプレート操作エリア */}
@@ -640,7 +640,7 @@ export const LotteryPage: React.FC = () => {
         </div>
 
         {/* 右カラム：お知らせ（バリデーション結果）とアクションボタン */}
-        <div style={{ flex: '1 1 45%', display: 'flex', flexDirection: 'column', paddingLeft: '8px', minWidth: '320px' }}>
+        <div className="lottery-split-right">
 
           <div style={{
             flex: 1,
