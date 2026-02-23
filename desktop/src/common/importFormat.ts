@@ -5,18 +5,14 @@
 
 /** 0始まりの列インデックス。-1 = 使わない */
 export interface ColumnMapping {
-  timestamp: number;
   name: number;
   x_id: number;
   vrc_url: number; // VRCアカウントURL
-  first_flag: number;
   cast1: number;
   cast2: number;
   cast3: number;
   cast4: number;
   cast5: number;
-  note: number;
-  is_pair_ticket: number;
   /** カスタム用: 2列目ユーザー名(例: VRC名)。name が空のときのフォールバック */
   nameColumn2?: number;
   /** カスタム用: 応募リストに出す追加列(ラベル付きで raw_extra に入る) */
@@ -31,18 +27,14 @@ export type ImportStyle = 'custom';
 
 /** カスタム用プリセット: VRCアカウント名,ツイッターユーザー名,アカウントＩＤ,希望キャスト(カンマ),確認事項１,確認事項２,自由記入欄 */
 export const CUSTOM_PRESET_VRC: ColumnMapping = {
-  timestamp: -1,
   name: 1,
   x_id: 2,
   vrc_url: -1,
-  first_flag: -1,
   cast1: 3,
   cast2: -1,
   cast3: -1,
   cast4: -1,
   cast5: -1,
-  note: 6,
-  is_pair_ticket: -1,
   nameColumn2: 0,
   extraColumns: [
     { columnIndex: 4, label: '確認事項１' },
@@ -53,18 +45,14 @@ export const CUSTOM_PRESET_VRC: ColumnMapping = {
 /** カスタム用：全項目を「未選択」で初期化（-1 = 使わない） */
 export function createEmptyColumnMapping(): ColumnMapping {
   return {
-    timestamp: -1,
     name: -1,
     x_id: -1,
     vrc_url: -1,
-    first_flag: -1,
     cast1: -1,
     cast2: -1,
     cast3: -1,
     cast4: -1,
     cast5: -1,
-    note: -1,
-    is_pair_ticket: -1,
   };
 }
 
@@ -76,18 +64,14 @@ export function hasRequiredIdentityColumn(m: ColumnMapping): boolean {
 /** マッピングで参照する最大列インデックス＋1 ＝ 必要な最小列数 */
 export function getMinColumnsFromMapping(m: ColumnMapping): number {
   const indices: number[] = [
-    m.timestamp,
     m.name,
     m.x_id,
     m.vrc_url,
-    m.first_flag,
     m.cast1,
     m.cast2,
     m.cast3,
     m.cast4,
     m.cast5,
-    m.note,
-    m.is_pair_ticket,
   ];
   if (m.nameColumn2 != null && m.nameColumn2 >= 0) indices.push(m.nameColumn2);
   if (m.extraColumns?.length) {

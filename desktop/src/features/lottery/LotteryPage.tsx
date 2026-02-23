@@ -248,7 +248,7 @@ export const LotteryPage: React.FC = () => {
         <div className="form-group" style={{ maxWidth: '400px' }}>
           <label className="form-label">マッチング形式（区分コード M000～M002）</label>
           <AppSelect
-            value={MATCHING_TYPE_CODES_SELECTABLE.includes(matchingTypeCode) ? matchingTypeCode : 'M000'}
+            value={MATCHING_TYPE_CODES_SELECTABLE.includes(matchingTypeCode) ? matchingTypeCode : 'M001'}
             onValueChange={(v) => setMatchingTypeCode(v as typeof matchingTypeCode)}
             options={MATCHING_TYPE_CODES_SELECTABLE.map((code) => ({
               value: code,

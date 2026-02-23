@@ -49,12 +49,6 @@ export interface NGExceptionSettings {
   exceptions: NGException[];
 }
 
-/** マッチング方式（UI用 — M000～M003） */
-export type MatchingAlgorithmId =
-  | 'random'               // M001: ランダムマッチング
-  | 'rotation'             // M002: ローテーションマッチング
-  | 'multiple';            // M003: 複数マッチング
-
 export interface MultipleMatchingSettings {
   usersPerTable: number;
   castsPerRotation: number;

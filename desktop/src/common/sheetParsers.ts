@@ -86,14 +86,10 @@ export function mapRowToUserBeanWithMapping(
   }
 
   return {
-    timestamp: mapping.timestamp >= 0 ? getCell(row, mapping.timestamp) : '',
     name,
     x_id: normalizedXId,
     vrc_url: vrcUrl,
-    first_flag: mapping.first_flag >= 0 ? getCell(row, mapping.first_flag) : '',
     casts,
-    note: mapping.note >= 0 ? getCell(row, mapping.note) : '',
-    is_pair_ticket: mapping.is_pair_ticket >= 0 && getCell(row, mapping.is_pair_ticket) === '1',
     raw_extra: rawExtra,
   };
 }
@@ -103,8 +99,8 @@ export function parseCastSheetRows(rows: unknown[][]): CastBean[] {
     .map((row) => ({
       name: (row[CAST_SHEET.NAME] ?? '').toString().trim(),
       is_present: (row[CAST_SHEET.IS_PRESENT] ?? '') === '1',
-      ng_users: (row[CAST_SHEET.NG_USERS] ?? '')
-        ? (row[CAST_SHEET.NG_USERS] as string).split(',').map((s: string) => s.trim())
+      ng_entries: (row[CAST_SHEET.NG_USERS] ?? '')
+        ? (row[CAST_SHEET.NG_USERS] as string).split(',').map((s: string) => ({ username: s.trim() }))
         : [],
     }))
     .filter((c) => c.name);
@@ -129,7 +125,7 @@ export function castBeansToCsvContent(casts: CastBean[]): string {
     const ngParts =
       c.ng_entries && c.ng_entries.length > 0
         ? c.ng_entries.map((e) => (e.accountId ? `${e.username ?? ''}@${e.accountId}` : e.username ?? '')).filter(Boolean)
-        : c.ng_users;
+        : [];
     const ngUsers = escapeCsvCell(Array.isArray(ngParts) ? ngParts.join(',') : '');
     return `${name},${isPresent},${ngUsers}`;
   });

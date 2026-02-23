@@ -122,10 +122,6 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
               m.cast4 = typeof m.cast4 === 'number' ? clampOrMinus(m.cast4) : -1;
               m.cast5 = typeof m.cast5 === 'number' ? clampOrMinus(m.cast5) : -1;
               m.vrc_url = typeof m.vrc_url === 'number' && m.vrc_url >= 0 ? clamp(m.vrc_url) : -1;
-              m.note = typeof m.note === 'number' && m.note >= 0 ? clamp(m.note) : -1;
-              m.timestamp = typeof m.timestamp === 'number' && m.timestamp >= 0 ? clamp(m.timestamp) : -1;
-              m.first_flag = typeof m.first_flag === 'number' && m.first_flag >= 0 ? clamp(m.first_flag) : -1;
-              m.is_pair_ticket = typeof m.is_pair_ticket === 'number' && m.is_pair_ticket >= 0 ? clamp(m.is_pair_ticket) : -1;
               setCustomMapping(m);
             }
             if (pref.castInputType != null) setCastInputType(pref.castInputType);
@@ -147,10 +143,6 @@ export const ImportPage: React.FC<ImportPageProps> = ({ onImportUserRows }) => {
           next.cast3 = clampOrMinus(next.cast3 ?? -1);
           next.cast4 = clampOrMinus(next.cast4 ?? -1);
           next.cast5 = clampOrMinus(next.cast5 ?? -1);
-          next.note = next.note >= 0 ? clamp(next.note) : -1;
-          next.timestamp = next.timestamp >= 0 ? clamp(next.timestamp) : -1;
-          next.first_flag = next.first_flag >= 0 ? clamp(next.first_flag) : -1;
-          next.is_pair_ticket = next.is_pair_ticket >= 0 ? clamp(next.is_pair_ticket) : -1;
           return next;
         });
       }

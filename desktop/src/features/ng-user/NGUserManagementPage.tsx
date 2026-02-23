@@ -10,9 +10,7 @@ import { parseXUsername } from '@/common/xIdUtils';
 type PersistCastsFn = (casts: CastBean[]) => void | Promise<void>;
 
 function getNgEntriesFromCast(cast: CastBean): NGUserEntry[] {
-  const entries = cast.ng_entries;
-  if (entries && entries.length > 0) return entries;
-  return (cast.ng_users ?? []).map((u) => ({ username: u }));
+  return cast.ng_entries ?? [];
 }
 
 function entryToKey(entry: NGUserEntry): string {
@@ -88,7 +86,7 @@ export const NGUserManagementPage: React.FC<{
 
     const nextCasts = casts.map((c) =>
       c.name === selectedCastName
-        ? { ...c, ng_entries: nextEntries, ng_users: [] }
+        ? { ...c, ng_entries: nextEntries }
         : c
     );
     setCasts(nextCasts);
@@ -108,12 +106,9 @@ export const NGUserManagementPage: React.FC<{
     const nextCasts = casts.map((c) => {
       if (c.name !== castName) return c;
       if (filtered.length === 0) {
-        return { ...c, ng_entries: undefined, ng_users: c.ng_entries ? [] : c.ng_users };
+        return { ...c, ng_entries: undefined };
       }
-      if ((c.ng_entries?.length ?? 0) > 0) {
-        return { ...c, ng_entries: filtered, ng_users: [] };
-      }
-      return { ...c, ng_users: filtered.map((e) => e.username ?? '').filter(Boolean) };
+      return { ...c, ng_entries: filtered };
     });
     setCasts(nextCasts);
     repository.saveCasts(nextCasts);

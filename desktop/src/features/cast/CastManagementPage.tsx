@@ -38,7 +38,6 @@ export const CastManagementPage: React.FC<{
     const newCast: CastBean = {
       name: newName,
       is_present: false,
-      ng_users: []
     };
 
     const updatedList = [...casts, newCast];

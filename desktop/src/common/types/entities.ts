@@ -1,12 +1,8 @@
 export interface UserBean {
-  timestamp: string;
   name: string;
   x_id: string;
   vrc_url?: string; // VRCアカウントURL(オプション)
-  first_flag: string;
   casts: string[];
-  note: string;
-  is_pair_ticket: boolean;
   is_guaranteed?: boolean; // 確定枠フラグ
   raw_extra: unknown[];
 }
@@ -22,8 +18,6 @@ export interface CastBean {
   is_present: boolean;
   /** 連絡先URL一覧（VRCプロフィール・X・Discord等）。＋で複数追加可能 */
   contact_urls?: string[];
-  /** 従来のNGリスト（ユーザー名のみ）。後方互換のため残す */
-  ng_users: string[];
-  /** 仕様準拠のNGリスト（ユーザー名・アカウントID）。あればこちらを優先 */
+  /** 仕様準拠のNGリスト（ユーザー名・アカウントID） */
   ng_entries?: NGUserEntry[];
 }

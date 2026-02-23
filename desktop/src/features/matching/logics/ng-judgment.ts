@@ -32,7 +32,7 @@ function matchEntry(user: UserBean, entry: NGUserEntry, judgmentType: NGJudgment
 }
 
 /**
- * キャストのNGリスト（ng_entries または ng_users）に対してユーザーがNGかどうか判定する。
+ * キャストのNGリスト（ng_entries）に対してユーザーがNGかどうか判定する。
  */
 export function isUserNGForCast(
   user: UserBean,
@@ -42,16 +42,6 @@ export function isUserNGForCast(
   const entries = cast.ng_entries;
   if (entries && entries.length > 0) {
     return entries.some((entry) => matchEntry(user, entry, judgmentType));
-  }
-  const legacyList = cast.ng_users ?? [];
-  if (legacyList.length === 0) return false;
-  const nameNorm = normalize(user.name);
-  const idNorm = normalize(user.x_id);
-  for (const s of legacyList) {
-    const t = normalize(s);
-    if (judgmentType === 'username' && nameNorm === t) return true;
-    if (judgmentType === 'accountId' && idNorm === t) return true;
-    if (judgmentType === 'either' && (nameNorm === t || idNorm === t)) return true;
   }
   return false;
 }

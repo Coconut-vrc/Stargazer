@@ -4,7 +4,6 @@
  */
 
 export const MATCHING_TYPE_CODES = [
-  'M000',
   'M001',
   'M002',
   'M003',
@@ -14,7 +13,6 @@ export type MatchingTypeCode = (typeof MATCHING_TYPE_CODES)[number];
 
 /** プルダウンに表示する区分コード */
 export const MATCHING_TYPE_CODES_SELECTABLE: readonly MatchingTypeCode[] = [
-  'M000',
   'M001',
   'M002',
   'M003',
@@ -22,7 +20,6 @@ export const MATCHING_TYPE_CODES_SELECTABLE: readonly MatchingTypeCode[] = [
 
 /** プルダウン用ラベル */
 export const MATCHING_TYPE_LABELS: Record<MatchingTypeCode, string> = {
-  M000: 'マッチングは使用しない',
   M001: 'ランダムマッチング',
   M002: 'ローテーションマッチング',
   M003: '多対多ローテーションマッチング',

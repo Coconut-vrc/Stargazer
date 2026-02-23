@@ -34,10 +34,6 @@ export function parseLotteryResultTsv(
     // 旧フォーマット名または新フォーマット名の両方を探索
     const nameIdx = colMap['ユーザー'] ?? colMap['name'] ?? -1;
     const xidIdx = colMap['X ID'] ?? colMap['x_id'] ?? -1;
-    const timestampIdx = colMap['timestamp'] ?? -1;
-    const firstFlagIdx = colMap['first_flag'] ?? -1;
-    const noteIdx = colMap['意気込み'] ?? colMap['note'] ?? -1;
-    const pairTicketIdx = colMap['is_pair_ticket'] ?? -1;
     const guaranteedIdx = colMap['区分'] ?? colMap['確定'] ?? -1;
 
     // 「希望1」「希望2」などの列インデックスを収集
@@ -73,17 +69,12 @@ export function parseLotteryResultTsv(
             if (val) casts.push(val);
         }
 
-        const is_pair_ticket = pairTicketIdx >= 0 ? row[pairTicketIdx]?.trim() === '1' : false;
         const is_guaranteed = guaranteedIdx >= 0 ? (row[guaranteedIdx]?.trim() === '確定' || row[guaranteedIdx]?.trim() === '1') : false;
 
         users.push({
-            timestamp: timestampIdx >= 0 ? (row[timestampIdx] || '').trim() : '',
             name,
             x_id,
-            first_flag: firstFlagIdx >= 0 ? (row[firstFlagIdx] || '').trim() : '',
             casts,
-            note: noteIdx >= 0 ? (row[noteIdx] || '').trim() : '',
-            is_pair_ticket,
             is_guaranteed,
             raw_extra: [],
         });
