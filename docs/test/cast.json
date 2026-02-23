@@ -1,0 +1,35 @@
+[
+    {
+        "id": 1,
+        "cast_name": "キャストA",
+        "x_id": "cast_a",
+        "ng_entries": []
+    },
+    {
+        "id": 2,
+        "cast_name": "キャストB",
+        "x_id": "cast_b",
+        "ng_entries": [
+            "bad_user_1",
+            "@bad_user_2"
+        ]
+    },
+    {
+        "id": 3,
+        "cast_name": "キャストC",
+        "x_id": "cast_c",
+        "ng_entries": []
+    },
+    {
+        "id": 4,
+        "cast_name": "キャストD",
+        "x_id": "cast_d",
+        "ng_entries": []
+    },
+    {
+        "id": 5,
+        "cast_name": "キャストE",
+        "x_id": "cast_e",
+        "ng_entries": []
+    }
+]

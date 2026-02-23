@@ -12,7 +12,7 @@ import { DEFAULT_ROTATION_COUNT } from '@/common/copy';
 import type { MatchedCast, TableSlot } from '@/features/matching/logics/matching_service';
 export type { UserBean, CastBean } from '@/common/types/entities';
 
-const VALID_PAGES: readonly string[] = ['guide', 'dataManagement', 'castNgManagement', 'import', 'db', 'cast', 'ngManagement', 'lotteryCondition', 'lottery', 'matching'];
+const VALID_PAGES: readonly string[] = ['guide', 'dataManagement', 'castNgManagement', 'eventManagement', 'import', 'db', 'cast', 'ngManagement', 'lotteryCondition', 'lottery', 'matching'];
 
 const VALID_MATCHING_CODES: readonly string[] = [...MATCHING_TYPE_CODES];
 
@@ -67,7 +67,7 @@ function getInitialSession(): PersistedSession | null {
   }
 }
 
-export type PageType = 'guide' | 'dataManagement' | 'castNgManagement' | 'import' | 'db' | 'cast' | 'ngManagement' | 'lotteryCondition' | 'lottery' | 'matching';
+export type PageType = 'guide' | 'dataManagement' | 'castNgManagement' | 'eventManagement' | 'import' | 'db' | 'cast' | 'ngManagement' | 'lotteryCondition' | 'lottery' | 'matching';
 export type { MatchingTypeCode } from '@/features/matching/types/matching-type-codes';
 export type { ThemeId } from '@/common/themes';
 

@@ -96,7 +96,15 @@ export const CastManagementPage: React.FC<{
     const nextCasts = casts.map((c) => {
       if (c.name !== castName) return c;
       const list = [...contactUrlsList(c)];
-      list[index] = value;
+
+      let finalValue = value;
+      if (finalValue.startsWith('dscsv@')) {
+        finalValue = `https://discord.com/channels/${finalValue.slice(6)}`;
+      } else if (finalValue.startsWith('dscdm@')) {
+        finalValue = `https://discord.com/channels/@me/${finalValue.slice(6)}`;
+      }
+
+      list[index] = finalValue;
       const contact_urls = list.filter((u) => u.trim()).length ? list.map((u) => u.trim()).filter(Boolean) : undefined;
       return { ...c, contact_urls };
     });

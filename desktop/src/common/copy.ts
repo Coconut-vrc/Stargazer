@@ -93,7 +93,7 @@ export const GUIDE = {
   FLOW_MATCHING_CONFIRM: 'マッチング構成確認',
   FLOW_MATCHING_CONFIRM_DESC: '抽選結果を確認・CSVダウンロード',
   FLOW_MATCHING_RESULT: 'マッチング結果',
-  FLOW_MATCHING_RESULT_DESC: 'マッチング結果を確認・CSVダウンロード',
+  FLOW_MATCHING_RESULT_DESC: 'マッチング結果を確認・TSVダウンロード',
   /** よくある質問: 抽選・マッチング結果の保存先 */
   EXPORT_DESCRIPTION: '抽選結果・マッチング結果は各画面の「TSVでダウンロード」からファイルで保存できます。',
 } as const;

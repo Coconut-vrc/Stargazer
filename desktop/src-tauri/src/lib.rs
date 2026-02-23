@@ -1,9 +1,100 @@
 // Stargazer: 完全ローカル用 Tauri コマンド（LocalAppData / ファイル操作のみ）
 
 // --- LocalAppData/CosmoArtsStore/Stargazer: src, backup/lottery, backup/matching, cast ---
-fn stargazer_dir() -> Result<std::path::PathBuf, String> {
+fn base_dir() -> Result<std::path::PathBuf, String> {
     let local = std::env::var("LOCALAPPDATA").map_err(|_| "LOCALAPPDATA が取得できません".to_string())?;
     Ok(std::path::PathBuf::from(local).join("CosmoArtsStore").join("Stargazer"))
+}
+
+fn stargazer_dir() -> Result<std::path::PathBuf, String> {
+    let base = base_dir()?;
+    let event_path_file = base.join("eventPath");
+    
+    // If eventPath exists, read the relative path (e.g., project/eventA)
+    if event_path_file.exists() {
+        if let Ok(content) = std::fs::read_to_string(&event_path_file) {
+            let trimmed = content.trim();
+            if !trimmed.is_empty() {
+                // Return base/trimmed
+                return Ok(base.join(trimmed));
+            }
+        }
+    }
+    // Fallback to base
+    Ok(base)
+}
+
+#[tauri::command]
+fn get_current_event() -> Result<Option<String>, String> {
+    let base = base_dir()?;
+    let event_path_file = base.join("eventPath");
+    if event_path_file.exists() {
+        if let Ok(content) = std::fs::read_to_string(&event_path_file) {
+            let trimmed = content.trim();
+            if !trimmed.is_empty() {
+                // project/eventName -> eventName
+                let parts: Vec<&str> = trimmed.split('/').collect();
+                if let Some(last) = parts.last() {
+                    return Ok(Some(last.to_string()));
+                }
+                return Ok(Some(trimmed.to_string()));
+            }
+        }
+    }
+    Ok(None)
+}
+
+#[tauri::command]
+fn set_current_event(event_name: String) -> Result<(), String> {
+    let base = base_dir()?;
+    if !base.exists() {
+        std::fs::create_dir_all(&base).map_err(|e| e.to_string())?;
+    }
+    let event_path_file = base.join("eventPath");
+    let target = format!("project/{}", event_name);
+    std::fs::write(&event_path_file, target).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn list_events() -> Result<Vec<String>, String> {
+    let base = base_dir()?;
+    let project_dir = base.join("project");
+    let mut events = Vec::new();
+
+    if project_dir.exists() && project_dir.is_dir() {
+        let read_dir = std::fs::read_dir(&project_dir).map_err(|e| format!("read_dir 失敗 {}: {}", project_dir.display(), e))?;
+        for item in read_dir {
+            if let Ok(entry) = item {
+                if let Ok(meta) = entry.metadata() {
+                    if meta.is_dir() {
+                        events.push(entry.file_name().to_string_lossy().to_string());
+                    }
+                }
+            }
+        }
+    }
+    Ok(events)
+}
+
+#[tauri::command]
+fn create_event(event_name: String) -> Result<(), String> {
+    let base = base_dir()?;
+    let target_dir = base.join("project").join(&event_name);
+    // Create base application directories inside this new event directory
+    std::fs::create_dir_all(target_dir.join("src")).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(target_dir.join("backup").join("lottery")).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(target_dir.join("backup").join("matching")).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(target_dir.join("template").join("temp")).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(target_dir.join("template").join("pref")).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(target_dir.join("pref")).map_err(|e| e.to_string())?;
+    let cast_dir = target_dir.join("cast");
+    std::fs::create_dir_all(&cast_dir).map_err(|e| e.to_string())?;
+    let cast_json = cast_dir.join("cast.json");
+    if !cast_json.exists() {
+        std::fs::write(&cast_json, r#"{"casts":[]}"#).map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -266,13 +357,22 @@ pub fn run() {
             read_cast_db_json,
             write_cast_db_json,
             list_app_data_structure,
-            read_file,
             write_backup_lottery_tsv,
             write_backup_matching_tsv,
-            save_import_template,
-            get_matching_import_pref,
-            write_pref_json,
+            read_local_file,
+            read_local_csv,
+            write_local_csv,
+            write_local_file,
             read_pref_json,
+            write_pref_json,
+            read_template_temp_json,
+            write_template_temp_json,
+            read_template_pref_json,
+            write_template_pref_json,
+            get_current_event,
+            set_current_event,
+            list_events,
+            create_event
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

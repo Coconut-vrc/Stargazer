@@ -1,12 +1,5 @@
-desktop プロジェクト構成 整合性チェック結果
-全ディレクトリ・ファイル・import/export関係・型定義・Tauriバックエンドコマンドとフロントエンドの突合を実施しました。以下、検出された問題点を列挙します。
 
-🟡 重要度: 中
-5. check_app_dirs_exist と ensure_app_dirs のディレクトリリスト不整合
-check_app_dirs_exist (lib.rs L39): src, backup/lottery, backup/matching, cast の4つを確認。
-ensure_app_dirs (lib.rs L18-28): 上記に加えて template/temp, template/pref, pref の3ディレクトリも作成。
-template/temp, template/pref, pref は存在チェックの対象外のため、これらが削除されても「初回起動」モーダルは表示されず、必要なディレクトリが存在しない状態で動作する可能性がある。
-8. isCautionUser のロジック不整合（MatchingPage vs caution-user.ts）
-MatchingPage.tsx L17-18: cu.accountId.toLowerCase() === user.x_id.toLowerCase() で accountIdのみ で比較。
-caution-user.ts L22-46: より複雑なロジック（@ 除去、username + accountId の AND 判定）。
-画面上のハイライト表示と内部ロジックで判定基準が異なる。
+
+
+
+

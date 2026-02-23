@@ -1,5 +1,6 @@
 import React, { useCallback, useState, useRef, useEffect, useMemo } from 'react';
 import { useAppContext } from '@/stores/AppContext';
+import './lottery.css';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { AppSelect } from '@/components/AppSelect';
 import { MATCHING_TYPE_CODES_SELECTABLE, MATCHING_TYPE_LABELS, isTableBasedMatching } from '@/features/matching/types/matching-type-codes';
@@ -43,6 +44,10 @@ export const LotteryPage: React.FC = () => {
     setCastsPerRotation,
     allowM003EmptySeats,
     setAllowM003EmptySeats,
+    currentWinners,
+    setGlobalMatchingResult,
+    setGlobalTableSlots,
+    setGlobalMatchingError,
   } = useAppContext();
 
   const [count, setCount] = useState(1);
@@ -215,7 +220,7 @@ export const LotteryPage: React.FC = () => {
 
       if (validation.warnings.length > 0) {
         const warningMessage = [
-          `${users.length}名の当選者をインポートしました`,
+          `${users.length} 名の当選者をインポートしました`,
           '',
           '警告:',
           ...validation.warnings,
@@ -257,7 +262,7 @@ export const LotteryPage: React.FC = () => {
       const userTableCount = Math.ceil(totalWinners / usersPerTable);
 
       if (totalTables < unitCount) {
-        errors.push(`総テーブル数（${totalTables}）がキャストのユニット数（${unitCount}）より少なくなっています。すべてのキャストが常に配置できるよう、総テーブル数は${unitCount}以上に設定してください。`);
+        errors.push(`総テーブル数（${totalTables}）がキャストのユニット数（${unitCount}）より少なくなっています。すべてのキャストが常に配置できるよう、総テーブル数は${unitCount} 以上に設定してください。`);
       }
       if (totalTables < userTableCount) {
         errors.push(`総テーブル数（${totalTables}）が当選者配置に必要なテーブル数（${userTableCount}）より少なくなっています。`);
@@ -268,7 +273,7 @@ export const LotteryPage: React.FC = () => {
 
       if (!allowM003EmptySeats && (hasEmptySeats || hasEmptyTables)) {
         if (hasEmptySeats) {
-          errors.push(`当選者数（${totalWinners}名）が「1テーブルのユーザー数（${usersPerTable}）」で割り切れないため端数の空席が発生します。「空席・手動指定による空きテーブルを許可する」にチェックを入れてください。`);
+          errors.push(`当選者数（${totalWinners} 名）が「1テーブルのユーザー数（${usersPerTable}）」で割り切れないため端数の空席が発生します。「空席・手動指定による空きテーブルを許可する」にチェックを入れてください。`);
         }
         if (hasEmptyTables) {
           errors.push(`指定された条件（総テーブル数${totalTables}）では誰も座らない完全な空きテーブルが発生します。「空席・手動指定による空きテーブルを許可する」にチェックを入れてください。`);
@@ -276,17 +281,30 @@ export const LotteryPage: React.FC = () => {
       }
 
       if (activeCastCount % castsPerRotation !== 0) {
-        errors.push(`出席キャスト数（${activeCastCount}名）が「1ローテあたりのキャスト数（${castsPerRotation}）」で割り切れません。`);
+        errors.push(`出席キャスト数（${activeCastCount} 名）が「1ローテあたりのキャスト数（${castsPerRotation}）」で割り切れません。`);
       }
 
       if (hasEmptySeats && allowM003EmptySeats) {
-        warnings.push(`最後のテーブルに${usersPerTable - (totalWinners % usersPerTable)}名分の空席が発生します。`);
+        warnings.push(`最後のテーブルに${usersPerTable - (totalWinners % usersPerTable)} 名分の空席が発生します。`);
+      }
+
+      const expectedCapacity = castsPerRotation * usersPerTable;
+      if (totalWinners > expectedCapacity) {
+        warnings.push(`当選者数（${totalWinners}名）が1ローテの接客枠（${castsPerRotation}キャスト × ${usersPerTable}人 = ${expectedCapacity}名）を上回っています。キャストが配置されないテーブルが発生する可能性があります。`);
+      } else if (totalWinners < expectedCapacity) {
+        warnings.push(`当選者数（${totalWinners}名）が1ローテの接客枠（${expectedCapacity}名）を下回っています。空席や待機状態のキャストが発生する可能性があります。`);
       }
     } else {
       if (isTableBasedMatching(matchingTypeCode)) {
         if (totalTables < totalWinners) {
-          errors.push(`総テーブル数（${totalTables}）が当選者数（${totalWinners}名）より少なくなっています。`);
+          errors.push(`総テーブル数（${totalTables}）が当選者数（${totalWinners} 名）より少なくなっています。`);
         }
+      }
+
+      if (totalWinners > activeCastCount) {
+        warnings.push(`当選者数（${totalWinners}名）が出勤キャスト数（${activeCastCount}名）を上回っています。接客を受けられないユーザーが発生する可能性があります。`);
+      } else if (totalWinners < activeCastCount) {
+        warnings.push(`出勤キャスト数（${activeCastCount}名）が当選者数（${totalWinners}名）を上回っています。待機状態となるキャストが発生する可能性があります。`);
       }
     }
 
@@ -304,6 +322,9 @@ export const LotteryPage: React.FC = () => {
     const lotteryWinners = shuffled.slice(0, count);
     const winners = [...guaranteedWinners.map(w => ({ ...w, is_guaranteed: true })), ...lotteryWinners];
     setCurrentWinners(winners);
+    setGlobalMatchingResult(null);
+    setGlobalTableSlots(undefined);
+    setGlobalMatchingError(null);
     setActivePage('lottery');
     if (isTauri() && winners.length > 0) {
       // 現在の表の形に合わせたヘッダーを作成
@@ -313,7 +334,7 @@ export const LotteryPage: React.FC = () => {
       }, 3);
 
       const header = ['ユーザー', 'X ID'];
-      for (let i = 0; i < maxCastCols; i++) header.push(`希望${i + 1}`);
+      for (let i = 0; i < maxCastCols; i++) header.push(`希望${i + 1} `);
       header.push('区分');
 
       const rows = winners.map((u) => {
@@ -326,12 +347,17 @@ export const LotteryPage: React.FC = () => {
       const content = buildTsvContent([header, ...rows]);
       invoke('write_backup_lottery_tsv', { content }).catch(() => { });
     }
-  }, [count, repository, setActivePage, setCurrentWinners, guaranteedWinners]);
+  }, [count, repository, setActivePage, setCurrentWinners, guaranteedWinners, setGlobalMatchingResult, setGlobalTableSlots, setGlobalMatchingError]);
 
   const run = useCallback(() => {
     if (validation.errors.length > 0) return;
-    doRun();
-  }, [validation.errors.length, doRun]);
+
+    if (currentWinners && currentWinners.length > 0) {
+      setConfirmMessage('前回の抽選結果（またはマッチング結果）が残っていますが、新しく抽選を行いますか？\n※前回の抽選結果・マッチング結果は削除されます');
+    } else {
+      doRun();
+    }
+  }, [validation.errors.length, currentWinners, doRun]);
 
   const handleConfirmOk = useCallback(() => {
     doRun();
@@ -356,8 +382,8 @@ export const LotteryPage: React.FC = () => {
   };
 
   return (
-    <div className="lottery-page-container fade-in" style={{ padding: '0 8px 16px 8px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 160px)', overflow: 'hidden' }}>
-      <div style={{ padding: '16px 0 16px 0', flexShrink: 0 }}>
+    <div className="lottery-page-container fade-in">
+      <div className="lottery-page-header">
         <h1 className="page-header-title page-header-title--sm">抽選条件</h1>
         <p className="page-header-subtitle page-header-subtitle--tight">
           マッチング形式と条件を選択してください
@@ -367,18 +393,13 @@ export const LotteryPage: React.FC = () => {
       <div className="lottery-split-pane">
         {/* 左カラム：入力フォーム */}
         <div className="lottery-split-left custom-scrollbar">
-          <div className="page-card-narrow" style={{ margin: 0, width: '100%', maxWidth: '100%', flex: '1 0 auto', padding: '20px' }}>
+          <div className="page-card-narrow lottery-form-card">
 
             {/* テンプレート操作エリア */}
-            <div className="form-group" style={{
-              padding: '12px',
-              backgroundColor: 'var(--discord-background-secondary)',
-              borderRadius: '8px',
-              marginBottom: '16px'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '12px' }}>
+            <div className="form-group lottery-template-area">
+              <div className="lottery-template-area-inner">
                 <div style={{ flex: 1 }}>
-                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                  <label className="form-label lottery-template-label">
                     <Save size={14} /> テンプレート
                   </label>
                   <AppSelect
@@ -404,11 +425,10 @@ export const LotteryPage: React.FC = () => {
                     ]}
                   />
                 </div>
-                <div style={{ display: 'flex', gap: '6px' }}>
+                <div className="lottery-template-actions">
                   <button
                     type="button"
-                    className="btn-secondary"
-                    style={{ padding: '0 10px', height: '40px', fontSize: '13px' }}
+                    className="btn-secondary lottery-btn-small"
                     onClick={() => setShowSaveTemplateModal(true)}
                     title="現在の条件を新規保存"
                   >
@@ -418,8 +438,7 @@ export const LotteryPage: React.FC = () => {
                     <>
                       <button
                         type="button"
-                        className="btn-secondary"
-                        style={{ padding: '0 10px', height: '40px', fontSize: '13px' }}
+                        className="btn-secondary lottery-btn-small"
                         onClick={handleOverwriteTemplate}
                         title="現在の条件で上書き保存"
                       >
@@ -427,8 +446,7 @@ export const LotteryPage: React.FC = () => {
                       </button>
                       <button
                         type="button"
-                        className="btn-danger"
-                        style={{ padding: '0 10px', height: '40px', backgroundColor: 'var(--discord-status-danger)' }}
+                        className="btn-danger lottery-btn-danger lottery-btn-small"
                         onClick={handleDeleteTemplate}
                         title="テンプレートを削除"
                       >
@@ -441,10 +459,10 @@ export const LotteryPage: React.FC = () => {
             </div>
 
             {/* 1. ローテーション回数＋総テーブル数（2列グリッド） */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+            <div className="lottery-grid-2col lottery-grid-2col--margin-bottom">
               {/* 左列: ローテーション回数（共通） */}
-              <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label" style={{ marginBottom: '6px' }}>ローテーション回数</label>
+              <div className="form-group lottery-form-group--no-margin">
+                <label className="form-label lottery-label--margin-bottom">ローテーション回数</label>
                 <div className="form-inline-group">
                   <input
                     type="number"
@@ -460,8 +478,8 @@ export const LotteryPage: React.FC = () => {
               </div>
 
               {/* 右列: 総テーブル数 */}
-              <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label" style={{ marginBottom: '6px' }}>総テーブル数</label>
+              <div className="form-group lottery-form-group--no-margin">
+                <label className="form-label lottery-label--margin-bottom">総テーブル数</label>
                 <input
                   type="number"
                   value={totalTables}
@@ -472,50 +490,49 @@ export const LotteryPage: React.FC = () => {
                   }}
                   className="form-number-input"
                 />
-                <p className="form-inline-note" style={{ marginTop: 4 }}>
+                <p className="form-inline-note lottery-note--margin-top">
                   ※ 全形式で共通
                 </p>
               </div>
             </div>
 
             {/* 2. マッチング形式 */}
-            <div className="form-group" style={{ maxWidth: '400px', marginBottom: '16px' }}>
-              <label className="form-label" style={{ marginBottom: '6px' }}>マッチング形式（コード M001～M002）</label>
+            <div className="form-group lottery-form-group--matching-type">
+              <label className="form-label lottery-label--margin-bottom">マッチング形式（コード M001～M002）</label>
               <AppSelect
                 value={MATCHING_TYPE_CODES_SELECTABLE.includes(matchingTypeCode) ? matchingTypeCode : 'M001'}
                 onValueChange={(v) => setMatchingTypeCode(v as typeof matchingTypeCode)}
                 options={MATCHING_TYPE_CODES_SELECTABLE.map((code) => ({
                   value: code,
-                  label: `${code}: ${MATCHING_TYPE_LABELS[code]}`,
+                  label: `${code}: ${MATCHING_TYPE_LABELS[code]} `,
                 }))}
               />
             </div>
 
             {/* 3. 確定当選枠＋当選者数（2列グリッド） */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+            <div className="lottery-grid-2col lottery-grid-2col--margin-bottom">
               {/* 左列: 確定当選枠 */}
-              <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label" style={{ marginBottom: '6px' }}>確定当選枠</label>
-                <div style={{ display: 'flex', alignItems: 'center', height: '40px', gap: '8px' }}>
+              <div className="form-group lottery-form-group--no-margin">
+                <label className="form-label lottery-label--margin-bottom">確定当選枠</label>
+                <div className="lottery-guaranteed-select-btn-wrap">
                   <button
                     type="button"
                     onClick={() => setShowGuaranteedSelect(true)}
-                    className="btn-secondary"
-                    style={{ padding: '0 12px', height: '100%', fontSize: '13px' }}
+                    className="btn-secondary lottery-guaranteed-select-btn"
                   >
                     確定当選者を選択
                   </button>
-                  <span className="form-inline-note" style={{ margin: 0, fontSize: '12px' }}>({guaranteedWinners.length}名)</span>
+                  <span className="form-inline-note lottery-guaranteed-count">({guaranteedWinners.length}名)</span>
                 </div>
-                <p className="form-inline-note" style={{ marginTop: 4, lineHeight: 1.3 }}>
+                <p className="form-inline-note lottery-note--compact">
                   抽選せずに確定で当選させるユーザー
                 </p>
               </div>
 
               {/* 右列: 当選者数（抽選枠） */}
-              <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label" style={{ marginBottom: '6px' }}>{countLabel}</label>
-                <div className="form-inline-group" style={{ height: '40px' }}>
+              <div className="form-group lottery-form-group--no-margin">
+                <label className="form-label lottery-label--margin-bottom">{countLabel}</label>
+                <div className="form-inline-group lottery-count-input-wrap">
                   <input
                     type="number"
                     value={count}
@@ -527,11 +544,11 @@ export const LotteryPage: React.FC = () => {
                         setCount(v);
                       }
                     }}
-                    style={{ height: '100%' }}
+                    className="lottery-count-input"
                   />
                 </div>
                 {matchingTypeCode === 'M003' && usersPerTable > 1 && (count + guaranteedWinners.length) % usersPerTable !== 0 && (
-                  <p className="form-inline-note" style={{ marginTop: 4, lineHeight: 1.3, color: 'var(--discord-accent-yellow, #f0b232)' }}>※ 最後のテーブルに{usersPerTable - ((count + guaranteedWinners.length) % usersPerTable)}名分の空席が発生します</p>
+                  <p className="form-inline-note lottery-note--warning">※ 最後のテーブルに{usersPerTable - ((count + guaranteedWinners.length) % usersPerTable)}名分の空席が発生します</p>
                 )}
               </div>
             </div>
@@ -540,7 +557,7 @@ export const LotteryPage: React.FC = () => {
               <ConfirmModal
                 type="alert"
                 title="確定当選者を選択"
-                message={`抽選せずに当選させるユーザーにチェックを付けます。${guaranteedWinners.length}名選択中。`}
+                message={`抽選せずに当選させるユーザーにチェックを付けます。${guaranteedWinners.length} 名選択中。`}
                 confirmLabel="閉じる"
                 onConfirm={() => setShowGuaranteedSelect(false)}
                 children={
@@ -572,15 +589,15 @@ export const LotteryPage: React.FC = () => {
 
             {/* 4. 多対多ローテーション条件設定 (タイトル部) */}
             {matchingTypeCode === 'M003' && (
-              <div style={{ padding: '12px 16px', backgroundColor: 'var(--discord-background-secondary)', borderRadius: '8px', border: '1px solid var(--discord-border)', marginBottom: '16px' }}>
-                <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--discord-text-normal)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="lottery-m003-section">
+                <h3 className="lottery-m003-title">
                   多対多ローテーション条件設定
                 </h3>
 
                 {/* 1テーブルあたりのユーザー数＋1ローテあたりのキャスト数（2列グリッド） */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label" style={{ marginBottom: '6px' }}>1テーブルのユーザー数</label>
+                <div className="lottery-grid-2col">
+                  <div className="form-group lottery-form-group--no-margin">
+                    <label className="form-label lottery-label--margin-bottom">1テーブルのユーザー数</label>
                     <div className="form-inline-group">
                       <input
                         type="number"
@@ -595,8 +612,8 @@ export const LotteryPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label" style={{ marginBottom: '6px' }}>1ローテのキャスト数</label>
+                  <div className="form-group lottery-form-group--no-margin">
+                    <label className="form-label lottery-label--margin-bottom">1ローテのキャスト数</label>
                     <div className="form-inline-group">
                       <input
                         type="number"
@@ -609,13 +626,13 @@ export const LotteryPage: React.FC = () => {
                         className="form-number-input"
                       />
                     </div>
-                    <p className="form-inline-note" style={{ marginTop: 4 }}>※ 総数がこの倍数でないと警告</p>
+                    <p className="form-inline-note lottery-note--margin-top">※ 総数がこの倍数でないと警告</p>
                   </div>
                 </div>
 
                 {/* 空席・空きテーブルの許容設定 */}
-                <div className="form-group" style={{ marginTop: '12px', marginBottom: 0 }}>
-                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', margin: 0, fontSize: '13px' }}>
+                <div className="form-group lottery-checkbox-group">
+                  <label className="form-label lottery-checkbox-label">
                     <input
                       type="checkbox"
                       checked={allowM003EmptySeats}
@@ -632,104 +649,69 @@ export const LotteryPage: React.FC = () => {
               ref={fileInputRef}
               type="file"
               accept=".tsv"
-              style={{ display: 'none' }}
+              className="lottery-hidden-input"
               onChange={handleFileChange}
             />
 
           </div>
         </div>
 
-        {/* 右カラム：お知らせ（バリデーション結果）とアクションボタン */}
+        {/* 右カラム：WARNING（バリデーション結果）とアクションボタン */}
         <div className="lottery-split-right">
+          <div className="page-card-narrow lottery-form-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '16px' }}>
 
-          <div style={{
-            flex: 1,
-            backgroundColor: 'var(--discord-background-secondary)',
-            borderRadius: '8px',
-            border: `1px solid ${validation.errors.length > 0 ? 'var(--discord-status-danger)' : validation.warnings.length > 0 ? 'var(--discord-accent-yellow, #fee75c)' : 'var(--discord-background-modifier-accent)'}`,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            boxShadow: validation.errors.length > 0 ? '0 0 0 1px var(--discord-status-danger)' : 'none'
-          }}>
-            <div style={{
-              padding: '12px 16px',
-              borderBottom: '1px solid var(--discord-background-modifier-accent)',
-              backgroundColor: 'var(--discord-background-tertiary)',
-              fontWeight: 600,
-              fontSize: '14px',
-              color: 'var(--discord-text-normal)'
-            }}>
-              お知らせ
-            </div>
+            <div className={`lottery-validation-panel ${validation.errors.length > 0 ? 'lottery-validation-panel--danger' : validation.warnings.length > 0 ? 'lottery-validation-panel--warning' : 'lottery-validation-panel--normal'}`}>
+              <div className="lottery-validation-header">
+                WARNING
+              </div>
 
-            <div style={{ padding: '16px', overflowY: 'auto', flex: 1 }} className="custom-scrollbar">
-              {validation.errors.length === 0 && validation.warnings.length === 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--discord-text-muted)', gap: '8px' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--discord-status-positive)', opacity: 0.1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'var(--discord-status-positive)' }} />
+              <div className="lottery-validation-content custom-scrollbar">
+                {validation.errors.length === 0 && validation.warnings.length === 0 ? (
+                  <div className="lottery-validation-empty">
+                    <div className="lottery-validation-icon-bg">
+                      <div className="lottery-validation-icon-fg" />
+                    </div>
+                    <p className="lottery-validation-empty-text">設定に問題はありません</p>
+                    <p className="lottery-validation-empty-subtext">抽選を行う準備が完了しています</p>
                   </div>
-                  <p style={{ margin: 0, fontSize: '13px' }}>設定に問題はありません</p>
-                  <p style={{ margin: 0, fontSize: '12px', opacity: 0.8 }}>抽選を行う準備が完了しています</p>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {validation.errors.map((error: string, idx: number) => (
-                    <div key={`err-${idx}`} style={{
-                      padding: '12px',
-                      backgroundColor: 'rgba(237, 66, 69, 0.1)',
-                      borderLeft: '4px solid var(--discord-status-danger)',
-                      borderRadius: '4px',
-                      color: 'var(--discord-text-normal)',
-                      fontSize: '13px',
-                      lineHeight: 1.5
-                    }}>
-                      <strong style={{ color: 'var(--discord-status-danger)', display: 'block', marginBottom: '4px' }}>エラー（抽選不可）</strong>
-                      {error}
-                    </div>
-                  ))}
-                  {validation.warnings.map((warning: string, idx: number) => (
-                    <div key={`warn-${idx}`} style={{
-                      padding: '12px',
-                      backgroundColor: 'rgba(254, 231, 92, 0.1)',
-                      borderLeft: '4px solid var(--discord-accent-yellow, #fee75c)',
-                      borderRadius: '4px',
-                      color: 'var(--discord-text-normal)',
-                      fontSize: '13px',
-                      lineHeight: 1.5
-                    }}>
-                      <strong style={{ color: 'var(--discord-accent-yellow, #fee75c)', display: 'block', marginBottom: '4px' }}>注意</strong>
-                      {warning}
-                    </div>
-                  ))}
-                </div>
-              )}
+                ) : (
+                  <div className="lottery-validation-list">
+                    {validation.errors.map((error: string, idx: number) => (
+                      <div key={`err-${idx}`} className="lottery-validation-item lottery-validation-item--error">
+                        <strong className="lottery-validation-item-label lottery-validation-item-label--error">エラー（抽選不可）</strong>
+                        {error}
+                      </div>
+                    ))}
+                    {validation.warnings.map((warning: string, idx: number) => (
+                      <div key={`warn-${idx}`} className="lottery-validation-item lottery-validation-item--warning">
+                        <strong className="lottery-validation-item-label lottery-validation-item-label--warning">注意</strong>
+                        {warning}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          <div style={{ marginTop: '16px', display: 'flex', gap: '12px', flexDirection: 'column' }}>
-            <button onClick={handleImportTsv} className="btn-secondary btn-secondary--full" style={{ height: '44px' }}>
-              抽選結果をインポート
-            </button>
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={run}
-                className="btn-primary btn-primary--full"
-                style={{ height: '52px', fontSize: '15px' }}
-                disabled={validation.errors.length > 0}
-              >
-                抽選開始
+            <div className="lottery-action-bar">
+              <button onClick={handleImportTsv} className="btn-secondary btn-secondary--full lottery-action-btn-import">
+                抽選結果をインポート
               </button>
-              {validation.errors.length > 0 && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    cursor: 'not-allowed'
-                  }}
-                  title="エラーがあるため抽選を開始できません"
-                />
-              )}
+              <div className="lottery-action-btn-start-wrap">
+                <button
+                  onClick={run}
+                  className="btn-primary btn-primary--full lottery-action-btn-start"
+                  disabled={validation.errors.length > 0}
+                >
+                  抽選開始
+                </button>
+                {validation.errors.length > 0 && (
+                  <div
+                    className="lottery-action-btn-start-disabled-overlay"
+                    title="エラーがあるため抽選を開始できません"
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -737,10 +719,12 @@ export const LotteryPage: React.FC = () => {
 
       {confirmMessage && (
         <ConfirmModal
+          title="再抽選の確認"
           message={confirmMessage}
           onConfirm={handleConfirmOk}
           onCancel={handleConfirmCancel}
-          confirmLabel="OK"
+          confirmLabel="再抽選実行"
+          cancelLabel="キャンセル"
           type="confirm"
         />
       )}

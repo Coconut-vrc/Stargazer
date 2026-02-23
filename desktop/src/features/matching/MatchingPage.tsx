@@ -11,7 +11,7 @@ import { DiscordTable, DiscordTableColumn } from '@/components/DiscordTable';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { InputModal } from '@/components/InputModal';
 import { XLinkInline } from '@/components/XLinkCell';
-import { downloadCsv } from '@/common/downloadCsv';
+import { downloadTsv } from '@/common/downloadCsv';
 import { MATCHING_TYPE_LABELS } from '@/features/matching/types/matching-type-codes';
 import { isCautionUser } from '@/features/matching/logics/caution-user';
 
@@ -66,7 +66,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
   const [isExportingPngCast, setIsExportingPngCast] = useState(false);
   const [showPngUserModal, setShowPngUserModal] = useState(false);
   const [showPngCastModal, setShowPngCastModal] = useState(false);
-  const [showCsvModal, setShowCsvModal] = useState(false);
+  const [showTsvModal, setShowTsvModal] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(globalMatchingError);
   const userTableRef = useRef<HTMLDivElement>(null);
   const castTableRef = useRef<HTMLDivElement>(null);
@@ -299,7 +299,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
     } else {
       for (const user of winners) {
         const history = matchingResult.get(user.x_id) ?? [];
-        history.forEach((slot, idx) => {
+        history.forEach((slot: any, idx: number) => {
           if (!slot || idx >= rotationCount) return;
           const row = map.get(slot.cast.name) ?? { castName: slot.cast.name, perRound: [...basePerRound] };
           row.perRound[idx] = { userName: user.name, x_id: user.x_id, rank: slot.rank };
@@ -380,7 +380,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
     [rotationCount],
   );
 
-  const handleExportCsv = useCallback((filename: string) => {
+  const handleExportTsv = useCallback((filename: string) => {
     if (winners.length === 0) {
       setAlertMessage('当選者がいないため、マッチング結果をエクスポートできません。');
       return;
@@ -455,8 +455,8 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
       values.push(line);
     }
 
-    downloadCsv(values, `${filename}.csv`);
-    setAlertMessage('CSV をダウンロードしました。');
+    downloadTsv(values, `${filename}.tsv`);
+    setAlertMessage('TSV をダウンロードしました。');
   }, [winners, matchingResult, tableSlots, rotationCount, castViewRows]);
 
   const downloadPng = useCallback(
@@ -632,10 +632,10 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
         <button
           type="button"
           className="btn-export-primary"
-          onClick={() => setShowCsvModal(true)}
+          onClick={() => setShowTsvModal(true)}
           disabled={winners.length === 0}
         >
-          マッチング結果をCSVでダウンロード
+          マッチング結果をTSVでダウンロード
         </button>
       </div>
 
@@ -737,10 +737,10 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
         />
       )}
 
-      {showCsvModal && (
+      {showTsvModal && (
         <InputModal
-          title="CSVダウンロード"
-          description="保存するCSVファイル名を入力してください。"
+          title="TSVダウンロード"
+          description="保存するTSVファイル名を入力してください。"
           fields={[
             {
               key: 'filename',
@@ -750,10 +750,10 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
             },
           ]}
           onSubmit={(values) => {
-            setShowCsvModal(false);
-            handleExportCsv(values.filename);
+            setShowTsvModal(false);
+            handleExportTsv(values.filename);
           }}
-          onCancel={() => setShowCsvModal(false)}
+          onCancel={() => setShowTsvModal(false)}
           submitLabel="ダウンロード"
           cancelLabel="キャンセル"
         />

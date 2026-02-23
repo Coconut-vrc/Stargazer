@@ -3,6 +3,7 @@ import { Menu, X, HelpCircle, Database, Users } from 'lucide-react';
 import { invoke } from '@/tauri';
 import { DataManagementPage } from '@/features/data-management/DataManagementPage';
 import { CastNgManagementPage } from '@/features/cast-ng-management/CastNgManagementPage';
+import { EventManagementPage } from '@/features/event-management/EventManagementPage';
 import { GuidePage } from '@/features/guide/GuidePage';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ConfirmModal } from '@/components/ConfirmModal';
@@ -32,6 +33,7 @@ export const AppContainer: React.FC = () => {
   const [columnCheckError, setColumnCheckError] = useState<string | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [showDirSetupConfirm, setShowDirSetupConfirm] = useState(false);
+  const [setupEventName, setSetupEventName] = useState('stargazer');
   /** TSV取り込みで既存応募データがあるときに確認用に保持する取り込み予定データ */
   const [pendingImport, setPendingImport] = useState<{
     rows: string[][];
@@ -143,6 +145,8 @@ export const AppContainer: React.FC = () => {
 
   const handleDirSetupConfirm = async () => {
     try {
+      const eventName = setupEventName.trim() || 'stargazer';
+      await invoke('set_current_event', { eventName });
       await invoke('ensure_app_dirs');
       setShowDirSetupConfirm(false);
       // ディレクトリ作成後、キャストデータを読み込む
@@ -197,6 +201,7 @@ export const AppContainer: React.FC = () => {
   const sidebarButtons: { text: string; page: PageType; icon?: React.ReactNode }[] = [
     { text: NAV.DATA_MANAGEMENT, page: 'dataManagement', icon: <Database size={18} /> },
     { text: NAV.CAST_NG_MANAGEMENT, page: 'castNgManagement', icon: <Users size={18} /> },
+    { text: 'イベント管理', page: 'eventManagement', icon: <Database size={18} /> },
     { text: NAV.GUIDE, page: 'guide', icon: <HelpCircle size={18} /> },
   ];
 
@@ -208,6 +213,8 @@ export const AppContainer: React.FC = () => {
         return <DataManagementPage onImportUserRows={handleImportUserRows} />;
       case 'castNgManagement':
         return <CastNgManagementPage onPersistCasts={persistCastData} />;
+      case 'eventManagement':
+        return <EventManagementPage />;
       default:
         return <DataManagementPage onImportUserRows={handleImportUserRows} />;
     }
@@ -265,12 +272,31 @@ export const AppContainer: React.FC = () => {
           <ConfirmModal
             type="confirm"
             title="初回起動"
-            message={`データ保存のため\n%localAppData%\\CosmoArtsStore\\Stargazer\nを作成します。よろしいですか？\n\n※同意すると以降は必要ファイルが欠損していた場合自動で生成されます。`}
-            confirmLabel="OK"
+            message={`データ保存のための初期設定を行います。イベント名（半角英数字）を入力してください。`}
+            confirmLabel="開始する"
             cancelLabel="キャンセル"
             onConfirm={handleDirSetupConfirm}
             onCancel={() => setShowDirSetupConfirm(false)}
-          />
+          >
+            <div style={{ marginTop: '16px' }}>
+              <input
+                type="text"
+                autoFocus
+                placeholder="stargazer"
+                value={setupEventName}
+                onChange={(e) => setSetupEventName(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  backgroundColor: 'var(--discord-bg-dark)',
+                  border: '1px solid var(--discord-border)',
+                  borderRadius: '4px',
+                  color: 'var(--discord-text-normal)',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+          </ConfirmModal>
         )}
         {pendingImport !== null && (
           <ConfirmModal
