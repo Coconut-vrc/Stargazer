@@ -48,6 +48,9 @@ function getInitialSession(): PersistedSession | null {
     const isLotteryUnlocked = typeof (o as { isLotteryUnlocked?: boolean }).isLotteryUnlocked === 'boolean'
       ? (o as { isLotteryUnlocked: boolean }).isLotteryUnlocked
       : false;
+    const allowM003EmptySeats = typeof (o as { allowM003EmptySeats?: boolean }).allowM003EmptySeats === 'boolean'
+      ? (o as { allowM003EmptySeats: boolean }).allowM003EmptySeats
+      : false;
     return {
       winners: o.winners as UserBean[],
       matchingTypeCode,
@@ -57,6 +60,7 @@ function getInitialSession(): PersistedSession | null {
       castsPerRotation,
       activePage,
       isLotteryUnlocked,
+      allowM003EmptySeats,
     };
   } catch {
     return null;
@@ -91,6 +95,7 @@ export interface PersistedSession {
   castsPerRotation: number;
   activePage: PageType;
   isLotteryUnlocked: boolean;
+  allowM003EmptySeats: boolean;
 }
 
 export class Repository {
@@ -141,6 +146,8 @@ interface AppContextType {
   setGlobalTableSlots: (slots: TableSlot[] | undefined) => void;
   globalMatchingError: string | null;
   setGlobalMatchingError: (err: string | null) => void;
+  allowM003EmptySeats: boolean;
+  setAllowM003EmptySeats: (val: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -164,6 +171,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [castsPerRotation, setCastsPerRotation] = useState<number>(initialSession?.castsPerRotation ?? 1);
   const [matchingSettings, setMatchingSettingsState] = useState<MatchingSettingsState>(() => getInitialMatchingSettings());
   const [isLotteryUnlocked, setIsLotteryUnlocked] = useState<boolean>(initialSession?.isLotteryUnlocked ?? false);
+  const [allowM003EmptySeats, setAllowM003EmptySeats] = useState<boolean>(initialSession?.allowM003EmptySeats ?? false);
 
   const [globalMatchingResult, setGlobalMatchingResult] = useState<Map<string, MatchedCast[]> | null>(null);
   const [globalTableSlots, setGlobalTableSlots] = useState<TableSlot[] | undefined>(undefined);
@@ -188,9 +196,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       castsPerRotation,
       activePage,
       isLotteryUnlocked,
+      allowM003EmptySeats,
     };
     localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(session));
-  }, [currentWinners, matchingTypeCode, rotationCount, totalTables, usersPerTable, castsPerRotation, activePage, isLotteryUnlocked]);
+  }, [currentWinners, matchingTypeCode, rotationCount, totalTables, usersPerTable, castsPerRotation, activePage, isLotteryUnlocked, allowM003EmptySeats]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -228,6 +237,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setGlobalTableSlots,
       globalMatchingError,
       setGlobalMatchingError,
+      allowM003EmptySeats,
+      setAllowM003EmptySeats,
     }}>
       {children}
     </AppContext.Provider>

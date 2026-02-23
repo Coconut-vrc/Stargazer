@@ -32,6 +32,7 @@ export const LotteryResultPage: React.FC = () => {
     setGlobalMatchingResult,
     setGlobalTableSlots,
     setGlobalMatchingError,
+    allowM003EmptySeats,
   } = useAppContext();
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
@@ -102,7 +103,7 @@ export const LotteryResultPage: React.FC = () => {
   const executeMatchingAndNavigate = useCallback(() => {
     const runOptions = {
       rotationCount,
-      totalTables: (matchingTypeCode === 'M001' || matchingTypeCode === 'M002') ? totalTables : undefined,
+      totalTables: totalTables,
       usersPerTable: matchingTypeCode === 'M003' ? usersPerTable : undefined,
       castsPerRotation: matchingTypeCode === 'M003' ? castsPerRotation : undefined,
     };
@@ -142,6 +143,7 @@ export const LotteryResultPage: React.FC = () => {
     usersPerTable,
     castsPerRotation,
     matchingSettings,
+    allowM003EmptySeats,
     setGlobalMatchingResult,
     setGlobalTableSlots,
     setGlobalMatchingError,

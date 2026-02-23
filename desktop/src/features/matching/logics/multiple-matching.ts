@@ -20,6 +20,7 @@ export interface MultipleMatchingParams {
   usersPerTable: number;
   castsPerRotation: number;
   rotationCount: number;
+  totalTables?: number;
 }
 
 /* ---------- 内部ユーティリティ（ロジック完全分離のため独立定義） ---------- */
@@ -68,9 +69,14 @@ export function runMultipleMatching(
   }
 
   const ROUNDS = Math.max(1, rotationCount);
-  /* 空席対応: 端数が出る場合はテーブル数を切り上げ */
-  const tableCount = Math.ceil(winners.length / usersPerTable);
   const unitCount = activeCasts.length / castsPerRotation;
+
+  /* 空席対応: 端数が出る場合はテーブル数を切り上げ、さらにキャスト数が多い場合は完全な空席テーブルを追加 */
+  const userTableCount = Math.ceil(winners.length / usersPerTable);
+  const minTableCount = Math.max(userTableCount, unitCount);
+  const tableCount = params.totalTables !== undefined
+    ? Math.max(params.totalTables, minTableCount)
+    : minTableCount;
 
   /* --- 重複配置防止バリデーション --- */
   if (unitCount < tableCount) {
@@ -83,10 +89,14 @@ export function runMultipleMatching(
   /* --- ユーザーをシャッフルしてテーブルに分割（端数テーブル対応） --- */
   const shuffledUsers = [...winners].sort(() => Math.random() - 0.5);
   const tables: UserBean[][] = [];
-  for (let t = 0; t < tableCount; t++) {
+  for (let t = 0; t < userTableCount; t++) {
     const start = t * usersPerTable;
     const end = Math.min(start + usersPerTable, shuffledUsers.length);
     tables.push(shuffledUsers.slice(start, end));
+  }
+  /* 誰も座らない完全な空席テーブル分を追加 */
+  for (let t = userTableCount; t < tableCount; t++) {
+    tables.push([]);
   }
 
   /* --- キャストをシャッフルしてユニットに編成（固定パターン） --- */
@@ -189,7 +199,7 @@ export function runMultipleMatching(
       });
     }
 
-    /* 空席スロットを生成（端数テーブルの場合のみ） */
+    /* 空席スロットを生成（端数テーブル・完全空きテーブルの場合） */
     const vacantCount = usersPerTable - tables[t].length;
     for (let v = 0; v < vacantCount; v++) {
       tableSlots.push({

@@ -1952,7 +1952,7 @@ select.app-select-native option {
 }
 
 .app-container:not([data-theme="pastel"]):not([data-theme="skyblue"]) .app-select__content {
-  background-color: rgba(30, 30, 35, 0.98);
+  background-color: #0a050e;
   border-color: rgba(255, 255, 255, 0.2);
 }
 

@@ -44,7 +44,7 @@ export const AppSelect: React.FC<AppSelectProps> = ({
           </span>
         </SelectPrimitive.Icon>
       </SelectPrimitive.Trigger>
-      <SelectPrimitive.Portal>
+      <SelectPrimitive.Portal container={typeof document !== 'undefined' ? document.querySelector('.app-container') as HTMLElement : undefined}>
         <SelectPrimitive.Content className="app-select__content" position="popper" sideOffset={4}>
           <SelectPrimitive.Viewport className="app-select__viewport">
             {options.map((opt) => (

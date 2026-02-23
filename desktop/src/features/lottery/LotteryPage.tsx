@@ -7,8 +7,12 @@ import { buildTsvContent } from '@/common/downloadCsv';
 import { parseLotteryResultTsv } from '@/common/lotteryImport';
 import { invoke } from '@/tauri';
 import { isTauri } from '@/tauri';
+import { InputModal } from '@/components/InputModal';
+import { LotteryTemplate } from './types/lottery-template';
+import { Save, Trash2 } from 'lucide-react';
 
 const PREF_NAME = 'lottery-pref';
+const TEMPLATES_PREF_NAME = 'lottery-templates';
 
 interface LotteryPref {
   count: number;
@@ -17,6 +21,7 @@ interface LotteryPref {
   totalTables: number;
   usersPerTable: number;
   castsPerRotation: number;
+  allowM003EmptySeats?: boolean;
 }
 
 export const LotteryPage: React.FC = () => {
@@ -36,6 +41,8 @@ export const LotteryPage: React.FC = () => {
     setUsersPerTable,
     castsPerRotation,
     setCastsPerRotation,
+    allowM003EmptySeats,
+    setAllowM003EmptySeats,
   } = useAppContext();
 
   const [count, setCount] = useState(1);
@@ -44,6 +51,12 @@ export const LotteryPage: React.FC = () => {
   const [showGuaranteedSelect, setShowGuaranteedSelect] = useState(false);
   const [prefLoaded, setPrefLoaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // テンプレート関連
+  const [templates, setTemplates] = useState<LotteryTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+  const [templateConfirmMessage, setTemplateConfirmMessage] = useState<{ message: string, action: () => void } | null>(null);
 
   // pref読み込み（初回マウント時）
   useEffect(() => {
@@ -59,11 +72,23 @@ export const LotteryPage: React.FC = () => {
             if (typeof pref.totalTables === 'number' && pref.totalTables >= 1) setTotalTables(pref.totalTables);
             if (typeof pref.usersPerTable === 'number' && pref.usersPerTable >= 1) setUsersPerTable(pref.usersPerTable);
             if (typeof pref.castsPerRotation === 'number' && pref.castsPerRotation >= 1) setCastsPerRotation(pref.castsPerRotation);
+            if (typeof pref.allowM003EmptySeats === 'boolean') setAllowM003EmptySeats(pref.allowM003EmptySeats);
           } catch { /* ignore parse errors */ }
         }
       })
       .catch(() => { /* ignore */ })
       .finally(() => setPrefLoaded(true));
+
+    invoke<string | null>('read_pref_json', { name: TEMPLATES_PREF_NAME })
+      .then((raw) => {
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw) as LotteryTemplate[];
+            if (Array.isArray(parsed)) setTemplates(parsed);
+          } catch { /* ignore parse errors */ }
+        }
+      })
+      .catch(() => { /* ignore */ });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -77,9 +102,84 @@ export const LotteryPage: React.FC = () => {
       totalTables,
       usersPerTable,
       castsPerRotation,
+      allowM003EmptySeats,
     };
     invoke('write_pref_json', { name: PREF_NAME, content: JSON.stringify(pref) }).catch(() => { /* ignore */ });
-  }, [count, matchingTypeCode, rotationCount, totalTables, usersPerTable, castsPerRotation, prefLoaded]);
+  }, [count, matchingTypeCode, rotationCount, totalTables, usersPerTable, castsPerRotation, allowM003EmptySeats, prefLoaded]);
+
+  // テンプレート関連メソッド
+  const saveTemplates = useCallback((newTemplates: LotteryTemplate[]) => {
+    setTemplates(newTemplates);
+    if (isTauri()) {
+      invoke('write_pref_json', { name: TEMPLATES_PREF_NAME, content: JSON.stringify(newTemplates) }).catch(() => { });
+    }
+  }, []);
+
+  const handleSaveTemplateSubmit = useCallback((values: Record<string, string>) => {
+    const name = values.templateName;
+    if (!name) return;
+
+    const newTemplate: LotteryTemplate = {
+      id: Date.now().toString(),
+      name,
+      settings: {
+        matchingTypeCode,
+        rotationCount,
+        totalTables,
+        usersPerTable,
+        castsPerRotation,
+        allowM003EmptySeats,
+      }
+    };
+
+    saveTemplates([...templates, newTemplate]);
+    setSelectedTemplateId(newTemplate.id);
+    setShowSaveTemplateModal(false);
+  }, [matchingTypeCode, rotationCount, totalTables, usersPerTable, castsPerRotation, allowM003EmptySeats, templates, saveTemplates]);
+
+  const handleDeleteTemplate = useCallback(() => {
+    if (!selectedTemplateId) return;
+
+    setTemplateConfirmMessage({
+      message: '選択中のテンプレートを削除します。\nよろしいですか？',
+      action: () => {
+        const newTemplates = templates.filter(t => t.id !== selectedTemplateId);
+        saveTemplates(newTemplates);
+        setSelectedTemplateId('');
+        setTemplateConfirmMessage(null);
+      }
+    });
+  }, [selectedTemplateId, templates, saveTemplates]);
+
+  const handleOverwriteTemplate = useCallback(() => {
+    if (!selectedTemplateId) return;
+    const target = templates.find(t => t.id === selectedTemplateId);
+    if (!target) return;
+
+    setTemplateConfirmMessage({
+      message: `選択中のテンプレート「${target.name}」を現在の設定で上書きします。\nよろしいですか？`,
+      action: () => {
+        const newTemplates = templates.map(t => {
+          if (t.id === selectedTemplateId) {
+            return {
+              ...t,
+              settings: {
+                matchingTypeCode,
+                rotationCount,
+                totalTables,
+                usersPerTable,
+                castsPerRotation,
+                allowM003EmptySeats,
+              }
+            };
+          }
+          return t;
+        });
+        saveTemplates(newTemplates);
+        setTemplateConfirmMessage(null);
+      }
+    });
+  }, [selectedTemplateId, templates, matchingTypeCode, rotationCount, totalTables, usersPerTable, castsPerRotation, allowM003EmptySeats, saveTemplates]);
 
   // TSVインポートハンドラー
   const handleImportTsv = useCallback(() => {
@@ -180,11 +280,30 @@ export const LotteryPage: React.FC = () => {
     const totalWinners = count + guaranteedWinners.length;
 
     if (matchingTypeCode === 'M003') {
-      if (totalWinners % usersPerTable !== 0) {
-        const vacantCount = usersPerTable - (totalWinners % usersPerTable);
-        setConfirmMessage(`当選者数（${totalWinners}名）は${usersPerTable}の倍数ではないため、最後のテーブルに${vacantCount}名分の空席が発生します。続行しますか？`);
+      const unitCount = activeCastCount / castsPerRotation;
+      const userTableCount = Math.ceil(totalWinners / usersPerTable);
+
+      if (totalTables < unitCount) {
+        setAlertMessage(`総テーブル数（${totalTables}）がキャストのユニット数（${unitCount}）より少なくなっています。\nすべてのキャストが同時に配置できるよう、総テーブル数は${unitCount}以上に設定してください。`);
         return;
       }
+      if (totalTables < userTableCount) {
+        setAlertMessage(`総テーブル数（${totalTables}）が当選者配置に必要なテーブル数（${userTableCount}）より少なくなっています。`);
+        return;
+      }
+
+      const hasEmptySeats = totalWinners % usersPerTable !== 0;
+      const hasEmptyTables = totalTables > userTableCount;
+
+      if (!allowM003EmptySeats && (hasEmptySeats || hasEmptyTables)) {
+        if (hasEmptySeats) {
+          setAlertMessage(`当選者数（${totalWinners}名）が「1テーブルあたりのユーザー数（${usersPerTable}）」で割り切れないため端数の空席が発生します。\n「端数の空席・手動指定による空きテーブルの発生を許可する」にチェックを入れると、空席込みで抽選を実行できます。`);
+        } else {
+          setAlertMessage(`指定された条件（総テーブル数${totalTables}）では誰も座らない完全な空きテーブルが発生します。\n「端数の空席・手動指定による空きテーブルの発生を許可する」にチェックを入れてください。`);
+        }
+        return;
+      }
+
       if (activeCastCount % castsPerRotation !== 0) {
         setAlertMessage('出席キャスト数が「1ローテあたりのキャスト数」で割り切れません。');
         return;
@@ -201,7 +320,7 @@ export const LotteryPage: React.FC = () => {
     }
 
     doRun();
-  }, [matchingTypeCode, count, guaranteedWinners, totalTables, usersPerTable, castsPerRotation, repository, doRun]);
+  }, [matchingTypeCode, count, guaranteedWinners, totalTables, usersPerTable, castsPerRotation, allowM003EmptySeats, repository, doRun]);
 
   const handleConfirmOk = useCallback(() => {
     doRun();
@@ -245,8 +364,118 @@ export const LotteryPage: React.FC = () => {
           マッチング形式と条件を選択してください
         </p>
 
-        <div className="form-group" style={{ maxWidth: '400px' }}>
-          <label className="form-label">マッチング形式（区分コード M000～M002）</label>
+        {/* テンプレート操作エリア */}
+        <div className="form-group" style={{
+          padding: '12px',
+          backgroundColor: 'var(--discord-background-secondary)',
+          borderRadius: '8px',
+          marginBottom: '16px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '12px' }}>
+            <div style={{ flex: 1 }}>
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                <Save size={14} /> テンプレート
+              </label>
+              <AppSelect
+                value={selectedTemplateId || 'unselected'}
+                onValueChange={(v) => {
+                  const newId = v === 'unselected' ? '' : v;
+                  setSelectedTemplateId(newId);
+                  if (newId) {
+                    const template = templates.find(t => t.id === newId);
+                    if (template) {
+                      setMatchingTypeCode(template.settings.matchingTypeCode as typeof matchingTypeCode);
+                      setRotationCount(template.settings.rotationCount);
+                      setTotalTables(template.settings.totalTables);
+                      setUsersPerTable(template.settings.usersPerTable);
+                      setCastsPerRotation(template.settings.castsPerRotation);
+                      setAllowM003EmptySeats(template.settings.allowM003EmptySeats ?? false);
+                    }
+                  }
+                }}
+                options={[
+                  { value: 'unselected', label: templates.length > 0 ? '未選択（読み込み）' : '保存されたテンプレートなし' },
+                  ...templates.map(t => ({ value: t.id, label: t.name }))
+                ]}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ padding: '0 10px', height: '40px', fontSize: '13px' }}
+                onClick={() => setShowSaveTemplateModal(true)}
+                title="現在の条件を新規保存"
+              >
+                新規保存
+              </button>
+              {selectedTemplateId && (
+                <>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    style={{ padding: '0 10px', height: '40px', fontSize: '13px' }}
+                    onClick={handleOverwriteTemplate}
+                    title="現在の条件で上書き保存"
+                  >
+                    上書き
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-danger"
+                    style={{ padding: '0 10px', height: '40px', backgroundColor: 'var(--discord-status-danger)' }}
+                    onClick={handleDeleteTemplate}
+                    title="テンプレートを削除"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 1. ローテーション回数＋総テーブル数（2列グリッド） */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+          {/* 左列: ローテーション回数（共通） */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label className="form-label" style={{ marginBottom: '6px' }}>ローテーション回数</label>
+            <div className="form-inline-group">
+              <input
+                type="number"
+                value={rotationCount}
+                min={1}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setRotationCount(Number.isFinite(v) && v >= 1 ? v : rotationCount);
+                }}
+                className="form-number-input"
+              />
+            </div>
+          </div>
+
+          {/* 右列: 総テーブル数 */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label className="form-label" style={{ marginBottom: '6px' }}>総テーブル数</label>
+            <input
+              type="number"
+              value={totalTables}
+              min={1}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                setTotalTables(Number.isFinite(v) && v >= 1 ? v : totalTables);
+              }}
+              className="form-number-input"
+            />
+            <p className="form-inline-note" style={{ marginTop: 4 }}>
+              ※ 全形式で共通
+            </p>
+          </div>
+        </div>
+
+        {/* 2. マッチング形式 */}
+        <div className="form-group" style={{ maxWidth: '400px', marginBottom: '16px' }}>
+          <label className="form-label" style={{ marginBottom: '6px' }}>マッチング形式（コード M001～M002）</label>
           <AppSelect
             value={MATCHING_TYPE_CODES_SELECTABLE.includes(matchingTypeCode) ? matchingTypeCode : 'M001'}
             onValueChange={(v) => setMatchingTypeCode(v as typeof matchingTypeCode)}
@@ -257,35 +486,51 @@ export const LotteryPage: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
-          <label className="form-label">ローテーション回数（共通）</label>
-          <div className="form-inline-group">
-            <input
-              type="number"
-              value={rotationCount}
-              min={1}
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                setRotationCount(Number.isFinite(v) && v >= 1 ? v : rotationCount);
-              }}
-              className="form-number-input"
-            />
+        {/* 3. 確定当選枠＋当選者数（2列グリッド） */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+          {/* 左列: 確定当選枠 */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label className="form-label" style={{ marginBottom: '6px' }}>確定当選枠</label>
+            <div style={{ display: 'flex', alignItems: 'center', height: '40px', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setShowGuaranteedSelect(true)}
+                className="btn-secondary"
+                style={{ padding: '0 12px', height: '100%', fontSize: '13px' }}
+              >
+                確定当選者を選択
+              </button>
+              <span className="form-inline-note" style={{ margin: 0, fontSize: '12px' }}>({guaranteedWinners.length}名)</span>
+            </div>
+            <p className="form-inline-note" style={{ marginTop: 4, lineHeight: 1.3 }}>
+              抽選せずに確定で当選させるユーザー
+            </p>
+          </div>
+
+          {/* 右列: 当選者数（抽選枠） */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label className="form-label" style={{ marginBottom: '6px' }}>{countLabel}</label>
+            <div className="form-inline-group" style={{ height: '40px' }}>
+              <input
+                type="number"
+                value={count}
+                min={1}
+                step={1}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  if (Number.isFinite(v) && v >= 1) {
+                    setCount(v);
+                  }
+                }}
+                style={{ height: '100%' }}
+              />
+            </div>
+            {matchingTypeCode === 'M003' && usersPerTable > 1 && (count + guaranteedWinners.length) % usersPerTable !== 0 && (
+              <p className="form-inline-note" style={{ marginTop: 4, lineHeight: 1.3, color: 'var(--discord-accent-yellow, #f0b232)' }}>※ 最後のテーブルに{usersPerTable - ((count + guaranteedWinners.length) % usersPerTable)}名分の空席が発生します</p>
+            )}
           </div>
         </div>
 
-        <div className="form-group">
-          <label className="form-label">確定当選枠</label>
-          <p className="form-inline-note mb-12">
-            抽選せずに確定で当選させるユーザーを選択できます（{guaranteedWinners.length}名選択中）
-          </p>
-          <button
-            type="button"
-            onClick={() => setShowGuaranteedSelect(true)}
-            className="btn-secondary"
-          >
-            確定当選者を選択する
-          </button>
-        </div>
         {showGuaranteedSelect && (
           <ConfirmModal
             type="alert"
@@ -320,87 +565,62 @@ export const LotteryPage: React.FC = () => {
           />
         )}
 
-        {/* 当選者数＋総テーブル数（2列グリッド） */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-          {/* 左列: 当選者数（抽選枠） */}
-          <div className="form-group" style={{ margin: 0 }}>
-            <label className="form-label">{countLabel}</label>
-            <div className="form-inline-group">
-              <input
-                type="number"
-                value={count}
-                min={1}
-                step={1}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  if (Number.isFinite(v) && v >= 1) {
-                    setCount(v);
-                  }
-                }}
-              />
-              {matchingTypeCode === 'M003' && usersPerTable > 1 && (count + guaranteedWinners.length) % usersPerTable !== 0 && (
-                <p className="form-inline-note" style={{ marginTop: 4, color: 'var(--discord-accent-yellow, #f0b232)' }}>※ 最後のテーブルに{usersPerTable - ((count + guaranteedWinners.length) % usersPerTable)}名分の空席が発生します</p>
-              )}
+        {/* 4. 多対多ローテーション条件設定 (タイトル部) */}
+        {matchingTypeCode === 'M003' && (
+          <div style={{ padding: '12px 16px', backgroundColor: 'var(--discord-background-secondary)', borderRadius: '8px', border: '1px solid var(--discord-border)', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--discord-text-normal)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              多対多ローテーション条件設定
+            </h3>
+
+            {/* 1テーブルあたりのユーザー数＋1ローテあたりのキャスト数（2列グリッド） */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label" style={{ marginBottom: '6px' }}>1テーブルのユーザー数</label>
+                <div className="form-inline-group">
+                  <input
+                    type="number"
+                    value={usersPerTable}
+                    min={1}
+                    onChange={(e) => {
+                      const v = Number(e.target.value);
+                      setUsersPerTable(Number.isFinite(v) && v >= 1 ? v : usersPerTable);
+                    }}
+                    className="form-number-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label" style={{ marginBottom: '6px' }}>1ローテのキャスト数</label>
+                <div className="form-inline-group">
+                  <input
+                    type="number"
+                    value={castsPerRotation}
+                    min={1}
+                    onChange={(e) => {
+                      const v = Number(e.target.value);
+                      setCastsPerRotation(Number.isFinite(v) && v >= 1 ? v : castsPerRotation);
+                    }}
+                    className="form-number-input"
+                  />
+                </div>
+                <p className="form-inline-note" style={{ marginTop: 4 }}>※ 総数がこの倍数でないと警告</p>
+              </div>
+            </div>
+
+            {/* 空席・空きテーブルの許容設定 */}
+            <div className="form-group" style={{ marginTop: '12px', marginBottom: 0 }}>
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', margin: 0, fontSize: '13px' }}>
+                <input
+                  type="checkbox"
+                  checked={allowM003EmptySeats}
+                  onChange={(e) => setAllowM003EmptySeats(e.target.checked)}
+                />
+                端数の空席・手動指定による空きテーブルを許可する
+              </label>
             </div>
           </div>
-
-          {/* 右列: 総テーブル数 */}
-          <div className="form-group" style={{ margin: 0 }}>
-            <label className="form-label">総テーブル数</label>
-            <input
-              type="number"
-              value={totalTables}
-              min={1}
-              disabled={matchingTypeCode === 'M003'}
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                setTotalTables(Number.isFinite(v) && v >= 1 ? v : totalTables);
-              }}
-              className="form-number-input"
-              style={{ opacity: matchingTypeCode === 'M003' ? 0.5 : 1, cursor: matchingTypeCode === 'M003' ? 'not-allowed' : 'text' }}
-            />
-            <p className="form-inline-note" style={{ marginTop: 4 }}>※ M001/M002で使用</p>
-          </div>
-        </div>
-
-        {/* 1テーブルあたりのユーザー数＋1ローテあたりのキャスト数（2列グリッド） */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
-          {/* 左列: 1テーブルあたりのユーザー数 */}
-          <div className="form-group" style={{ margin: 0 }}>
-            <label className="form-label">1テーブルあたりのユーザー数</label>
-            <input
-              type="number"
-              value={usersPerTable}
-              min={1}
-              disabled={matchingTypeCode !== 'M003'}
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                setUsersPerTable(Number.isFinite(v) && v >= 1 ? v : usersPerTable);
-              }}
-              className="form-number-input"
-              style={{ opacity: matchingTypeCode !== 'M003' ? 0.5 : 1, cursor: matchingTypeCode !== 'M003' ? 'not-allowed' : 'text' }}
-            />
-            <p className="form-inline-note" style={{ marginTop: 4 }}>※ M003で使用</p>
-          </div>
-
-          {/* 右列: 1ローテあたりのキャスト数 */}
-          <div className="form-group" style={{ margin: 0 }}>
-            <label className="form-label">1ローテあたりのキャスト数</label>
-            <input
-              type="number"
-              value={castsPerRotation}
-              min={1}
-              disabled={matchingTypeCode !== 'M003'}
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                setCastsPerRotation(Number.isFinite(v) && v >= 1 ? v : castsPerRotation);
-              }}
-              className="form-number-input"
-              style={{ opacity: matchingTypeCode !== 'M003' ? 0.5 : 1, cursor: matchingTypeCode !== 'M003' ? 'not-allowed' : 'text' }}
-            />
-            <p className="form-inline-note" style={{ marginTop: 4 }}>※ M003で使用。キャスト総数がこの倍数でないと警告されます</p>
-          </div>
-        </div>
+        )}
 
         {/* 隠しファイル入力 */}
         <input
@@ -411,11 +631,11 @@ export const LotteryPage: React.FC = () => {
           onChange={handleFileChange}
         />
 
-        <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
-          <button onClick={handleImportTsv} className="btn-secondary btn-secondary--full">
-            抽選結果TSVをインポート
+        <div style={{ display: 'flex', gap: '12px', flexDirection: 'row', marginTop: 'auto' }}>
+          <button onClick={handleImportTsv} className="btn-secondary" style={{ flex: 1, height: '44px' }}>
+            抽選結果をインポート
           </button>
-          <button onClick={run} className="btn-primary btn-primary--full">
+          <button onClick={run} className="btn-primary" style={{ flex: 1.5, height: '44px' }}>
             抽選開始
           </button>
         </div>
@@ -436,6 +656,25 @@ export const LotteryPage: React.FC = () => {
           onConfirm={() => setAlertMessage(null)}
           confirmLabel="OK"
           type="alert"
+        />
+      )}
+      {templateConfirmMessage && (
+        <ConfirmModal
+          message={templateConfirmMessage.message}
+          onConfirm={templateConfirmMessage.action}
+          onCancel={() => setTemplateConfirmMessage(null)}
+          confirmLabel="OK"
+          type="confirm"
+        />
+      )}
+      {showSaveTemplateModal && (
+        <InputModal
+          title="テンプレートの保存"
+          description="現在の条件設定に名前をつけて保存します。"
+          fields={[{ key: 'templateName', label: 'テンプレート名', placeholder: '例：通常営業、多対多イベント' }]}
+          onSubmit={handleSaveTemplateSubmit}
+          onCancel={() => setShowSaveTemplateModal(false)}
+          submitLabel="保存する"
         />
       )}
     </div>

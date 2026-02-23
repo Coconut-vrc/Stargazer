@@ -76,6 +76,7 @@ export class MatchingService {
             usersPerTable: options.usersPerTable ?? 1,
             castsPerRotation: options.castsPerRotation ?? 1,
             rotationCount: ROUNDS,
+            totalTables: options.totalTables,
           },
           ngJudgmentType,
           ngMatchingBehavior,
