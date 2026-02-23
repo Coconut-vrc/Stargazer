@@ -1,9 +1,12 @@
 // desktop/src/features/matching/MatchingPage.tsx
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { toPng } from 'html-to-image';
-import { Repository, type UserBean, type MatchingTypeCode } from '@/stores/AppContext';
+import { useAppContext, Repository, type UserBean, type MatchingTypeCode } from '@/stores/AppContext';
 import type { MatchingSettingsState } from '@/features/matching/stores/matching-settings-store';
-import { MatchingService, MatchedCast, type TableSlot } from '@/features/matching/logics/matching_service';
+import {
+  MatchedCast,
+  type TableSlot
+} from '@/features/matching/logics/matching_service';
 import { DiscordTable, DiscordTableColumn } from '@/components/DiscordTable';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { InputModal } from '@/components/InputModal';
@@ -49,59 +52,36 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
   repository,
   matchingTypeCode,
   rotationCount,
-  totalTables,
   usersPerTable,
   castsPerRotation,
   matchingSettings,
 }) => {
-  const [matchingResult, setMatchingResult] = useState<Map<string, MatchedCast[]>>(new Map());
-  const [tableSlots, setTableSlots] = useState<TableSlot[] | undefined>(undefined);
+  const {
+    globalMatchingResult,
+    globalTableSlots,
+    globalMatchingError,
+  } = useAppContext();
+
   const [isExportingPngUser, setIsExportingPngUser] = useState(false);
   const [isExportingPngCast, setIsExportingPngCast] = useState(false);
   const [showPngUserModal, setShowPngUserModal] = useState(false);
   const [showPngCastModal, setShowPngCastModal] = useState(false);
   const [showCsvModal, setShowCsvModal] = useState(false);
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [alertMessage, setAlertMessage] = useState<string | null>(globalMatchingError);
   const userTableRef = useRef<HTMLDivElement>(null);
   const castTableRef = useRef<HTMLDivElement>(null);
 
-  const runOptions = useMemo(() => ({
-    rotationCount,
-    totalTables: (matchingTypeCode === 'M001' || matchingTypeCode === 'M002') ? totalTables : undefined,
-    usersPerTable: matchingTypeCode === 'M003' ? usersPerTable : undefined,
-    castsPerRotation: matchingTypeCode === 'M003' ? castsPerRotation : undefined,
-  }), [matchingTypeCode, rotationCount, totalTables, usersPerTable, castsPerRotation]);
-
-  // ページ表示時、または当選者が変わった時にマッチングを再計算
+  // コンポーネントマウント時、もしグローバルエラーが残っていればアラートに反映
   useEffect(() => {
-    if (winners.length > 0) {
-      const result = MatchingService.runMatching(
-        winners,
-        repository.getAllCasts(),
-        matchingTypeCode,
-        runOptions,
-        matchingSettings.ngJudgmentType,
-        matchingSettings.ngMatchingBehavior,
-      );
-      if (result.ngConflict) {
-        setMatchingResult(new Map());
-        setTableSlots(undefined);
-        setAlertMessage(
-          'NGユーザーを排除できる組み合わせが見つかりませんでした。\n\n' +
-          '以下のいずれかの対応を行ってください:\n' +
-          '・抽選をやり直す\n' +
-          '・NGの原因となるキャストを欠席にする\n' +
-          '・NGユーザー設定を見直す',
-        );
-        return;
-      }
-      setMatchingResult(result.userMap);
-      setTableSlots(result.tableSlots);
-    } else {
-      setMatchingResult(new Map());
-      setTableSlots(undefined);
+    if (globalMatchingError) {
+      setAlertMessage(globalMatchingError);
     }
-  }, [winners, repository, matchingTypeCode, runOptions, matchingSettings]);
+  }, [globalMatchingError]);
+
+  const matchingResult = globalMatchingResult || new Map();
+  const tableSlots = globalTableSlots;
+
+  // (useEffect for MatchingService.runMatching is intentionally removed)
 
   /**
    * 希望ランクに応じたラベルを表示
@@ -126,7 +106,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
       if (matchingTypeCode === 'M003') {
         const tableMap = new Map<number, Array<{ user: UserBean | null; matches: MatchedCast[] }>>();
 
-        tableSlots.forEach((slot, i) => {
+        tableSlots.forEach((slot: TableSlot, i: number) => {
           const tableIndex = Math.floor(i / usersPerTable) + 1;
           if (!tableMap.has(tableIndex)) {
             tableMap.set(tableIndex, []);
@@ -148,8 +128,8 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
       }
 
       // M001/M002の場合、従来通り
-      return tableSlots.map((slot, i) => ({
-        tableIndex: i + 1,
+      return tableSlots.map((slot: TableSlot, i: number) => ({
+        tableIndex: matchingTypeCode === 'M001' ? i + 1 : undefined,
         user: slot.user,
         matches: slot.matches,
       }));
@@ -182,7 +162,7 @@ const MatchingPageComponent: React.FC<MatchingPageProps> = ({
                   </div>
                 )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  {row.tableUsers.map((userInfo, idx) => (
+                  {row.tableUsers.map((userInfo: { user: UserBean | null; matches: MatchedCast[] }, idx: number) => (
                     <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       {userInfo.user ? (
                         <>

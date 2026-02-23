@@ -6,6 +6,7 @@ import { ALERT, EXTERNAL_LINK } from '@/common/copy';
 import { downloadTsv } from '@/common/downloadCsv';
 import { openInDefaultBrowser } from '@/common/openExternal';
 import { isUserNGForCast } from '@/features/matching/logics/ng-judgment';
+import { MatchingService } from '@/features/matching/logics/matching_service';
 
 function defaultLotteryFilename(): string {
   const now = new Date();
@@ -16,11 +17,27 @@ function defaultLotteryFilename(): string {
 }
 
 export const LotteryResultPage: React.FC = () => {
-  const { currentWinners, guaranteedWinners, setActivePage, repository, matchingSettings } = useAppContext();
+  const {
+    currentWinners,
+    guaranteedWinners,
+    setActivePage,
+    repository,
+    matchingSettings,
+    matchingTypeCode,
+    rotationCount,
+    totalTables,
+    usersPerTable,
+    castsPerRotation,
+    globalMatchingResult,
+    setGlobalMatchingResult,
+    setGlobalTableSlots,
+    setGlobalMatchingError,
+  } = useAppContext();
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showNgCast, setShowNgCast] = useState(false);
+  const [showRematchConfirm, setShowRematchConfirm] = useState(false);
 
   const guaranteedIds = new Set(guaranteedWinners.map(w => w.x_id));
   const casts = repository.getAllCasts();
@@ -81,6 +98,65 @@ export const LotteryResultPage: React.FC = () => {
     doExport(values.filename?.trim() || defaultLotteryFilename());
     setShowExportModal(false);
   };
+
+  const executeMatchingAndNavigate = useCallback(() => {
+    const runOptions = {
+      rotationCount,
+      totalTables: (matchingTypeCode === 'M001' || matchingTypeCode === 'M002') ? totalTables : undefined,
+      usersPerTable: matchingTypeCode === 'M003' ? usersPerTable : undefined,
+      castsPerRotation: matchingTypeCode === 'M003' ? castsPerRotation : undefined,
+    };
+
+    const result = MatchingService.runMatching(
+      currentWinners,
+      repository.getAllCasts(),
+      matchingTypeCode,
+      runOptions,
+      matchingSettings.ngJudgmentType,
+      matchingSettings.ngMatchingBehavior,
+    );
+
+    if (result.ngConflict) {
+      setGlobalMatchingResult(null);
+      setGlobalTableSlots(undefined);
+      setGlobalMatchingError(
+        'NGユーザーを排除できる組み合わせが見つかりませんでした。\n\n' +
+        '以下のいずれかの対応を行ってください:\n' +
+        '・抽選をやり直す\n' +
+        '・NGの原因となるキャストを欠席にする\n' +
+        '・NGユーザー設定を見直す'
+      );
+    } else {
+      setGlobalMatchingResult(result.userMap);
+      setGlobalTableSlots(result.tableSlots);
+      setGlobalMatchingError(null);
+    }
+
+    setActivePage('matching');
+  }, [
+    currentWinners,
+    repository,
+    matchingTypeCode,
+    rotationCount,
+    totalTables,
+    usersPerTable,
+    castsPerRotation,
+    matchingSettings,
+    setGlobalMatchingResult,
+    setGlobalTableSlots,
+    setGlobalMatchingError,
+    setActivePage
+  ]);
+
+  const handleStartMatching = useCallback(() => {
+    if (currentWinners.length === 0) return;
+
+    if (globalMatchingResult && globalMatchingResult.size > 0) {
+      setShowRematchConfirm(true);
+    } else {
+      executeMatchingAndNavigate();
+    }
+  }, [currentWinners.length, globalMatchingResult, executeMatchingAndNavigate]);
 
   return (
     <div className="fade-in page-wrapper">
@@ -203,7 +279,7 @@ export const LotteryResultPage: React.FC = () => {
           />
         )}
         <button
-          onClick={() => setActivePage('matching')}
+          onClick={handleStartMatching}
           style={{
             padding: '10px 24px',
             borderRadius: '4px',
@@ -232,6 +308,21 @@ export const LotteryResultPage: React.FC = () => {
           onCancel={() => setPendingUrl(null)}
           confirmLabel={EXTERNAL_LINK.CONFIRM_LABEL}
           cancelLabel={EXTERNAL_LINK.CANCEL_LABEL}
+          type="confirm"
+        />
+      )}
+
+      {showRematchConfirm && (
+        <ConfirmModal
+          title="再マッチングの確認"
+          message={"前回のマッチング結果が残っていますが再度マッチングを行いますか？\n※前回のマッチング結果は削除されます"}
+          onConfirm={() => {
+            setShowRematchConfirm(false);
+            executeMatchingAndNavigate();
+          }}
+          onCancel={() => setShowRematchConfirm(false)}
+          confirmLabel="OK"
+          cancelLabel="キャンセル"
           type="confirm"
         />
       )}

@@ -517,6 +517,13 @@ select.form-input {
   align-items: flex-end;
 }
 
+@media (max-width: 768px) {
+  .form-card--flex-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 .form-card--flex-col {
   display: flex;
   flex-direction: column;
@@ -724,6 +731,13 @@ select.form-input {
   justify-content: flex-end;
   gap: 10px;
   margin-bottom: 12px;
+}
+
+@media (max-width: 768px) {
+  .action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 .section-block {
@@ -3893,6 +3907,31 @@ select.app-select-native option {
   margin-bottom: 24px;
 }
 
+@media (max-width: 768px) {
+  .page-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    /* タップ時のハイライトを無効化 */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* スクロールバーを少し目立たなくする */
+  .page-tabs::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .page-tabs::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .page-tabs::-webkit-scrollbar-thumb {
+    background: var(--discord-background-modifier-accent);
+    border-radius: 4px;
+  }
+}
+
 .page-tab {
   padding: 12px 24px;
   background: transparent;
@@ -3906,14 +3945,20 @@ select.app-select-native option {
   margin-bottom: -2px;
 }
 
-.page-tab:hover {
+.page-tab:hover:not(:disabled) {
   color: var(--discord-text-normal);
   background: var(--discord-background-modifier-hover);
 }
 
-.page-tab--active {
+.page-tab.page-tab--active {
   color: var(--discord-accent-primary);
   border-bottom-color: var(--discord-accent-primary);
+}
+
+.page-tab:disabled,
+.page-tab--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* ========================================

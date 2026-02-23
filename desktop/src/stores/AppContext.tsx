@@ -9,6 +9,7 @@ import {
 } from '@/features/matching/stores/matching-settings-store';
 import { MATCHING_TYPE_CODES, type MatchingTypeCode } from '@/features/matching/types/matching-type-codes';
 import { DEFAULT_ROTATION_COUNT } from '@/common/copy';
+import type { MatchedCast, TableSlot } from '@/features/matching/logics/matching_service';
 export type { UserBean, CastBean } from '@/common/types/entities';
 
 const VALID_PAGES: readonly string[] = ['guide', 'dataManagement', 'castNgManagement', 'import', 'db', 'cast', 'ngManagement', 'lotteryCondition', 'lottery', 'matching'];
@@ -44,6 +45,9 @@ function getInitialSession(): PersistedSession | null {
     const castsPerRotation = typeof (o as { castsPerRotation?: number }).castsPerRotation === 'number' && (o as { castsPerRotation: number }).castsPerRotation >= 1
       ? (o as { castsPerRotation: number }).castsPerRotation
       : 1;
+    const isLotteryUnlocked = typeof (o as { isLotteryUnlocked?: boolean }).isLotteryUnlocked === 'boolean'
+      ? (o as { isLotteryUnlocked: boolean }).isLotteryUnlocked
+      : false;
     return {
       winners: o.winners as UserBean[],
       matchingTypeCode,
@@ -52,6 +56,7 @@ function getInitialSession(): PersistedSession | null {
       usersPerTable,
       castsPerRotation,
       activePage,
+      isLotteryUnlocked,
     };
   } catch {
     return null;
@@ -85,6 +90,7 @@ export interface PersistedSession {
   /** M003用: 1ローテあたりのキャスト数 */
   castsPerRotation: number;
   activePage: PageType;
+  isLotteryUnlocked: boolean;
 }
 
 export class Repository {
@@ -127,6 +133,14 @@ interface AppContextType {
   setCastsPerRotation: (n: number) => void;
   matchingSettings: MatchingSettingsState;
   setMatchingSettings: (state: MatchingSettingsState | ((prev: MatchingSettingsState) => MatchingSettingsState)) => void;
+  isLotteryUnlocked: boolean;
+  setIsLotteryUnlocked: (val: boolean) => void;
+  globalMatchingResult: Map<string, MatchedCast[]> | null;
+  setGlobalMatchingResult: (res: Map<string, MatchedCast[]> | null) => void;
+  globalTableSlots: TableSlot[] | undefined;
+  setGlobalTableSlots: (slots: TableSlot[] | undefined) => void;
+  globalMatchingError: string | null;
+  setGlobalMatchingError: (err: string | null) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -149,6 +163,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [usersPerTable, setUsersPerTable] = useState<number>(initialSession?.usersPerTable ?? 1);
   const [castsPerRotation, setCastsPerRotation] = useState<number>(initialSession?.castsPerRotation ?? 1);
   const [matchingSettings, setMatchingSettingsState] = useState<MatchingSettingsState>(() => getInitialMatchingSettings());
+  const [isLotteryUnlocked, setIsLotteryUnlocked] = useState<boolean>(initialSession?.isLotteryUnlocked ?? false);
+
+  const [globalMatchingResult, setGlobalMatchingResult] = useState<Map<string, MatchedCast[]> | null>(null);
+  const [globalTableSlots, setGlobalTableSlots] = useState<TableSlot[] | undefined>(undefined);
+  const [globalMatchingError, setGlobalMatchingError] = useState<string | null>(null);
 
   const setMatchingSettings = (stateOrUpdater: MatchingSettingsState | ((prev: MatchingSettingsState) => MatchingSettingsState)) => {
     setMatchingSettingsState((prev) => {
@@ -168,9 +187,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       usersPerTable,
       castsPerRotation,
       activePage,
+      isLotteryUnlocked,
     };
     localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(session));
-  }, [currentWinners, matchingTypeCode, rotationCount, totalTables, usersPerTable, castsPerRotation, activePage]);
+  }, [currentWinners, matchingTypeCode, rotationCount, totalTables, usersPerTable, castsPerRotation, activePage, isLotteryUnlocked]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -200,6 +220,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setCastsPerRotation,
       matchingSettings,
       setMatchingSettings,
+      isLotteryUnlocked,
+      setIsLotteryUnlocked,
+      globalMatchingResult,
+      setGlobalMatchingResult,
+      globalTableSlots,
+      setGlobalTableSlots,
+      globalMatchingError,
+      setGlobalMatchingError,
     }}>
       {children}
     </AppContext.Provider>

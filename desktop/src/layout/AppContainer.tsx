@@ -25,6 +25,7 @@ export const AppContainer: React.FC = () => {
     setCurrentWinners,
     themeId,
     setThemeId,
+    setIsLotteryUnlocked,
   } = useAppContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -182,6 +183,7 @@ export const AppContainer: React.FC = () => {
       );
     repository.saveApplyUsers(users);
     setCurrentWinners([]);
+    setIsLotteryUnlocked(false);
     if (typeof window !== 'undefined') window.localStorage.removeItem(STORAGE_KEYS.SESSION);
     setActivePage('db');
   };

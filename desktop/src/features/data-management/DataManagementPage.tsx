@@ -26,6 +26,7 @@ function toTabOrDefault(page: PageType): DataManagementTab {
 export const DataManagementPage: React.FC<DataManagementPageProps> = ({ onImportUserRows }) => {
   const {
     activePage,
+    setActivePage,
     repository,
     currentWinners,
     matchingTypeCode,
@@ -34,6 +35,7 @@ export const DataManagementPage: React.FC<DataManagementPageProps> = ({ onImport
     usersPerTable,
     castsPerRotation,
     matchingSettings,
+    isLotteryUnlocked,
   } = useAppContext();
 
   const totalTables = matchingTypeCode === 'M003' && usersPerTable > 0
@@ -88,15 +90,25 @@ export const DataManagementPage: React.FC<DataManagementPageProps> = ({ onImport
   return (
     <div className="page-wrapper">
       <div className="page-tabs">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            className={`page-tab ${activeTab === tab.id ? 'page-tab--active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {tabs.map((tab) => {
+          const isLocked = !isLotteryUnlocked && ['lotteryCondition', 'lottery', 'matching'].includes(tab.id);
+          return (
+            <button
+              key={tab.id}
+              className={`page-tab ${activeTab === tab.id ? 'page-tab--active' : ''} ${isLocked ? 'page-tab--disabled' : ''}`}
+              onClick={() => {
+                if (!isLocked) {
+                  setActiveTab(tab.id);
+                  setActivePage(tab.id);
+                }
+              }}
+              disabled={isLocked}
+              title={isLocked ? "応募データ一覧から「抽選条件へ」進むと解放されます" : undefined}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
       <div className="page-tab-content">{renderContent()}</div>
     </div>

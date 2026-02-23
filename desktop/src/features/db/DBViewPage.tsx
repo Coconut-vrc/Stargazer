@@ -41,7 +41,12 @@ const XLinkCell: React.FC<{
 };
 
 const DBViewPageComponent: React.FC = () => {
-  const { repository, setActivePage, matchingSettings } = useAppContext();
+  const {
+    repository,
+    setActivePage,
+    matchingSettings,
+    setIsLotteryUnlocked,
+  } = useAppContext();
   const rawUsers = repository.getAllApplyUsers();
   const userData = Array.isArray(rawUsers) ? rawUsers : [];
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
@@ -252,7 +257,10 @@ const DBViewPageComponent: React.FC = () => {
       <div className="page-header-row">
         <h1 className="page-header-title page-header-title--md">名簿データベース</h1>
         <button
-          onClick={() => setActivePage('lotteryCondition')}
+          onClick={() => {
+            setIsLotteryUnlocked(true);
+            setActivePage('lotteryCondition');
+          }}
           className="btn-accent-yellow"
         >
           抽選条件へ
